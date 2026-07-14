@@ -43,7 +43,7 @@ signed record invalidates its signature. (Signature/draft endpoints exist for PK
 flows; the reference covers the core opt-in lifecycle.)
 
 ## Reference
-[`./reference`](./reference):
+[`./references`](./references):
 - `src/consentClient.ts` — dependency-free Consent BB client (`consentRecords.*`).
 - `src/consent.ts` — `readConsent`, `setConsent`, `giveConsent`, `withdrawConsent`
   (create-or-update, so callers don't juggle first-time vs update).
@@ -52,7 +52,7 @@ flows; the reference covers the core opt-in lifecycle.)
 - `src/server.ts` — example wiring.
 
 ## Steps
-1. `cd reference && cp .env.example .env`; set `OWS_ENV`, `OWS_API_KEY`.
+1. `cd references && cp .env.example .env`; set `OWS_ENV`, `OWS_API_KEY`.
 2. `npm install`.
 3. Mount the router with your own resolver (session → userId → individualId):
    ```ts

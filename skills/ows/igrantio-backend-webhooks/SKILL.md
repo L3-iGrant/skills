@@ -26,7 +26,7 @@ to the browser). Composed by `igrantio-issuer-backend` / `igrantio-verifier-back
   reject unknown topics, extract the exchange id, store the event.
 
 ## Reference
-[`./reference`](./reference):
+[`./references`](./references):
 - `topics.ts` — `ISSUER_TOPICS`, `VERIFIER_TOPICS`, `extractExchangeId(type, data)`.
 - `webhooks.ts` — `verifySignature(...)` + `webhookReceiver(store)` router.
 - `registerWebhook.ts` — `registerWebhook({ owsBaseUrl, apiKey, payloadUrl, secretKey, topics })`, idempotent.

@@ -31,9 +31,9 @@ For the verifier equivalent use `igrantio-verifier-backend` (separate skill). Re
   `DELETE /webhook/{id}` lets it consume-and-delete.
 
 ## Reference implementation
-Runnable Express + TypeScript app in [`./reference`](./reference):
+Runnable Express + TypeScript app in [`./references`](./references):
 ```
-reference/
+references/
   src/config.ts          env config
   src/tenants.ts         TenantStore — per-tenant API-key resolution (env or pluggable)
   src/eventStore.ts      in-memory event store (swap for Redis/Postgres)
@@ -48,7 +48,7 @@ reference/
 ```
 
 ## Steps
-1. `cd reference && cp .env.example .env`, then set `OWS_BASE_URL`,
+1. `cd references && cp .env.example .env`, then set `OWS_BASE_URL`,
    `WEBHOOK_SECRET_KEY`, `PUBLIC_BASE_URL`, `CORS_ORIGINS`, and one
    `OWS_TENANT_<SLUG>_API_KEY` per organisation.
 2. `npm install && npm run dev` — backend on `:6001`.

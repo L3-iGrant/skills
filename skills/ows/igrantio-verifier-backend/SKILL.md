@@ -31,13 +31,13 @@ issuer equivalent use `igrantio-issuer-backend` (separate skill). Read
   browser; `DELETE /webhook/{id}` consume-and-delete.
 
 ## Reference implementation
-Runnable Express + TypeScript app in [`./reference`](./reference). Same modules as
+Runnable Express + TypeScript app in [`./references`](./references). Same modules as
 the issuer backend; the only role differences are in `src/server.ts`
 (verification allow-list) and `scripts/register-webhook.ts` (`VERIFIER_TOPICS`).
 Default `PORT=6002` so it can run alongside an issuer backend.
 
 ## Steps
-1. `cd reference && cp .env.example .env`; set `OWS_ENV` (demo|staging, default
+1. `cd references && cp .env.example .env`; set `OWS_ENV` (demo|staging, default
    demo), `WEBHOOK_SECRET_KEY`, `PUBLIC_BASE_URL`, `CORS_ORIGINS`, and one
    `OWS_TENANT_<SLUG>_API_KEY` per organisation.
 2. `npm install && npm run dev` — backend on `:6002`.

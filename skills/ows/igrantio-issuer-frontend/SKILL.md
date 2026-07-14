@@ -38,7 +38,7 @@ Depends on `igrantio-frontend-client` (vendored at `src/lib/ows/`) and an
    - `credential_accepted` / `token_issued` → **done**, close SSE.
 
 ## Steps
-1. Vendor `igrantio-frontend-client/reference/lib/ows` into `src/lib/ows/`.
+1. Vendor `igrantio-frontend-client/references/lib/ows` into `src/lib/ows/`.
 2. Copy [`./references/features/issuer`](./references/features/issuer) into `src/features/issuer/`.
 3. `npm i qrcode @types/qrcode` (for `QrCode`).
 4. Wire it up:

@@ -42,7 +42,7 @@ a QR (or use the same-device wallet), and show the disclosed claims and the
    when `verified === true` (plus your trust rules).
 
 ## Steps
-1. Vendor `igrantio-frontend-client/reference/lib/ows` into `src/lib/ows/`.
+1. Vendor `igrantio-frontend-client/references/lib/ows` into `src/lib/ows/`.
 2. Copy [`./references/features/verifier`](./references/features/verifier) into `src/features/verifier/`.
 3. `npm i qrcode @types/qrcode`.
 4. Wire it up:

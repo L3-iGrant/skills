@@ -89,7 +89,7 @@ const { open, close } = useSSE();
 - `apiKey` empty by default → the browser never holds a secret.
 
 ## Validation / done criteria
-- `cd reference && npm install && npm run typecheck` passes.
+- `cd references && npm install && npm run typecheck` passes.
 - No import of `@igrant/*` anywhere.
 - SSE delivers the event and auto-deletes it; a refresh does not replay it.
 

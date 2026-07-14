@@ -28,7 +28,7 @@ Compose it into an issuer or verifier backend (see `igrantio-issuer-backend` /
 The browser targets `${proxyPrefix}/{tenant}` as its base URL with **no** key.
 
 ## Reference
-[`./reference`](./reference):
+[`./references`](./references):
 - `proxy.ts` — `proxyRouter(store, permittedPrefixes)` Express router.
 - `tenants.ts` — `TenantStore` interface + `EnvTenantStore` / `MapTenantStore`.
 - `config.ts` — OWS base URL (OWS_ENV demo|staging, default demo) + timeout.

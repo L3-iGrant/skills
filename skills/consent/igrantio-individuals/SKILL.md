@@ -42,14 +42,14 @@ Individual fields: `name`, `email`, `phone` (required), `externalId`,
 `externalIdType`, `identityProviderId`, `iamId`, `mapperId`, `deviceType`, …
 
 ## Reference
-[`./reference`](./reference):
+[`./references`](./references):
 - `src/consentClient.ts` — dependency-free Consent BB client (`individuals.*` + `consentRecords.*`).
 - `src/mappingStore.ts` — `IndividualMappingStore` (userId ↔ individualId); in-memory + DB-swappable.
 - `src/onboarding.ts` — **`ensureIndividual(client, store, userId, profile)`**: idempotent (local mapping → lookup by externalId → create).
 - `src/server.ts` — example onboarding endpoints (`POST /individuals/onboard`, `GET /individuals/me`).
 
 ## Steps
-1. `cd reference && cp .env.example .env`; set `OWS_ENV` (demo|staging), `OWS_API_KEY`.
+1. `cd references && cp .env.example .env`; set `OWS_ENV` (demo|staging), `OWS_API_KEY`.
 2. `npm install`.
 3. In your **authenticated** signup handler:
    ```ts

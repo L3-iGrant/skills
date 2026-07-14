@@ -27,7 +27,7 @@ Mounted at `/webhook`:
   refresh/reconnect doesn't replay a handled event.
 
 ## Reference
-[`./reference`](./reference):
+[`./references`](./references):
 - `sse.ts` — `sseRouter(store)` Express router.
 - `eventStore.ts` — the `EventStore` interface + `InMemoryEventStore` (share the
   same instance with the webhook receiver).
