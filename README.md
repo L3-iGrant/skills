@@ -23,21 +23,21 @@ repo to install.
 
 <!-- BEGIN SKILLS -->
 - **Getting started with iGrant.io**
-  -   [**iGrant.io Organisation Wallet Suite overview**](./igrantio-ows-overview)
+  -   [**iGrant.io Organisation Wallet Suite overview**](./skills/ows/igrantio-ows-overview)
 - **Credential issuance (OpenID4VCI)**
-  -   [**Issuer backend**](./igrantio-issuer-backend)
-  -   [**Issuer frontend**](./igrantio-issuer-frontend)
+  -   [**Issuer backend**](./skills/ows/igrantio-issuer-backend)
+  -   [**Issuer frontend**](./skills/ows/igrantio-issuer-frontend)
 - **Credential verification (OpenID4VP + DCQL)**
-  -   [**Verifier backend**](./igrantio-verifier-backend)
-  -   [**Verifier frontend**](./igrantio-verifier-frontend)
+  -   [**Verifier backend**](./skills/ows/igrantio-verifier-backend)
+  -   [**Verifier frontend**](./skills/ows/igrantio-verifier-frontend)
 - **Consent management**
-  -   [**Consent records**](./igrantio-consent-records)
-  -   [**Individuals onboarding**](./igrantio-individuals)
+  -   [**Consent records**](./skills/consent/igrantio-consent-records)
+  -   [**Individuals onboarding**](./skills/consent/igrantio-individuals)
 - **Composable building blocks**
-  -   [**Backend proxy (API-key hiding, multi-tenant)**](./igrantio-backend-proxy)
-  -   [**Backend Server-Sent Events**](./igrantio-backend-sse)
-  -   [**Backend webhooks**](./igrantio-backend-webhooks)
-  -   [**Frontend client**](./igrantio-frontend-client)
+  -   [**Backend proxy (API-key hiding, multi-tenant)**](./skills/ows/igrantio-backend-proxy)
+  -   [**Backend Server-Sent Events**](./skills/ows/igrantio-backend-sse)
+  -   [**Backend webhooks**](./skills/ows/igrantio-backend-webhooks)
+  -   [**Frontend client**](./skills/ows/igrantio-frontend-client)
 <!-- END SKILLS -->
 
 ## Support
