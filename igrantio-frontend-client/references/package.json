@@ -1,0 +1,25 @@
+{
+  "name": "igrantio-frontend-client",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Generic, dependency-free OWS frontend client: fetch client + SSE + React hooks + QR. No @igrant/* SDK.",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "qrcode": ">=1.5"
+  },
+  "peerDependenciesMeta": {
+    "react": { "optional": true },
+    "qrcode": { "optional": true }
+  },
+  "devDependencies": {
+    "@types/qrcode": "^1.5.5",
+    "@types/react": "^18.3.12",
+    "qrcode": "^1.5.4",
+    "react": "^18.3.1",
+    "typescript": "^5.6.0"
+  }
+}
