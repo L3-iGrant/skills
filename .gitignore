@@ -7,3 +7,4 @@ build/
 .DS_Store
 _to_delete/
 .claude/
+ows/*/references/package-lock.json
