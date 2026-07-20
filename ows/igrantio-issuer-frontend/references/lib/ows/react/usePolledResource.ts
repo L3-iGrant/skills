@@ -15,7 +15,7 @@ export interface PollOptions {
 }
 
 /**
- * Small generic polling primitive — no external data-fetching dependency.
+ * Small generic polling primitive - no external data-fetching dependency.
  * `useCredentialHistory` and `useVerificationHistory` are built on it. Prefer
  * SSE for completion signals; use polling as a fallback or for periodic reads.
  */

@@ -46,7 +46,7 @@ jobs:
         with:
           args: >-
             --no-progress
-            --exclude 'localhost|127\.0\.0\.1|example\.com|cluster\.local|your-'
+            --exclude 'localhost|127\.0\.0\.1|example\.com|cluster\.local|your-|skills\.sh'
             './**/*.md'
           fail: true
 

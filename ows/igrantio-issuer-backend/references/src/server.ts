@@ -8,7 +8,7 @@ import { webhookReceiver } from "./webhooks";
 import { sseRouter } from "./sse";
 
 /**
- * ISSUER backend — least privilege: the proxy only forwards OWS *credential*
+ * ISSUER backend - least privilege: the proxy only forwards OWS *credential*
  * endpoints. (Register ISSUER_TOPICS with scripts/register-webhook.ts.)
  */
 const ISSUER_PERMITTED_PREFIXES = [

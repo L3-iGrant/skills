@@ -8,7 +8,7 @@ import { ensureIndividual } from "./onboarding";
 /**
  * Example server showing where individual-onboarding fits. In a real app you call
  * `ensureIndividual(...)` inside your own authenticated signup handler and persist
- * the mapping in your users table — you don't need a separate service.
+ * the mapping in your users table - you don't need a separate service.
  */
 const app = express();
 app.use(express.json());

@@ -32,9 +32,11 @@ then copy it byte-for-byte to the other locations. CI runs
 
 ## Versioning
 
-Each skill carries a `metadata.version` field in its `SKILL.md` frontmatter.
-Bump it whenever the skill's contract changes (endpoints, payloads, file
-layout, or the steps an agent is told to follow).
+Each skill carries a `metadata.version` field in its `SKILL.md` frontmatter,
+following the `yyyy.mm.NN` scheme, where `yyyy.mm` is the year and month of
+the release and `NN` is the release number within that month (for example
+`2026.07.01`). Bump it whenever the skill's contract changes (endpoints,
+payloads, file layout, or the steps an agent is told to follow).
 
 ## Commit style
 

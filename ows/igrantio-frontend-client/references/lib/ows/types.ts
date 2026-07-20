@@ -1,5 +1,5 @@
 /**
- * OWS OpenID4VC request/response types (self-contained — no external SDK).
+ * OWS OpenID4VC request/response types (self-contained - no external SDK).
  * Only the fields the browser actually reads are modelled precisely; the rest
  * are left open via index signatures. See igrantio-ows-overview api-reference.
  */

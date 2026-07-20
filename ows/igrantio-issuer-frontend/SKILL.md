@@ -4,10 +4,10 @@ description: Build the browser UI for an OpenID4VCI credential ISSUER against th
 license: Apache-2.0
 metadata:
   provider: iGrant.io
-  version: 1.0.0
-  api: https://docs.igrant.io/docs/openid4vc-api
+  version: 2026.07.01
+  api: https://docs.igrant.io/docs/category/openid4vc-api/issuer
   protocols: OpenID4VCI-1.0, SD-JWT-VC, W3C-VC-2.0, mso_mdoc
-  auth: none in the browser — the issuer backend injects the OWS API key
+  auth: none in the browser - the issuer backend injects the OWS API key
   requires-skills: igrantio-ows-overview, igrantio-frontend-client, igrantio-issuer-backend
 ---
 
@@ -23,11 +23,11 @@ Depends on `igrantio-frontend-client` (vendored at `src/lib/ows/`) and an
 ## What it provides
 - **`useIssuance({ proxyBaseUrl, webhookBaseUrl })`** →
   `{ status, offerUri, credentialExchangeId, error, issueInTime, issueDeferred, reset }`.
-  - `issueInTime(payload)` — claims known now.
-  - `issueDeferred(startRequest, claims)` — create the offer now; the hook pushes
+  - `issueInTime(payload)` - claims known now.
+  - `issueDeferred(startRequest, claims)` - create the offer now; the hook pushes
     the claims automatically on the `offer_received` webhook.
   - `status`: `idle → offer_ready → scanned → issued` (or `error`).
-- **`IssuerFlow`** — a minimal end-to-end demo component.
+- **`IssuerFlow`** - a minimal end-to-end demo component.
 
 ## Flow (what happens)
 1. `POST …/credential/issue` → read `credentialHistory.CredentialExchangeId`
@@ -55,7 +55,7 @@ Depends on `igrantio-frontend-client` (vendored at `src/lib/ows/`) and an
 
 ## Clean-code notes
 - No `@igrant/*` SDK; OWS specifics live in the client, flow logic in the hook,
-  presentation in the component — swap the UI without touching the flow.
+  presentation in the component - swap the UI without touching the flow.
 - The QR URI and exchange id are the only two response fields the UI needs.
 
 ## Validation / done criteria

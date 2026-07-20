@@ -4,10 +4,10 @@ description: Build the browser UI for an OpenID4VP + DCQL credential VERIFIER / 
 license: Apache-2.0
 metadata:
   provider: iGrant.io
-  version: 1.0.0
-  api: https://docs.igrant.io/docs/openid4vc-api
+  version: 2026.07.01
+  api: https://docs.igrant.io/docs/category/openid4vc-api/verifier
   protocols: OpenID4VP-1.0, DCQL, SD-JWT-VC, Digital-Credentials-API
-  auth: none in the browser — the verifier backend injects the OWS API key
+  auth: none in the browser - the verifier backend injects the OWS API key
   requires-skills: igrantio-ows-overview, igrantio-frontend-client, igrantio-verifier-backend
 ---
 
@@ -24,13 +24,13 @@ a QR (or use the same-device wallet), and show the disclosed claims and the
 ## What it provides
 - **`useVerification({ proxyBaseUrl, webhookBaseUrl })`** →
   `{ status, qrUri, presentationExchangeId, result, error, requestPresentation, reset }`.
-  - `requestPresentation(payload)` — send a DCQL request; returns the full
+  - `requestPresentation(payload)` - send a DCQL request; returns the full
     `verificationHistory` (so you can also drive same-device DC API).
   - `result`: `{ verified, claims, presentations }` once the wallet responds.
   - `status`: `idle → waiting → verified | rejected` (or `error`).
-- **`dcApi.ts`** — same-device Digital Credentials API helpers (`supportsDcApi`,
+- **`dcApi.ts`** - same-device Digital Credentials API helpers (`supportsDcApi`,
   `invokeWallet`, `buildReceivePayload`).
-- **`VerifierFlow`** — a minimal end-to-end demo component.
+- **`VerifierFlow`** - a minimal end-to-end demo component.
 
 ## Flow (what happens)
 1. `POST …/verification/send` with `presentationDefinitionId` → read
@@ -63,7 +63,7 @@ still delivers the final verified result, so the render path is unchanged.
 ## Clean-code notes
 - No `@igrant/*` SDK; OWS specifics live in the client, flow logic in the hook,
   DC-API concerns isolated in `dcApi.ts`.
-- Read the decision from `verified` and claims from `presentation[0]` — the only
+- Read the decision from `verified` and claims from `presentation[0]` - the only
   fields the UI needs.
 
 ## Validation / done criteria

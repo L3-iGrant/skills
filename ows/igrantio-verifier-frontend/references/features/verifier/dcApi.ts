@@ -96,7 +96,7 @@ export function buildReceivePayload(
   protocol: DcApiProtocol,
 ): Record<string, unknown> {
   if (protocol === "openid4vp-v1-signed") {
-    return { response: credentialData }; // encrypted JWE — send as-is
+    return { response: credentialData }; // encrypted JWE - send as-is
   }
   try {
     const parsed = JSON.parse(credentialData);

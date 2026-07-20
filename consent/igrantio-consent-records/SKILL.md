@@ -4,25 +4,25 @@ description: 'Record and manage individual consents against a data agreement usi
 license: Apache-2.0
 metadata:
   provider: iGrant.io
-  version: 1.0.0
+  version: 2026.07.01
   api: https://docs.igrant.io/docs/category/consent-management-individual-api/consent-record
-  auth: Organisation API key (Authorization "ApiKey <key>") + X-ConsentBB-IndividualId — server-side only
+  auth: Organisation API key (Authorization "ApiKey <key>") + X-ConsentBB-IndividualId - server-side only
   requires-skills: igrantio-individuals
 ---
 
 # iGrant.io consent records (Consent BB individual API)
 
 ## When to use
-When your app must **record and manage a user's consent** for a data agreement —
+When your app must **record and manage a user's consent** for a data agreement -
 allow, read current state, withdraw, show history, or erase (right to be
 forgotten). Assumes you already have the `individualId` (from
 `igrantio-individuals`) and the `dataAgreementId` you are collecting consent for.
 
 ## Prerequisites
-- `individualId` — the Consent BB individual for the user (see `igrantio-individuals`;
+- `individualId` - the Consent BB individual for the user (see `igrantio-individuals`;
   resolve it **server-side** from your session/userId mapping).
-- `dataAgreementId` — the data agreement to record consent against.
-- Organisation API key — server-side only.
+- `dataAgreementId` - the data agreement to record consent against.
+- Organisation API key - server-side only.
 
 ## API (Consent BB individual, base `/v2`)
 Auth on every call: `Authorization: ApiKey <key>` **and**
@@ -44,12 +44,12 @@ flows; the reference covers the core opt-in lifecycle.)
 
 ## Reference
 [`./references`](./references):
-- `src/consentClient.ts` — dependency-free Consent BB client (`consentRecords.*`).
-- `src/consent.ts` — `readConsent`, `setConsent`, `giveConsent`, `withdrawConsent`
+- `src/consentClient.ts` - dependency-free Consent BB client (`consentRecords.*`).
+- `src/consent.ts` - `readConsent`, `setConsent`, `giveConsent`, `withdrawConsent`
   (create-or-update, so callers don't juggle first-time vs update).
-- `src/consentRouter.ts` — Express router exposing clean endpoints; resolves
+- `src/consentRouter.ts` - Express router exposing clean endpoints; resolves
   `individualId` **server-side** via an `IndividualIdResolver` (never trusts the browser).
-- `src/server.ts` — example wiring.
+- `src/server.ts` - example wiring.
 
 ## Steps
 1. `cd references && cp .env.example .env`; set `OWS_ENV`, `OWS_API_KEY`.
@@ -60,7 +60,7 @@ flows; the reference covers the core opt-in lifecycle.)
    app.use("/", consentRouter(client, (req) => mappingStore.getIndividualId(req.session.userId)));
    ```
 4. Frontend calls `PUT /consents/:dataAgreementId { optIn }` to allow/withdraw,
-   `GET /consents/:dataAgreementId` to read — no key or individualId in the browser.
+   `GET /consents/:dataAgreementId` to read - no key or individualId in the browser.
 
 ## Clean-code notes
 - `individualId` and the API key are injected server-side; the browser only sends

@@ -22,7 +22,7 @@ export interface RegisterResult {
 export async function registerWebhook(o: RegisterOptions): Promise<RegisterResult> {
   const base = o.owsBaseUrl.replace(/\/$/, "");
 
-  // 1. List — skip if a webhook already targets this payloadUrl (idempotency).
+  // 1. List - skip if a webhook already targets this payloadUrl (idempotency).
   const listRes = await fetch(`${base}/v2/config/webhooks?limit=100&offset=0`, {
     headers: { Authorization: `ApiKey ${o.apiKey}`, accept: "application/json" },
   });

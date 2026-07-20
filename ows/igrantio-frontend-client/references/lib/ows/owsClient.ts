@@ -14,7 +14,7 @@ import type {
  * A dependency-free OWS client that talks to your tenant backend proxy.
  *
  * `baseUrl` is the proxy base, e.g. `https://host/ows/acme`. Leave `apiKey`
- * empty in the browser — the backend injects the real OWS key. Set `apiKey`
+ * empty in the browser - the backend injects the real OWS key. Set `apiKey`
  * only for local direct-to-OWS testing.
  */
 export interface OwsClientConfig {
@@ -43,7 +43,7 @@ const PATHS = {
 
 export interface OwsClient {
   issuance: {
-    /** InTime: claims known now — wallet receives the finished credential. */
+    /** InTime: claims known now - wallet receives the finished credential. */
     issueInTime(payload: IssueInTimeRequest): Promise<IssueCredentialResponse>;
     /** Deferred: create the offer now; supply claims later via completeDeferred(). */
     startDeferred(payload: StartDeferredRequest): Promise<IssueCredentialResponse>;

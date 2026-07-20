@@ -51,7 +51,7 @@ export function useIssuance({ proxyBaseUrl, webhookBaseUrl }: IssuanceConfig) {
       const credential = (event.data as IssuanceSSEData).credential;
       if (!credential) return;
 
-      // Deferred: the wallet has the offer — supply the claims now.
+      // Deferred: the wallet has the offer - supply the claims now.
       if (
         credential.status === "offer_received" &&
         deferredClaimsRef.current &&

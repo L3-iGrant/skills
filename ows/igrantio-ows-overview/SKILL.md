@@ -4,13 +4,13 @@ description: Architecture, glossary, and the full iGrant.io Organisation Wallet 
 license: Apache-2.0
 metadata:
   provider: iGrant.io
-  version: 1.0.0
-  api: https://docs.igrant.io/docs/openid4vc-api
+  version: 2026.07.01
+  api: https://docs.igrant.io/docs/developer-apis
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0, DCQL, SD-JWT-VC, W3C-VC-2.0, mso_mdoc
-  auth: OWS API key (Authorization "ApiKey <key>") — held only by the tenant backend, never the browser
+  auth: OWS API key (Authorization "ApiKey <key>") - held only by the tenant backend, never the browser
 ---
 
-# iGrant.io OWS integration — overview
+# iGrant.io OWS integration - overview
 
 ## When to use
 Read this skill before or alongside any of the `igrantio-*` backend/frontend
@@ -31,7 +31,7 @@ data-flow, path allow-list, HMAC scheme, and the exchange-id correlation table.
 
 ## The two flows
 
-### Issuance (OpenID4VCI) — you are the issuer
+### Issuance (OpenID4VCI) - you are the issuer
 1. `POST …/credential/issue` with `credentialDefinitionId` + claims → response
    carries `credentialHistory.CredentialExchangeId` (correlation key) and
    `credentialHistory.credentialOffer` (the `openid-credential-offer://` URI → render as QR / deep link).
@@ -42,7 +42,7 @@ data-flow, path allow-list, HMAC scheme, and the exchange-id correlation table.
    `openid.credential.offer_received` `PUT …/credential/history/{CredentialExchangeId}`
    with the collected claims.
 
-### Verification (OpenID4VP + DCQL) — you are the verifier / relying party
+### Verification (OpenID4VP + DCQL) - you are the verifier / relying party
 1. `POST …/verification/send` with `presentationDefinitionId` (a stored DCQL query)
    → response carries `verificationHistory.presentationExchangeId` (correlation key)
    and `verificationHistory.vpTokenQrCode` (the `openid4vp://` URI → render as QR / DC API request).
@@ -61,18 +61,17 @@ Exact methods, paths, payloads, and full response schemas:
 | --- | --- |
 | Demo | `https://demo-api.igrant.io` |
 | Staging | `https://staging-api.igrant.io` |
-| In-cluster | `http://igrant-api-demo-svc.demo.svc.cluster.local` |
 
 The browser targets the **tenant backend** base URL (e.g. `https://your-host/ows/<tenant>`),
 never these directly.
 
 ## Glossary
-- **OWS** — Organisation Wallet Suite (the iGrant.io API surface).
-- **credentialDefinitionId** — a stored issuer credential configuration.
-- **presentationDefinitionId** — a stored verifier DCQL query / presentation definition.
-- **CredentialExchangeId / presentationExchangeId** — per-transaction id; the **SSE correlation key** and the webhook's `external_id`.
-- **credentialOffer / vpTokenQrCode** — the wallet-facing URI you render as a QR code or open as a same-device deep link.
-- **exchange id** — umbrella term for the two above.
+- **OWS** - Organisation Wallet Suite (the iGrant.io API surface).
+- **credentialDefinitionId** - a stored issuer credential configuration.
+- **presentationDefinitionId** - a stored verifier DCQL query / presentation definition.
+- **CredentialExchangeId / presentationExchangeId** - per-transaction id; the **SSE correlation key** and the webhook's `external_id`.
+- **credentialOffer / vpTokenQrCode** - the wallet-facing URI you render as a QR code or open as a same-device deep link.
+- **exchange id** - umbrella term for the two above.
 
 ## Validation / done criteria
 - You can name the exact OWS path, method, and payload for issue, deferred-issue,

@@ -4,8 +4,8 @@ description: Build the backend for an OpenID4VCI credential ISSUER against the i
 license: Apache-2.0
 metadata:
   provider: iGrant.io
-  version: 1.0.0
-  api: https://docs.igrant.io/docs/openid4vc-api
+  version: 2026.07.01
+  api: https://docs.igrant.io/docs/category/openid4vc-api/issuer
   protocols: OpenID4VCI-1.0, SD-JWT-VC, W3C-VC-2.0, mso_mdoc
   auth: OWS API key (Authorization "ApiKey <key>") injected by the proxy; browser sends no key
   requires-skills: igrantio-ows-overview, igrantio-backend-proxy, igrantio-backend-webhooks, igrantio-backend-sse
@@ -35,7 +35,7 @@ Runnable Express + TypeScript app in [`./references`](./references):
 ```
 references/
   src/config.ts          env config
-  src/tenants.ts         TenantStore — per-tenant API-key resolution (env or pluggable)
+  src/tenants.ts         TenantStore - per-tenant API-key resolution (env or pluggable)
   src/eventStore.ts      in-memory event store (swap for Redis/Postgres)
   src/topics.ts          ISSUER_TOPICS + topic→exchangeId extraction
   src/proxy.ts           API-key-injecting reverse proxy (allow-list param)
@@ -51,9 +51,9 @@ references/
 1. `cd references && cp .env.example .env`, then set `OWS_BASE_URL`,
    `WEBHOOK_SECRET_KEY`, `PUBLIC_BASE_URL`, `CORS_ORIGINS`, and one
    `OWS_TENANT_<SLUG>_API_KEY` per organisation.
-2. `npm install && npm run dev` — backend on `:6001`.
+2. `npm install && npm run dev` - backend on `:6001`.
 3. Register the webhook once per tenant: `npm run register-webhook -- <tenant>`
-   (idempotent — safe to re-run; skips if the payloadUrl already exists).
+   (idempotent - safe to re-run; skips if the payloadUrl already exists).
 4. Point the issuer frontend base URL at `${PUBLIC_BASE_URL}${PROXY_PREFIX}/<tenant>`
    and the webhook base at `${PUBLIC_BASE_URL}/webhook`.
 

@@ -14,7 +14,7 @@ curl -s -XPOST localhost:6003/individuals/onboard \
 # -> { "individualId": "6541...cd" }
 ```
 
-Core library (use inside your own signup handler — a separate server is optional):
+Core library (use inside your own signup handler - a separate server is optional):
 `src/consentClient.ts`, `src/mappingStore.ts`, `src/onboarding.ts` (`ensureIndividual`).
 
 See the parent `SKILL.md`. Pairs with `igrantio-consent-records`.

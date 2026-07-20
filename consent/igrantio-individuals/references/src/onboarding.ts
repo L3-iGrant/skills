@@ -13,8 +13,8 @@ export interface OnboardProfile {
 /**
  * Idempotently ensure a Consent BB individual exists for your user and return
  * its individualId. Resolution order:
- *   1. local mapping (your DB)         — fast path, no API call
- *   2. lookup by externalId (= userId) — reuse if created before but unmapped
+ *   1. local mapping (your DB)         - fast path, no API call
+ *   2. lookup by externalId (= userId) - reuse if created before but unmapped
  *   3. create a new individual
  * The mapping is persisted so later calls are O(1). Call this from your
  * authenticated signup/onboarding handler; `userId` MUST come from your session,
@@ -42,7 +42,7 @@ export async function ensureIndividual(
       return found;
     }
   } catch {
-    // list may error/empty for a new externalId — fall through to create
+    // list may error/empty for a new externalId - fall through to create
   }
 
   const payload: Individual = {

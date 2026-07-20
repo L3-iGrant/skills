@@ -16,7 +16,7 @@ app.use(
 
 const client = createConsentClient({ owsBaseUrl: config.owsBaseUrl, apiKey: config.apiKey });
 
-// DEMO ONLY resolver — replace with: session -> userId -> mappingStore.getIndividualId(userId)
+// DEMO ONLY resolver - replace with: session -> userId -> mappingStore.getIndividualId(userId)
 const resolveIndividualId: IndividualIdResolver = (req) =>
   req.header("X-Demo-Individual-Id") || undefined;
 

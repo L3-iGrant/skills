@@ -4,7 +4,7 @@ description: 'Composable building block: register, receive, and verify iGrant.io
 license: Apache-2.0
 metadata:
   provider: iGrant.io
-  version: 1.0.0
+  version: 2026.07.01
   api: https://docs.igrant.io/docs/openid4vc-api/config-create-webhook
   auth: OWS API key to register; shared HMAC secretKey to verify deliveries
   requires-skills: igrantio-ows-overview, igrantio-backend-sse
@@ -18,20 +18,20 @@ verification. Pairs with `igrantio-backend-sse` (which streams the stored events
 to the browser). Composed by `igrantio-issuer-backend` / `igrantio-verifier-backend`.
 
 ## What it does
-- **Register (idempotent)** — `POST /v2/config/webhook` with `payloadUrl`,
+- **Register (idempotent)** - `POST /v2/config/webhook` with `payloadUrl`,
   `contentType`, `subscribedEvents.digitalWalletWebhook`, `secretKey`. Lists
   existing webhooks first and **skips if one already targets the payloadUrl**.
-- **Receive** — `POST /webhook`: verify `X-iGrant-Signature: t=<ts>,sig=<hex>`
+- **Receive** - `POST /webhook`: verify `X-iGrant-Signature: t=<ts>,sig=<hex>`
   where `sig = HMAC_SHA256(secretKey, "<t>.<raw body>")` (constant-time compare),
   reject unknown topics, extract the exchange id, store the event.
 
 ## Reference
 [`./references`](./references):
-- `topics.ts` — `ISSUER_TOPICS`, `VERIFIER_TOPICS`, `extractExchangeId(type, data)`.
-- `webhooks.ts` — `verifySignature(...)` + `webhookReceiver(store)` router.
-- `registerWebhook.ts` — `registerWebhook({ owsBaseUrl, apiKey, payloadUrl, secretKey, topics })`, idempotent.
-- `eventStore.ts` — the `EventStore` the receiver writes to (shared with SSE).
-- `config.ts` — `webhookSecretKey`, OWS base URL.
+- `topics.ts` - `ISSUER_TOPICS`, `VERIFIER_TOPICS`, `extractExchangeId(type, data)`.
+- `webhooks.ts` - `verifySignature(...)` + `webhookReceiver(store)` router.
+- `registerWebhook.ts` - `registerWebhook({ owsBaseUrl, apiKey, payloadUrl, secretKey, topics })`, idempotent.
+- `eventStore.ts` - the `EventStore` the receiver writes to (shared with SSE).
+- `config.ts` - `webhookSecretKey`, OWS base URL.
 
 ## Topics → exchange id
 | Topic | Exchange id path in `data` |

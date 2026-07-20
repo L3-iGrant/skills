@@ -52,7 +52,7 @@ export function IssuerFlow({ credentialDefinitionId, claims, ...config }: Issuer
   // offer_ready | scanned
   return (
     <div>
-      <p>{status === "scanned" ? "Wallet connected — finishing…" : "Scan to receive your credential"}</p>
+      <p>{status === "scanned" ? "Wallet connected - finishing…" : "Scan to receive your credential"}</p>
       {offerUri && <QrCode value={offerUri} />}
       {offerUri && (
         <button type="button" onClick={() => openInWallet(offerUri)}>

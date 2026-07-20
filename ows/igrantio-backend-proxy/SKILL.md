@@ -4,8 +4,8 @@ description: 'Composable building block: a tenant-aware reverse proxy that hides
 license: Apache-2.0
 metadata:
   provider: iGrant.io
-  version: 1.0.0
-  api: https://docs.igrant.io/docs/openid4vc-api
+  version: 2026.07.01
+  api: https://docs.igrant.io/docs/developer-apis
   auth: OWS API key held server-side; injected per request. Browser sends no key.
   requires-skills: igrantio-ows-overview
 ---
@@ -13,7 +13,7 @@ metadata:
 # iGrant.io backend proxy (API-key hiding, per-tenant)
 
 ## When to use
-Whenever the browser must call OWS but must not hold the API key — which is
+Whenever the browser must call OWS but must not hold the API key - which is
 always. This is the "manages API key for a specific tenant organisation" piece.
 Compose it into an issuer or verifier backend (see `igrantio-issuer-backend` /
 `igrantio-verifier-backend`) or mount it in an existing Express app.
@@ -29,9 +29,9 @@ The browser targets `${proxyPrefix}/{tenant}` as its base URL with **no** key.
 
 ## Reference
 [`./references`](./references):
-- `proxy.ts` — `proxyRouter(store, permittedPrefixes)` Express router.
-- `tenants.ts` — `TenantStore` interface + `EnvTenantStore` / `MapTenantStore`.
-- `config.ts` — OWS base URL (OWS_ENV demo|staging, default demo) + timeout.
+- `proxy.ts` - `proxyRouter(store, permittedPrefixes)` Express router.
+- `tenants.ts` - `TenantStore` interface + `EnvTenantStore` / `MapTenantStore`.
+- `config.ts` - OWS base URL (OWS_ENV demo|staging, default demo) + timeout.
 
 ## Usage
 ```ts
@@ -50,7 +50,7 @@ app.use(config.proxyPrefix, proxyRouter(new EnvTenantStore(), ISSUER));
 ## Per-tenant key management
 - `EnvTenantStore` reads `OWS_TENANT_<SLUG>_API_KEY`.
 - Swap in a DB / secret-manager `TenantStore` (async `getApiKey`) for many
-  organisations; rotate by updating the store — no frontend change.
+  organisations; rotate by updating the store - no frontend change.
 
 ## Clean-code notes
 - The allow-list is a parameter, so issuer/verifier scope the proxy to just their

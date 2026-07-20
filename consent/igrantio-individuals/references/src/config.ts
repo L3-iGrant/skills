@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-/** OWS environments — integrator picks via OWS_ENV (default demo). */
+/** OWS environments - integrator picks via OWS_ENV (default demo). */
 export const OWS_ENVIRONMENTS: Record<string, string> = {
   demo: "https://demo-api.igrant.io",
   staging: "https://staging-api.igrant.io",

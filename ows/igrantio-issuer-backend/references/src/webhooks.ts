@@ -32,7 +32,7 @@ export function verifySignature(
 }
 
 /**
- * POST /webhook — receive an OWS webhook, verify HMAC, extract the exchange id,
+ * POST /webhook - receive an OWS webhook, verify HMAC, extract the exchange id,
  * and store the event for the SSE stream to pick up.
  */
 export function webhookReceiver(store: EventStore): Router {

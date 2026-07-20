@@ -4,9 +4,9 @@ description: 'Composable building block: stream stored iGrant.io OWS webhook eve
 license: Apache-2.0
 metadata:
   provider: iGrant.io
-  version: 1.0.0
-  api: https://docs.igrant.io/docs/openid4vc-api
-  auth: none — reads only the local event store; correlation is by exchange id
+  version: 2026.07.01
+  api: https://docs.igrant.io/docs/developer-apis
+  auth: none - reads only the local event store; correlation is by exchange id
   requires-skills: igrantio-ows-overview, igrantio-backend-webhooks
 ---
 
@@ -20,16 +20,16 @@ backends.
 
 ## What it does
 Mounted at `/webhook`:
-- `GET /webhook/sse/:exchangeId` — opens a `text/event-stream`, checks the store
+- `GET /webhook/sse/:exchangeId` - opens a `text/event-stream`, checks the store
   each second, emits `data: <event JSON>\n\n` when an event for that id appears,
   and sends comment heartbeats to keep the connection alive.
-- `DELETE /webhook/:exchangeId` — lets the browser consume-and-delete so a
+- `DELETE /webhook/:exchangeId` - lets the browser consume-and-delete so a
   refresh/reconnect doesn't replay a handled event.
 
 ## Reference
 [`./references`](./references):
-- `sse.ts` — `sseRouter(store)` Express router.
-- `eventStore.ts` — the `EventStore` interface + `InMemoryEventStore` (share the
+- `sse.ts` - `sseRouter(store)` Express router.
+- `eventStore.ts` - the `EventStore` interface + `InMemoryEventStore` (share the
   same instance with the webhook receiver).
 
 ## Usage

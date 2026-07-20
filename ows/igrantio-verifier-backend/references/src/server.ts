@@ -8,7 +8,7 @@ import { webhookReceiver } from "./webhooks";
 import { sseRouter } from "./sse";
 
 /**
- * VERIFIER backend — least privilege: the proxy only forwards OWS *verification*
+ * VERIFIER backend - least privilege: the proxy only forwards OWS *verification*
  * endpoints. (Register VERIFIER_TOPICS with scripts/register-webhook.ts.)
  */
 const VERIFIER_PERMITTED_PREFIXES = [

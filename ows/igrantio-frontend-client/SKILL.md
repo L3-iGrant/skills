@@ -4,10 +4,10 @@ description: 'Generic, dependency-free browser client for the iGrant.io Organisa
 license: Apache-2.0
 metadata:
   provider: iGrant.io
-  version: 1.0.0
-  api: https://docs.igrant.io/docs/openid4vc-api
+  version: 2026.07.01
+  api: https://docs.igrant.io/docs/developer-apis
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0, DCQL, SD-JWT-VC
-  auth: none in the browser — the tenant backend injects the OWS API key
+  auth: none in the browser - the tenant backend injects the OWS API key
   requires-skills: igrantio-ows-overview
 ---
 
@@ -21,19 +21,19 @@ code you own. Read `igrantio-ows-overview` for the endpoint/response contract.
 
 ## What it provides
 Framework-agnostic core (only `fetch` + `EventSource`):
-- **`createOwsClient({ baseUrl, apiKey? })`** — typed methods:
+- **`createOwsClient({ baseUrl, apiKey? })`** - typed methods:
   - `issuance.issueInTime`, `issuance.startDeferred`, `issuance.completeDeferred`,
     `issuance.readHistory`, `issuance.deleteHistory`
   - `verification.sendRequest`, `verification.readHistory`, `verification.deleteHistory`
   - `baseUrl` = your backend proxy (`https://host/ows/<tenant>`); leave `apiKey` empty (the backend injects it).
-- **`openSseSession({ webhookBaseUrl, exchangeId, onMessage })`** — EventSource
+- **`openSseSession({ webhookBaseUrl, exchangeId, onMessage })`** - EventSource
   session with consume-and-delete and reconnect; returns `{ close }`.
-- **`types.ts`** — request/response + SSE event types.
+- **`types.ts`** - request/response + SSE event types.
 
 React layer (peer deps: `react`, and `qrcode` for `QrCode`):
 - **`useSSE()`** → `{ open, close }`
-- **`useOwsClient(baseUrl, apiKey?)`** — memoised client
-- **`useCredentialHistory` / `useVerificationHistory`** — optional polling reads
+- **`useOwsClient(baseUrl, apiKey?)`** - memoised client
+- **`useCredentialHistory` / `useVerificationHistory`** - optional polling reads
 - **`QrCode`** component + **`openInWallet(uri)`** deep-link helper
 
 ## Reference layout (vendor into your app)

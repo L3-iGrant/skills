@@ -1,4 +1,4 @@
-# OWS API reference — issuance, verification, config, webhooks
+# OWS API reference - issuance, verification, config, webhooks
 
 Authoritative endpoint/payload/response reference for the OWS OpenID4VC API, as
 used by the iGrant.io landing-page use cases and the `@igrant/usecase-sdk` /
@@ -21,12 +21,12 @@ Authorization: ApiKey <issuer-key>
 Content-Type: application/json
 ```
 
-Request body (`IssueCredentialRequest` — one of four shapes by `issuanceMode`):
+Request body (`IssueCredentialRequest` - one of four shapes by `issuanceMode`):
 
 ```jsonc
 {
   "issuanceMode": "InTime",              // "InTime" | "Deferred"
-  "credentialDefinitionId": "<id>",      // required — stored issuer config
+  "credentialDefinitionId": "<id>",      // required - stored issuer config
   // one of the credential bodies (format depends on the credential definition):
   "credential": {
     "claims": { /* SD-JWT VC / mdoc claims, or namespaced e.g. "org.iso.18013.5.1": {…} */ }
@@ -44,23 +44,23 @@ Request body (`IssueCredentialRequest` — one of four shapes by `issuanceMode`)
 ```
 
 `issuanceMode`:
-- **`InTime`** — claims are known now; provide `credential.claims`. Wallet gets the finished credential.
-- **`Deferred`** — issue the *offer* now, provide the claims later via §1.2. Use when
+- **`InTime`** - claims are known now; provide `credential.claims`. Wallet gets the finished credential.
+- **`Deferred`** - issue the *offer* now, provide the claims later via §1.2. Use when
   claims are collected after the offer, or gated behind a presentation
   (`presentationDefinitionId` → "dynamic credential request").
 
-**Response** (`IssueCredentialResponse`) — process these fields:
+**Response** (`IssueCredentialResponse`) - process these fields:
 
 | Field | Use |
 | --- | --- |
-| `credentialHistory.CredentialExchangeId` | **SSE correlation key** — open SSE on this. |
+| `credentialHistory.CredentialExchangeId` | **SSE correlation key** - open SSE on this. |
 | `credentialHistory.credentialOffer` | `openid-credential-offer://…` URI → **render as QR / same-device deep link**. |
 | `credentialHistory.credentialStatus` | `"pending"` \| `"ready"`. |
 | `credentialHistory.status` | `offer_sent` → `offer_received` → `credential_issued` → `credential_acked`/`credential_accepted`, or `issuance_denied`. |
 | `credentialHistory.presentationExchangeId` | present for dynamic (presentation-gated) issuance. |
 | `c_nonce`, `c_nonce_expires_in`, `credential_id` | protocol fields, usually not needed by the UI. |
 
-### 1.2 Deferred issue — supply claims after the offer
+### 1.2 Deferred issue - supply claims after the offer
 ```
 PUT {base}/v2/config/digital-wallet/openid/sdjwt/credential/history/{CredentialExchangeId}
 ```
@@ -102,7 +102,7 @@ Request body (`SendVerificationRequest`):
 ```jsonc
 {
   "requestByReference": true,                 // request object served by reference (recommended)
-  "presentationDefinitionId": "<id>",         // required — stored DCQL query / presentation definition
+  "presentationDefinitionId": "<id>",         // required - stored DCQL query / presentation definition
   // optional:
   "transactionData": { "payment_data": { "payee": "…", "currency_amount": { "currency": "EUR", "value": "10.00" } } },
   "individualId": "<id>",
@@ -112,11 +112,11 @@ Request body (`SendVerificationRequest`):
 }
 ```
 
-**Response** (`VerificationResponse`) — process these fields:
+**Response** (`VerificationResponse`) - process these fields:
 
 | Field | Use |
 | --- | --- |
-| `verificationHistory.presentationExchangeId` | **SSE correlation key** — open SSE on this. |
+| `verificationHistory.presentationExchangeId` | **SSE correlation key** - open SSE on this. |
 | `verificationHistory.vpTokenQrCode` | `openid4vp://…` URI → **render as QR / same-device DC API request**. |
 | `verificationHistory.status` | `request_sent` → `request_received` → `presentation_acked`. |
 | `verificationHistory.dcApiRequest` / `dcApiProtocol` | present when same-device **Digital Credentials API** is used (see `igrantio-verifier-frontend`). |
@@ -129,9 +129,9 @@ GET {base}/v3/config/digital-wallet/openid/sdjwt/verification/history/{presentat
 
 | Field | Meaning |
 | --- | --- |
-| `verified` | **boolean — the accept/reject decision.** |
-| `vpTokenResponse` | `string[]` — non-empty once the wallet has responded. |
-| `presentation` | `object[]` — the **disclosed claims** (`presentation[0]` = first credential's claims). |
+| `verified` | **boolean - the accept/reject decision.** |
+| `vpTokenResponse` | `string[]` - non-empty once the wallet has responded. |
+| `presentation` | `object[]` - the **disclosed claims** (`presentation[0]` = first credential's claims). |
 | `presentationSubmission` | maps disclosed credentials to the DCQL query. |
 | `status` | `request_sent` \| `request_received` \| `presentation_acked`. |
 | `holder.name` | subject/holder. |
@@ -152,14 +152,14 @@ DELETE {base}/v3/config/digital-wallet/openid/sdjwt/verification/history/{presen
 These are typically created once per organisation via the OWS business console or a
 setup script; the frontend never calls them.
 
-- **Credential definition** (issuer config) — defines a credential type/format the
+- **Credential definition** (issuer config) - defines a credential type/format the
   issuer can issue; yields the `credentialDefinitionId` used in §1.1.
-- **Presentation definition** (verifier config / DCQL) —
+- **Presentation definition** (verifier config / DCQL) -
   `POST {base}/v2/config/digital-wallet/openid/sdjwt/presentation-definition`,
   list via `…/presentation-definitions`, delete via `…/presentation-definition/{id}`.
   Body carries a `dcqlQuery` (`credentials[]` with `format`, `meta.doctype_value`,
   `claims[].path`); yields the `presentationDefinitionId` used in §2.1.
-- **Webhook** — see §4 and the `igrantio-backend-webhooks` skill.
+- **Webhook** - see §4 and the `igrantio-backend-webhooks` skill.
 
 ---
 
@@ -194,7 +194,7 @@ Content-Type: application/json
 ```
 **Response** `201`: the created webhook plus `id`, `orgId`, `timestamp`.
 
-### 4.2 List webhooks (for idempotency — "don't create if exists")
+### 4.2 List webhooks (for idempotency - "don't create if exists")
 ```
 GET {base}/v2/config/webhooks?limit=10&offset=0
 Authorization: ApiKey <org-key>   (Bearer <dashboard-JWT> also works from the console)

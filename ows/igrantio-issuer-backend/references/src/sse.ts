@@ -3,8 +3,8 @@ import type { EventStore } from "./eventStore";
 
 /**
  * Server-Sent Events transport, mounted at /webhook:
- *   GET    /webhook/sse/:exchangeId  — hold open, emit the stored event when it appears
- *   DELETE /webhook/:exchangeId      — browser consume-and-delete after processing
+ *   GET    /webhook/sse/:exchangeId  - hold open, emit the stored event when it appears
+ *   DELETE /webhook/:exchangeId      - browser consume-and-delete after processing
  *
  * The frontend (igrantio-frontend-client) opens `${base}/sse/${id}` and deletes
  * `${base}/${id}` where base = the /webhook URL.
@@ -37,7 +37,7 @@ export function sseRouter(store: EventStore): Router {
           res.write(":keepalive\n\n"); // comment heartbeat every ~20s
         }
       } catch {
-        // transient store error — keep the connection open and retry next tick
+        // transient store error - keep the connection open and retry next tick
       }
     }, 1000);
 

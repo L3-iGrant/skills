@@ -16,7 +16,7 @@ export type IndividualIdResolver = (req: Request) => Promise<string | undefined>
  *
  *   GET    /consents                     list the user's consent records
  *   GET    /consents/:dataAgreementId    read consent for one data agreement
- *   PUT    /consents/:dataAgreementId    body { optIn, revisionId? } — allow/withdraw
+ *   PUT    /consents/:dataAgreementId    body { optIn, revisionId? } - allow/withdraw
  *   GET    /history                      consent-record change history
  *   DELETE /consents                     erase all records (right to be forgotten)
  */

@@ -4,8 +4,8 @@ description: Build the backend for an OpenID4VP + DCQL credential VERIFIER / rel
 license: Apache-2.0
 metadata:
   provider: iGrant.io
-  version: 1.0.0
-  api: https://docs.igrant.io/docs/openid4vc-api
+  version: 2026.07.01
+  api: https://docs.igrant.io/docs/category/openid4vc-api/verifier
   protocols: OpenID4VP-1.0, DCQL, SD-JWT-VC
   auth: OWS API key (Authorization "ApiKey <key>") injected by the proxy; browser sends no key
   requires-skills: igrantio-ows-overview, igrantio-backend-proxy, igrantio-backend-webhooks, igrantio-backend-sse
@@ -40,7 +40,7 @@ Default `PORT=6002` so it can run alongside an issuer backend.
 1. `cd references && cp .env.example .env`; set `OWS_ENV` (demo|staging, default
    demo), `WEBHOOK_SECRET_KEY`, `PUBLIC_BASE_URL`, `CORS_ORIGINS`, and one
    `OWS_TENANT_<SLUG>_API_KEY` per organisation.
-2. `npm install && npm run dev` — backend on `:6002`.
+2. `npm install && npm run dev` - backend on `:6002`.
 3. Register the webhook once per tenant: `npm run register-webhook -- <tenant>`
    (idempotent).
 4. Point the verifier frontend base URL at `${PUBLIC_BASE_URL}${PROXY_PREFIX}/<tenant>`

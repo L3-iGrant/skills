@@ -3,7 +3,7 @@
  *
  * Persist this in YOUR database (one column on your users table, or a join
  * table). The in-memory store is for local dev only. Implement the interface
- * over your DB for production — all methods may be async.
+ * over your DB for production - all methods may be async.
  */
 export interface IndividualMappingStore {
   getIndividualId(userId: string): Promise<string | undefined> | string | undefined;

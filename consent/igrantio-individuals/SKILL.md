@@ -4,9 +4,9 @@ description: Onboard application users into the iGrant.io Consent Building Block
 license: Apache-2.0
 metadata:
   provider: iGrant.io
-  version: 1.0.0
+  version: 2026.07.01
   api: https://docs.igrant.io/docs/category/consent-management-admin-api/individual
-  auth: Organisation API key (Authorization "ApiKey <key>") — server-side only, never the browser
+  auth: Organisation API key (Authorization "ApiKey <key>") - server-side only, never the browser
   requires-skills: igrantio-consent-records
 ---
 
@@ -43,10 +43,10 @@ Individual fields: `name`, `email`, `phone` (required), `externalId`,
 
 ## Reference
 [`./references`](./references):
-- `src/consentClient.ts` — dependency-free Consent BB client (`individuals.*` + `consentRecords.*`).
-- `src/mappingStore.ts` — `IndividualMappingStore` (userId ↔ individualId); in-memory + DB-swappable.
-- `src/onboarding.ts` — **`ensureIndividual(client, store, userId, profile)`**: idempotent (local mapping → lookup by externalId → create).
-- `src/server.ts` — example onboarding endpoints (`POST /individuals/onboard`, `GET /individuals/me`).
+- `src/consentClient.ts` - dependency-free Consent BB client (`individuals.*` + `consentRecords.*`).
+- `src/mappingStore.ts` - `IndividualMappingStore` (userId ↔ individualId); in-memory + DB-swappable.
+- `src/onboarding.ts` - **`ensureIndividual(client, store, userId, profile)`**: idempotent (local mapping → lookup by externalId → create).
+- `src/server.ts` - example onboarding endpoints (`POST /individuals/onboard`, `GET /individuals/me`).
 
 ## Steps
 1. `cd references && cp .env.example .env`; set `OWS_ENV` (demo|staging), `OWS_API_KEY`.
@@ -57,7 +57,7 @@ Individual fields: `name`, `email`, `phone` (required), `externalId`,
    const individualId = await ensureIndividual(client, store, session.userId, { name, email, phone });
    // store.set already persisted userId -> individualId; save it in your users table too
    ```
-   `userId` must come from your session — never from request input.
+   `userId` must come from your session - never from request input.
 
 ## Clean-code notes
 - The client is the only place Consent BB paths live; onboarding logic is one

@@ -17,11 +17,6 @@ Credential formats and standards covered: SD-JWT VC, W3C VC 2.0, mso_mdoc, and
 webhook/SSE patterns for wallet interactions under eIDAS 2.0
 (EU Regulation 2024/1183).
 
-> [!NOTE]
-> Each skill is versioned individually through the `metadata.version` field in
-> its `SKILL.md`, and versions are bumped whenever a skill's contract changes.
-> Re-run the install command to pick up updates.
-
 ## Quick start
 
 ```bash
@@ -66,26 +61,17 @@ building blocks, so your agent installs only what the task needs.
 | [`igrantio-consent-records`](./consent/igrantio-consent-records) | Record, read, withdraw, and erase consents | individuals |
 <!-- END SKILLS -->
 
-### How the skills compose
-
-```mermaid
-graph TD
-    OV[igrantio-ows-overview] --> PX[igrantio-backend-proxy]
-    OV --> WH[igrantio-backend-webhooks]
-    WH --> SSE[igrantio-backend-sse]
-    OV --> FC[igrantio-frontend-client]
-    PX & WH & SSE --> IB[igrantio-issuer-backend]
-    PX & WH & SSE --> VB[igrantio-verifier-backend]
-    FC --> IF[igrantio-issuer-frontend]
-    FC --> VF[igrantio-verifier-frontend]
-    IB -.talks to.- IF
-    VB -.talks to.- VF
-    IND[igrantio-individuals] --> CR[igrantio-consent-records]
-```
-
 Every skill ships a runnable TypeScript reference implementation in its
 `references/` folder, so the agent adapts working code rather than generating
 an integration from scratch.
+
+## Release versioning
+
+Each skill is versioned individually through the `metadata.version` field in
+its `SKILL.md`, following the `yyyy.mm.NN` scheme, where `yyyy.mm` is the year
+and month of the release and `NN` is the release number within that month. The
+current release is `2026.07.01`. Versions are bumped whenever a skill's
+contract changes; re-run the install command to pick up updates.
 
 ## Support
 

@@ -1,6 +1,6 @@
 /**
  * iGrant.io Consent BB client (admin Individual API + individual Consent-Record API).
- * Dependency-free (fetch). Runs server-side only — it carries the org API key.
+ * Dependency-free (fetch). Runs server-side only - it carries the org API key.
  *
  * All requests send `Authorization: ApiKey <key>`. Consent-record requests also
  * send `X-ConsentBB-IndividualId: <individualId>`. Paths are under `/v2`.
@@ -82,7 +82,7 @@ const P = {
 } as const;
 
 export interface ConsentClient {
-  /** Admin Individual API — organisation-scoped. */
+  /** Admin Individual API - organisation-scoped. */
   individuals: {
     create(individual: Individual): Promise<{ individual: Individual }>;
     read(individualId: string): Promise<{ individual: Individual }>;
@@ -91,7 +91,7 @@ export interface ConsentClient {
       params: ListParams & { externalIndividualId?: string },
     ): Promise<{ individuals: Individual[]; pagination: Pagination }>;
   };
-  /** Individual Consent-Record API — acts on behalf of one individual. */
+  /** Individual Consent-Record API - acts on behalf of one individual. */
   consentRecords: {
     /** Record consent for a data agreement (first time). */
     create(

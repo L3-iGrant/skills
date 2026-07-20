@@ -26,7 +26,7 @@ export const config = {
   /** OWS base URL, from OWS_ENV (demo|staging, default demo) or OWS_BASE_URL. */
   owsBaseUrl: resolveOwsBaseUrl(),
 
-  /** Shared HMAC secret — MUST equal the secretKey used at webhook registration. */
+  /** Shared HMAC secret - MUST equal the secretKey used at webhook registration. */
   webhookSecretKey: process.env.WEBHOOK_SECRET_KEY ?? "",
 
   /** Public origin of THIS backend, used to build the webhook payloadUrl at registration. */

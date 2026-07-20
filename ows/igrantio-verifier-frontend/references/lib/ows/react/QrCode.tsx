@@ -5,7 +5,7 @@ import QRCode from "qrcode"; // peer dependency: `npm i qrcode` (+ `@types/qrcod
  * Render a wallet URI (credentialOffer / vpTokenQrCode) as a scannable QR code
  * for cross-device flows. For same-device, use `openInWallet` instead.
  *
- * `qrcode` is a peer dependency so this stays swappable — replace with any QR
+ * `qrcode` is a peer dependency so this stays swappable - replace with any QR
  * generator without touching the rest of the client.
  */
 export interface QrCodeProps {
