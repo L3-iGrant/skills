@@ -1,0 +1,37 @@
+name: Skill inaccuracy
+description: Report a bug or inaccuracy in a SKILL.md or its reference implementation
+title: "[skill] "
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: skill
+    attributes:
+      label: Which skill?
+      options:
+        - igrantio-ows-overview
+        - igrantio-issuer-backend
+        - igrantio-issuer-frontend
+        - igrantio-verifier-backend
+        - igrantio-verifier-frontend
+        - igrantio-backend-proxy
+        - igrantio-backend-webhooks
+        - igrantio-backend-sse
+        - igrantio-frontend-client
+        - igrantio-individuals
+        - igrantio-consent-records
+        - Repository-wide
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What is inaccurate?
+      description: Quote the section or file, and describe what the agent did wrong or what the docs actually say.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should it say or do instead?
+    validations:
+      required: false

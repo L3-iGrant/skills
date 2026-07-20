@@ -1,0 +1,26 @@
+name: New skill request
+description: Suggest a new skill for this repository
+title: "[new skill] "
+labels: ["enhancement"]
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Proposed skill name
+      placeholder: igrantio-...
+    validations:
+      required: true
+  - type: textarea
+    id: purpose
+    attributes:
+      label: What should the skill teach an agent to build?
+      description: The task, the iGrant.io APIs involved, and the standards it touches (for example OpenID4VCI, OpenID4VP, Consent BB).
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Anything else?
+      description: Links to documentation, related skills, or an existing implementation to base the reference on.
+    validations:
+      required: false

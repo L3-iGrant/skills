@@ -53,17 +53,17 @@ building blocks, so your agent installs only what the task needs.
 <!-- BEGIN SKILLS -->
 | Skill | What it teaches the agent | Builds on |
 | --- | --- | --- |
-| [`igrantio-ows-overview`](./skills/ows/igrantio-ows-overview) | OWS architecture, glossary, and the full API reference. Read first | none |
-| [`igrantio-issuer-backend`](./skills/ows/igrantio-issuer-backend) | Tenant backend for credential **issuance** (proxy + webhooks + SSE) | proxy, webhooks, sse |
-| [`igrantio-issuer-frontend`](./skills/ows/igrantio-issuer-frontend) | Issuer UI: request issuance, render the QR or deep link, live status | frontend-client |
-| [`igrantio-verifier-backend`](./skills/ows/igrantio-verifier-backend) | Tenant backend for **verification** (proxy + webhooks + SSE) | proxy, webhooks, sse |
-| [`igrantio-verifier-frontend`](./skills/ows/igrantio-verifier-frontend) | Verifier UI: presentation request, QR or DC API, disclosed claims | frontend-client |
-| [`igrantio-backend-proxy`](./skills/ows/igrantio-backend-proxy) | API-key-hiding, multi-tenant reverse proxy building block | overview |
-| [`igrantio-backend-webhooks`](./skills/ows/igrantio-backend-webhooks) | Register, receive, and HMAC-verify OWS webhooks | overview |
-| [`igrantio-backend-sse`](./skills/ows/igrantio-backend-sse) | Stream webhook events to the browser over SSE | webhooks |
-| [`igrantio-frontend-client`](./skills/ows/igrantio-frontend-client) | Dependency-free typed OWS browser client plus React hooks | overview |
-| [`igrantio-individuals`](./skills/consent/igrantio-individuals) | Onboard users as Consent BB individuals (userId to individualId mapping) | none |
-| [`igrantio-consent-records`](./skills/consent/igrantio-consent-records) | Record, read, withdraw, and erase consents | individuals |
+| [`igrantio-ows-overview`](./ows/igrantio-ows-overview) | OWS architecture, glossary, and the full API reference. Read first | none |
+| [`igrantio-issuer-backend`](./ows/igrantio-issuer-backend) | Tenant backend for credential **issuance** (proxy + webhooks + SSE) | proxy, webhooks, sse |
+| [`igrantio-issuer-frontend`](./ows/igrantio-issuer-frontend) | Issuer UI: request issuance, render the QR or deep link, live status | frontend-client |
+| [`igrantio-verifier-backend`](./ows/igrantio-verifier-backend) | Tenant backend for **verification** (proxy + webhooks + SSE) | proxy, webhooks, sse |
+| [`igrantio-verifier-frontend`](./ows/igrantio-verifier-frontend) | Verifier UI: presentation request, QR or DC API, disclosed claims | frontend-client |
+| [`igrantio-backend-proxy`](./ows/igrantio-backend-proxy) | API-key-hiding, multi-tenant reverse proxy building block | overview |
+| [`igrantio-backend-webhooks`](./ows/igrantio-backend-webhooks) | Register, receive, and HMAC-verify OWS webhooks | overview |
+| [`igrantio-backend-sse`](./ows/igrantio-backend-sse) | Stream webhook events to the browser over SSE | webhooks |
+| [`igrantio-frontend-client`](./ows/igrantio-frontend-client) | Dependency-free typed OWS browser client plus React hooks | overview |
+| [`igrantio-individuals`](./consent/igrantio-individuals) | Onboard users as Consent BB individuals (userId to individualId mapping) | none |
+| [`igrantio-consent-records`](./consent/igrantio-consent-records) | Record, read, withdraw, and erase consents | individuals |
 <!-- END SKILLS -->
 
 ### How the skills compose
@@ -101,6 +101,9 @@ We welcome contributions to improve these skills. You can help by:
   in the skill Markdown files or reference implementations.
 - Suggesting new skills to add to this repository (for example, holder-side
   functions or additional iGrant.io recipes) by filing a feature request.
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines, including the
+canonical locations of the intentionally duplicated reference files.
 
 ## Licence
 

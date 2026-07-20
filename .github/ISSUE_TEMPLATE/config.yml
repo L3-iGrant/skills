@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: iGrant.io documentation
+    url: https://docs.igrant.io
+    about: Product and API documentation for the Organisation Wallet Suite and Consent Building Block.

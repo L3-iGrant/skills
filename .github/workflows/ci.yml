@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  duplicates:
+    name: Duplicated reference files in sync
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./scripts/check-duplicates.sh
+
+  typecheck:
+    name: Typecheck ${{ matrix.dir }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dir:
+          - ows/igrantio-frontend-client/references
+          - ows/igrantio-issuer-backend/references
+          - ows/igrantio-issuer-frontend/references
+          - ows/igrantio-verifier-backend/references
+          - ows/igrantio-verifier-frontend/references
+          - consent/igrantio-consent-records/references
+          - consent/igrantio-individuals/references
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+        working-directory: ${{ matrix.dir }}
+      - run: npm run typecheck
+        working-directory: ${{ matrix.dir }}
+
+  links:
+    name: Markdown links
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --no-progress
+            --exclude 'localhost|127\.0\.0\.1|example\.com|cluster\.local|your-'
+            './**/*.md'
+          fail: true
+
+  gitleaks:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run gitleaks over full history
+        run: |
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz | tar -xz gitleaks
+          ./gitleaks git --no-banner --redact .
