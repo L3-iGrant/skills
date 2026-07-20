@@ -66,10 +66,11 @@ PUT {base}/v2/config/digital-wallet/openid/sdjwt/credential/history/{CredentialE
 ```
 Body (`UpdateCredentialHistoryPayload`):
 ```jsonc
-{ "credential": { "claims": { … }, "id": "<credentialConfigurationId?>" } }
-// W3C form: { "credential": { "credentialSubject": { … } } }
+{ "credential": { "claims": { … }, "id": "<credentialHistory.credential.id from the offer>" } }
+// W3C form: { "credential": { "credentialSubject": { … }, "id": "<…>" } }
 ```
 Call this when the SSE / webhook reports `offer_received` for a `Deferred` issuance.
+**`credential.id` is required**: echo back `credentialHistory.credential.id` from the §1.1 offer response, or OWS returns `400 {"detail":"Id field is missing in credential"}` and the claims are never delivered.
 **Response**: `{ "success": true, "message"?: "…" }`.
 
 ### 1.3 Read credential history
