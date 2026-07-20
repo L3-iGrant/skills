@@ -41,6 +41,8 @@ export function useIssuance({ proxyBaseUrl, webhookBaseUrl }: IssuanceConfig) {
     error: null,
   });
   const deferredClaimsRef = useRef<UpdateCredentialHistoryPayload | null>(null);
+  /** Deferred flows only: set once completeDeferred's PUT has actually delivered the claims. */
+  const deferredDoneRef = useRef(false);
 
   const fail = useCallback((message: string) => {
     setState((s) => ({ ...s, status: "error", error: message }));
@@ -60,11 +62,20 @@ export function useIssuance({ proxyBaseUrl, webhookBaseUrl }: IssuanceConfig) {
         setState((s) => ({ ...s, status: "scanned" }));
         client.issuance
           .completeDeferred(credential.CredentialExchangeId, deferredClaimsRef.current)
-          .catch((e) => fail(e instanceof Error ? e.message : String(e)));
+          .then(() => {
+            deferredDoneRef.current = true;
+          })
+          .catch((e) => {
+            deferredDoneRef.current = false;
+            fail(e instanceof Error ? e.message : String(e));
+          });
         return;
       }
 
       if (credential.status === "credential_accepted" || credential.status === "token_issued") {
+        // OWS fires token_issued even when the completing PUT failed, so a deferred
+        // issuance is only truly "issued" once completeDeferred actually delivered the claims.
+        if (deferredClaimsRef.current && !deferredDoneRef.current) return;
         setState((s) => ({ ...s, status: "issued" }));
         close();
       }
@@ -84,6 +95,7 @@ export function useIssuance({ proxyBaseUrl, webhookBaseUrl }: IssuanceConfig) {
   const issueInTime = useCallback(
     async (payload: IssueInTimeRequest) => {
       deferredClaimsRef.current = null;
+      deferredDoneRef.current = false;
       try {
         const { credentialHistory } = await client.issuance.issueInTime(payload);
         if (!credentialHistory?.CredentialExchangeId || !credentialHistory.credentialOffer) {
@@ -101,10 +113,19 @@ export function useIssuance({ proxyBaseUrl, webhookBaseUrl }: IssuanceConfig) {
   const issueDeferred = useCallback(
     async (request: StartDeferredRequest, claims: UpdateCredentialHistoryPayload) => {
       deferredClaimsRef.current = claims;
+      deferredDoneRef.current = false;
       try {
         const { credentialHistory } = await client.issuance.startDeferred(request);
         if (!credentialHistory?.CredentialExchangeId || !credentialHistory.credentialOffer) {
           throw new Error("Issuance response missing CredentialExchangeId/credentialOffer");
+        }
+        // OWS requires the offer's credential id back in the completing PUT (else 400 "Id field is missing in credential").
+        const credentialId = credentialHistory.credential?.id as string | undefined;
+        if (credentialId) {
+          deferredClaimsRef.current = {
+            ...claims,
+            credential: { ...claims.credential, id: credentialId },
+          };
         }
         start(credentialHistory.CredentialExchangeId, credentialHistory.credentialOffer);
       } catch (e) {
@@ -117,6 +138,7 @@ export function useIssuance({ proxyBaseUrl, webhookBaseUrl }: IssuanceConfig) {
   const reset = useCallback(() => {
     close();
     deferredClaimsRef.current = null;
+    deferredDoneRef.current = false;
     setState({ status: "idle", offerUri: null, credentialExchangeId: null, error: null });
   }, [close]);
 
