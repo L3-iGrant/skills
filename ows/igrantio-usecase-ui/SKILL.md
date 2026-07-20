@@ -1,9 +1,10 @@
 ---
 name: igrantio-usecase-ui
-description: 'Default iGrant.io look and feel for frontend skills: a theme (design tokens plus Plus Jakarta Sans, monochrome palette, sharp-corner black uppercase buttons, two-column stepper-plus-panel layout, QR box, status stages), a page shell (Header + Footer ported 1:1 from the iGrant.io landing page), a few primitives (Stepper/Step, Panel, Field, Button, QrBox, StatusStage), and strings-driven i18n. Used by default when the user has not specified their own UI or layout. No component-library sprawl; no runtime deps beyond React (peer) plus qrcode.'
+description: 'Default iGrant.io look and feel for EUDI Wallet (EUDIW) and European Business Wallet (EUBW) use-case frontends: a theme (design tokens plus Plus Jakarta Sans, monochrome palette, sharp-corner black uppercase buttons, two-column stepper-plus-panel layout, QR box, status stages), a page shell (Header + Footer ported 1:1 from the iGrant.io landing page), a few primitives (Stepper/Step, Panel, Field, Button, QrBox, StatusStage), and strings-driven i18n. Used by default when the user has not specified their own UI or layout. No component-library sprawl; no runtime deps beyond React (peer) plus qrcode.'
 license: Apache-2.0
 metadata:
   provider: iGrant.io
+  keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, UI theme, design tokens, React, i18n
   version: 2026.07.01
   design-source: iGrant.io landing page (Navbar.astro, Footer.astro, _variables.scss)
   font: Plus Jakarta Sans

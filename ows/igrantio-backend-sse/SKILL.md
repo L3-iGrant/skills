@@ -1,9 +1,10 @@
 ---
 name: igrantio-backend-sse
-description: 'Composable building block: stream stored iGrant.io OWS webhook events to a browser over Server-Sent Events, keyed by exchange id (CredentialExchangeId / presentationExchangeId), with consume-and-delete. Provides GET /webhook/sse/:exchangeId and DELETE /webhook/:exchangeId over an EventStore. Use to push live issuance/verification status to a frontend without polling.'
+description: 'Composable building block: stream stored iGrant.io OWS webhook events to a browser over Server-Sent Events, keyed by exchange id (CredentialExchangeId / presentationExchangeId), with consume-and-delete. Provides GET /webhook/sse/:exchangeId and DELETE /webhook/:exchangeId over an EventStore. Use to push live credential issuance (OpenID4VCI) and verification (OpenID4VP) status to a frontend without polling.'
 license: Apache-2.0
 metadata:
   provider: iGrant.io
+  keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, OpenID4VCI, OpenID4VP, Server-Sent Events, SSE, live status
   version: 2026.07.01
   api: https://docs.igrant.io/docs/developer-apis
   auth: none - reads only the local event store; correlation is by exchange id

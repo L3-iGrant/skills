@@ -1,9 +1,10 @@
 ---
 name: igrantio-verifier-backend
-description: Build the backend for an OpenID4VP + DCQL credential VERIFIER / relying party against the iGrant.io Organisation Wallet Suite (OWS). A tenant-aware Node/TypeScript (Express) service that hides per-organisation API keys behind a proxy, registers and receives OWS verification webhooks (HMAC-verified), and pushes the verified result to the browser over SSE. Use when an application must request and verify a presentation and the API key must never reach the frontend.
+description: Build the backend for an OpenID4VP + DCQL credential VERIFIER / relying party against the iGrant.io Organisation Wallet Suite (OWS). A tenant-aware Node/TypeScript (Express) service that hides per-organisation API keys behind a proxy, registers and receives OWS verification webhooks (HMAC-verified), and pushes the verified result to the browser over SSE. Use when an application must request and verify a credential presentation from an eIDAS 2.0 EUDI Wallet (EUDIW) or European Business Wallet (EUBW) and the API key must never reach the frontend.
 license: Apache-2.0
 metadata:
   provider: iGrant.io
+  keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VP, DCQL, relying party, credential verification, verifiable presentations
   version: 2026.07.01
   api: https://docs.igrant.io/docs/category/openid4vc-api/verifier
   protocols: OpenID4VP-1.0, DCQL, SD-JWT-VC

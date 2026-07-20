@@ -1,9 +1,10 @@
 ---
 name: igrantio-ows-overview
-description: Architecture, glossary, and the full iGrant.io Organisation Wallet Suite (OWS) API reference for issuing and verifying EUDI Wallet and European Business Wallet credentials, covering issuance (OpenID4VCI) and verification (OpenID4VP + DCQL), including which response fields to extract and how webhooks correlate to a browser session over SSE. Read this first before building an OWS issuer or verifier backend/frontend, or whenever you need the exact OWS endpoint, payload, or response shape.
+description: Architecture, glossary, and the full iGrant.io Organisation Wallet Suite (OWS) API reference for issuing and verifying EUDI Wallet (EUDIW) and European Business Wallet (EUBW) credentials under eIDAS 2.0 (eIDAS2), covering issuance (OpenID4VCI) and verification (OpenID4VP + DCQL), including which response fields to extract and how webhooks correlate to a browser session over SSE. Read this first before building an OWS issuer or verifier backend/frontend, or whenever you need the exact OWS endpoint, payload, or response shape.
 license: Apache-2.0
 metadata:
   provider: iGrant.io
+  keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VCI, OpenID4VP, DCQL, verifiable credentials, digital identity wallet
   version: 2026.07.01
   api: https://docs.igrant.io/docs/developer-apis
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0, DCQL, SD-JWT-VC, W3C-VC-2.0, mso_mdoc

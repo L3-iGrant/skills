@@ -1,9 +1,10 @@
 ---
 name: igrantio-issuer-backend
-description: Build the backend for an OpenID4VCI credential ISSUER against the iGrant.io Organisation Wallet Suite (OWS). A tenant-aware Node/TypeScript (Express) service that hides per-organisation API keys behind a proxy, registers and receives OWS issuance webhooks (HMAC-verified), and pushes live status to the browser over SSE. Use when an application must issue verifiable credentials to a wallet and the API key must never reach the frontend.
+description: Build the backend for an OpenID4VCI credential ISSUER against the iGrant.io Organisation Wallet Suite (OWS). A tenant-aware Node/TypeScript (Express) service that hides per-organisation API keys behind a proxy, registers and receives OWS issuance webhooks (HMAC-verified), and pushes live status to the browser over SSE. Use when an application must issue verifiable credentials (SD-JWT VC, W3C VC, mso_mdoc) to an eIDAS 2.0 EUDI Wallet (EUDIW) or European Business Wallet (EUBW) and the API key must never reach the frontend.
 license: Apache-2.0
 metadata:
   provider: iGrant.io
+  keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VCI, credential issuance, verifiable credentials, SD-JWT VC, mso_mdoc
   version: 2026.07.01
   api: https://docs.igrant.io/docs/category/openid4vc-api/issuer
   protocols: OpenID4VCI-1.0, SD-JWT-VC, W3C-VC-2.0, mso_mdoc

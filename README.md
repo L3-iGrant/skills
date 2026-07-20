@@ -1,21 +1,24 @@
 # iGrant.io Agent Skills for EUDI Wallet and European Business Wallet integrations
 
-[![Install via skills.sh](https://img.shields.io/badge/skills.sh-install-green)](https://skills.sh/L3-iGrant/skills)
+[![Install via skills.sh](https://img.shields.io/badge/skills.sh-install-green)](https://www.skills.sh/l3-igrant/skills)
 [![Licence: Apache-2.0](https://img.shields.io/badge/licence-Apache--2.0-blue)](./LICENSE)
 
 [Agent Skills](https://agentskills.io) that teach AI coding agents (Claude Code,
 Cursor, and any agent supporting the `SKILL.md` format) how to build
-**European Digital Identity (EUDI) Wallet** and **European Business Wallet**
-integrations on the [iGrant.io](https://igrant.io) **Organisation Wallet Suite
-(OWS)** and **Consent Building Block**:
+**European Digital Identity (EUDI) Wallet (EUDIW)** and **European Business
+Wallet (EUBW)** integrations on the [iGrant.io](https://igrant.io)
+**Organisation Wallet Suite (OWS)** and **Consent Building Block**:
 
 - **Credential issuance** using OpenID4VCI 1.0 (in-time and deferred)
 - **Credential verification** using OpenID4VP 1.0 + DCQL, including the same-device Digital Credentials API
 - **Consent management** for recording and managing individual consents against data agreements
 
 Credential formats and standards covered: SD-JWT VC, W3C VC 2.0, mso_mdoc, and
-webhook/SSE patterns for wallet interactions under eIDAS 2.0
-(EU Regulation 2024/1183).
+webhook/SSE patterns for wallet interactions under eIDAS 2.0 (eIDAS2,
+EU Regulation 2024/1183).
+
+Browse the published skills on
+[skills.sh](https://www.skills.sh/l3-igrant/skills).
 
 ## Quick start
 

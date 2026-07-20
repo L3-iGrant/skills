@@ -1,9 +1,10 @@
 ---
 name: igrantio-backend-proxy
-description: 'Composable building block: a tenant-aware reverse proxy that hides per-organisation iGrant.io OWS API keys from the browser. Resolves a tenant slug to its API key, allow-lists the OWS paths the frontend may reach, injects Authorization "ApiKey <key>", and forwards to OWS. Use to add API-key hiding + per-tenant key management to any Node/TypeScript backend; the issuer and verifier backends compose it.'
+description: 'Composable building block: a tenant-aware reverse proxy that hides per-organisation iGrant.io OWS API keys from the browser. Resolves a tenant slug to its API key, allow-lists the OWS paths the frontend may reach, injects Authorization "ApiKey <key>", and forwards to OWS. Use to add API-key hiding + per-tenant key management to any Node/TypeScript backend; the OpenID4VCI issuer and OpenID4VP verifier backends compose it.'
 license: Apache-2.0
 metadata:
   provider: iGrant.io
+  keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, OpenID4VCI, OpenID4VP, reverse proxy, multi-tenant, API key security
   version: 2026.07.01
   api: https://docs.igrant.io/docs/developer-apis
   auth: OWS API key held server-side; injected per request. Browser sends no key.

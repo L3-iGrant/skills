@@ -1,9 +1,10 @@
 ---
 name: igrantio-consent-records
-description: 'Record and manage individual consents against a data agreement using the iGrant.io Consent Building Block, given a dataAgreementId and an individualId. Node/TypeScript backend for the individual Consent-Record API: create, read, list, update (allow/withdraw), history, and delete-all (right to be forgotten). Use when an application must capture and manage a user''s consent decisions. Get individualId from igrantio-individuals.'
+description: 'Record and manage individual consents against a data agreement using the iGrant.io Consent Building Block, given a dataAgreementId and an individualId. Node/TypeScript backend for the individual Consent-Record API: create, read, list, update (allow/withdraw), history, and delete-all (GDPR right to be forgotten). Use when an application must capture and manage a user''s consent decisions. Get individualId from igrantio-individuals.'
 license: Apache-2.0
 metadata:
   provider: iGrant.io
+  keywords: consent management, GDPR, data agreement, eIDAS2, EUDIW, right to be forgotten, personal data
   version: 2026.07.01
   api: https://docs.igrant.io/docs/category/consent-management-individual-api/consent-record
   auth: Organisation API key (Authorization "ApiKey <key>") + X-ConsentBB-IndividualId - server-side only

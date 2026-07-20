@@ -1,9 +1,10 @@
 ---
 name: igrantio-frontend-client
-description: 'Generic, dependency-free browser client for the iGrant.io Organisation Wallet Suite (OWS): a typed fetch client for issuance/verification via your tenant backend proxy, a Server-Sent-Events consumer (EventSource + consume-and-delete + reconnect), and optional React hooks (useSSE, useOwsClient, credential/ verification history) plus QR/deep-link helpers. No @igrant/* SDK. Use as the shared frontend foundation for igrantio-issuer-frontend and igrantio-verifier-frontend.'
+description: 'Generic, dependency-free browser client for the iGrant.io Organisation Wallet Suite (OWS): a typed fetch client for EUDI Wallet (EUDIW) credential issuance (OpenID4VCI) and verification (OpenID4VP) via your tenant backend proxy, a Server-Sent-Events consumer (EventSource + consume-and-delete + reconnect), and optional React hooks (useSSE, useOwsClient, credential/ verification history) plus QR/deep-link helpers. No @igrant/* SDK. Use as the shared frontend foundation for igrantio-issuer-frontend and igrantio-verifier-frontend.'
 license: Apache-2.0
 metadata:
   provider: iGrant.io
+  keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VCI, OpenID4VP, React hooks, SSE, browser client
   version: 2026.07.01
   api: https://docs.igrant.io/docs/developer-apis
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0, DCQL, SD-JWT-VC

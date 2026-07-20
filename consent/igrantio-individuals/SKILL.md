@@ -1,9 +1,10 @@
 ---
 name: igrantio-individuals
-description: Onboard application users into the iGrant.io Consent Building Block as "individuals" and keep a mapping between your own userId and the returned individualId. Node/TypeScript backend for the Consent BB admin Individual API (create, read, update, list). Use when an application signs up users and must create a corresponding individual so consents can later be recorded against a data agreement. Pairs with igrantio-consent-records.
+description: Onboard application users into the iGrant.io Consent Building Block as "individuals" and keep a mapping between your own userId and the returned individualId. Node/TypeScript backend for the Consent BB admin Individual API (create, read, update, list). Use when an application signs up users and must create a corresponding individual so GDPR consents can later be recorded against a data agreement. Pairs with igrantio-consent-records.
 license: Apache-2.0
 metadata:
   provider: iGrant.io
+  keywords: consent management, GDPR, data agreement, eIDAS2, EUDIW, user onboarding, personal data
   version: 2026.07.01
   api: https://docs.igrant.io/docs/category/consent-management-admin-api/individual
   auth: Organisation API key (Authorization "ApiKey <key>") - server-side only, never the browser

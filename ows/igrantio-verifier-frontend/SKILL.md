@@ -1,9 +1,10 @@
 ---
 name: igrantio-verifier-frontend
-description: Build the browser UI for an OpenID4VP + DCQL credential VERIFIER / relying party against the iGrant.io Organisation Wallet Suite. Send a presentation request through your tenant backend proxy, render the QR (cross-device) or invoke the same-device Digital Credentials API, and read the disclosed claims + verified decision live over SSE. Composes igrantio-frontend-client; talks to igrantio-verifier-backend.
+description: Build the browser UI for an OpenID4VP + DCQL credential VERIFIER / relying party against the iGrant.io Organisation Wallet Suite. Send a presentation request through your tenant backend proxy, render the QR (cross-device) or invoke the same-device Digital Credentials API to reach the EUDI Wallet (EUDIW) or European Business Wallet (EUBW), and read the disclosed claims + verified decision live over SSE. Composes igrantio-frontend-client; talks to igrantio-verifier-backend.
 license: Apache-2.0
 metadata:
   provider: iGrant.io
+  keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VP, DCQL, Digital Credentials API, credential verification, QR code
   version: 2026.07.01
   api: https://docs.igrant.io/docs/category/openid4vc-api/verifier
   protocols: OpenID4VP-1.0, DCQL, SD-JWT-VC, Digital-Credentials-API
