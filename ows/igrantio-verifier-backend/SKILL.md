@@ -1,11 +1,11 @@
 ---
 name: igrantio-verifier-backend
-description: Build the backend for an OpenID4VP + DCQL credential VERIFIER / relying party against the iGrant.io Organisation Wallet Suite (OWS). A tenant-aware Node/TypeScript (Express) service that hides per-organisation API keys behind a proxy, registers and receives OWS verification webhooks (HMAC-verified), and pushes the verified result to the browser over SSE. Use when an application must request and verify a credential presentation from an eIDAS 2.0 EUDI Wallet (EUDIW) or European Business Wallet (EUBW) and the API key must never reach the frontend.
+description: Build the backend for an OpenID4VP + DCQL credential VERIFIER / relying party against the iGrant.io Organisation Wallet Suite (OWS). A tenant-aware Node/TypeScript (Express) service that hides per-organisation API keys behind a proxy, registers and receives OWS verification webhooks (HMAC-verified), and pushes the verified result to the browser over SSE. Use when an application must request and verify a credential presentation from an eIDAS 2.0 EUDI Wallet (EUDIW) or European Business Wallet (EUBW) and the API key must never reach the frontend. Supports wallet-signed transaction data (SCA payments, e-mandates, login/risk authentication, account access, QES document signing).
 license: Apache-2.0
 metadata:
   provider: iGrant.io
-  keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VP, DCQL, relying party, credential verification, verifiable presentations
-  version: 2026.07.01
+  keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VP, DCQL, relying party, credential verification, verifiable presentations, transaction data, SCA, e-mandate, QES
+  version: 2026.07.02
   api: https://docs.igrant.io/docs/category/openid4vc-api/verifier
   protocols: OpenID4VP-1.0, DCQL, SD-JWT-VC
   auth: OWS API key (Authorization "ApiKey <key>") injected by the proxy; browser sends no key
@@ -50,6 +50,13 @@ Default `PORT=6002` so it can run alongside an issuer backend.
 ## Verification contract (what the frontend drives through this backend)
 - `POST …/verification/send` → response `verificationHistory.presentationExchangeId`
   (SSE key) + `verificationHistory.vpTokenQrCode` (QR URI).
+- The send body may carry optional `transactionData` - wallet-displayed and
+  wallet-signed transaction data (SCA): simple `payment_data`, an EUDI SCA
+  rulebook (TS12) `payload` (payment / e-mandate / login-risk / account
+  access), or `qes_data` (QES document signing). The proxy passes it through
+  unchanged; see `igrantio-ows-overview/references/api-reference.md` §2.1 for
+  the exact shapes and §2.2 for verifying the returned
+  `transaction_data_hashes`.
 - Done on webhook `openid.presentation.presentation_acked.v3` /
   `digitalwallet.presentation.verified`; the SSE event carries
   `data.presentation.verified` and `data.presentation.presentation[0]` (claims).

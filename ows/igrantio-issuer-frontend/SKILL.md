@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VCI, credential offer, QR code, verifiable credentials
-  version: 2026.07.01
+  version: 2026.07.02
   api: https://docs.igrant.io/docs/category/openid4vc-api/issuer
   protocols: OpenID4VCI-1.0, SD-JWT-VC, W3C-VC-2.0, mso_mdoc
   auth: none in the browser - the issuer backend injects the OWS API key

@@ -39,7 +39,7 @@ Request body (`IssueCredentialRequest` - one of four shapes by `issuanceMode`):
   "presentationDefinitionId": "<id>",     // "dynamic" issuance: collect a presentation first
   "individualId": "<id>",
   "urlScheme": "openid-credential-offer",
-  "transactionData": { "payment_data": { "payee": "…", "currency_amount": { "currency": "EUR", "value": "10.00" } } }
+  "transactionData": { "payment_data": { "payee": "…", "currency_amount": { "currency": "EUR", "value": "10.00" } } }  // payment-gated dynamic issuance; variants in §2.1
 }
 ```
 
@@ -105,13 +105,50 @@ Request body (`SendVerificationRequest`):
   "requestByReference": true,                 // request object served by reference (recommended)
   "presentationDefinitionId": "<id>",         // required - stored DCQL query / presentation definition
   // optional:
-  "transactionData": { "payment_data": { "payee": "…", "currency_amount": { "currency": "EUR", "value": "10.00" } } },
+  "transactionData": { … },                   // wallet-displayed + signed transaction data - variants below
   "individualId": "<id>",
   "mapperId": "<id>",
   "signatureStamp": true,
   "signatureCoordinate": [x, y]
 }
 ```
+
+**`transactionData` variants** - the wallet shows this alongside the
+presentation request and signs over it (Strong Customer Authentication).
+Exactly one key:
+
+1. **Simple payment** (legacy shape):
+   ```jsonc
+   { "payment_data": { "payee": "Fast ferries", "currency_amount": { "currency": "EUR", "value": "10.00" } } }
+   ```
+2. **EUDI SCA rulebook (TS12) payload** - send only the inner payload; OWS
+   wraps it into the OpenID4VP `transaction_data` array entry (`type` urn,
+   `credential_ids`, `transaction_data_hashes_alg`) for you:
+   ```jsonc
+   {
+     "payload": {
+       "transaction_id": "txn-84729", "date_time": "2026-05-05T15:30:00Z",
+       "payee": { "name": "Fast ferries", "id": "MERCH-FF-99384", "logo": "https://…", "website": "https://…" },
+       "pisp": { "legal_name": "…", "brand_name": "…", "domain_name": "…" },  // account payment via a PISP
+       "execution_date": "2026-05-12",                                        // scheduled (future-dated) payment
+       "currency": "EUR", "amount": 120.00,
+       "amount_estimated": false, "amount_earmarked": true, "sct_inst": false,
+       "recurrence": { "start_date": "2026-06-01", "end_date": "2027-05-01", "number": 12, "frequency": "MNTH" },
+       "mit_options": { "amount_variable": true, "min_amount": 85.00, "max_amount": 100.00, "total_amount": 1020.00 }
+     }
+   }
+   ```
+   Payload families (the `urn:eudi:sca:*:1` types): **payment** (above);
+   **e-mandate** (`start_date`, `end_date`, `reference_number`, `creditor_id`,
+   `purpose`, nested `payment_payload`); **login / risk transaction**
+   (`transaction_id`, `date_time`, `service`, `action`); **account access /
+   AISP** (`aisp { legal_name, brand_name, domain_name }`, `description`).
+   Omit `recurrence` entirely for one-off payments - OWS rejects an empty
+   `frequency` string.
+3. **QES document signing** - the wallet signs the linked document:
+   ```jsonc
+   { "qes_data": { "type": "pdf", "external_link": "https://…/service/file/<fileId>" } }
+   ```
 
 **Response** (`VerificationResponse`) - process these fields:
 
@@ -139,7 +176,10 @@ GET {base}/v3/config/digital-wallet/openid/sdjwt/verification/history/{presentat
 | `walletUnitAttestationVerified`, `presentationValidity`, `walletUnitValidity` | trust/assurance signals. |
 
 Accept the presentation only when `verified === true` (and, per your trust rules,
-attestation/validity signals pass).
+attestation/validity signals pass). If the request carried `transactionData`,
+the wallet's key-binding JWT (last segment of each `vpTokenResponse` entry)
+includes `transaction_data_hashes` + `transaction_data_hashes_alg`; verify the
+hash matches the transaction data you sent.
 
 ### 2.3 Delete verification history
 ```

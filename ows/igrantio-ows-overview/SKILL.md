@@ -4,8 +4,8 @@ description: Architecture, glossary, and the full iGrant.io Organisation Wallet 
 license: Apache-2.0
 metadata:
   provider: iGrant.io
-  keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VCI, OpenID4VP, DCQL, verifiable credentials, digital identity wallet
-  version: 2026.07.01
+  keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VCI, OpenID4VP, DCQL, verifiable credentials, digital identity wallet, transaction data, SCA
+  version: 2026.07.02
   api: https://docs.igrant.io/docs/developer-apis
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0, DCQL, SD-JWT-VC, W3C-VC-2.0, mso_mdoc
   auth: OWS API key (Authorization "ApiKey <key>") - held only by the tenant backend, never the browser

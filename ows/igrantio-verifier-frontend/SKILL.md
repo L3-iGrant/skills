@@ -4,8 +4,8 @@ description: Build the browser UI for an OpenID4VP + DCQL credential VERIFIER / 
 license: Apache-2.0
 metadata:
   provider: iGrant.io
-  keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VP, DCQL, Digital Credentials API, credential verification, QR code
-  version: 2026.07.01
+  keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VP, DCQL, Digital Credentials API, credential verification, QR code, transaction data, SCA
+  version: 2026.07.02
   api: https://docs.igrant.io/docs/category/openid4vc-api/verifier
   protocols: OpenID4VP-1.0, DCQL, SD-JWT-VC, Digital-Credentials-API
   auth: none in the browser - the verifier backend injects the OWS API key
@@ -36,7 +36,11 @@ a QR (or use the same-device wallet), and show the disclosed claims and the
 ## Flow (what happens)
 1. `POST …/verification/send` with `presentationDefinitionId` → read
    `verificationHistory.presentationExchangeId` (SSE key) and
-   `verificationHistory.vpTokenQrCode` (QR URI).
+   `verificationHistory.vpTokenQrCode` (QR URI). Optionally include
+   `transactionData` (SCA payment, e-mandate, login/risk, account access, or
+   QES signing - typed as `TransactionData` in `lib/ows/types.ts`; shapes in
+   `igrantio-ows-overview` api-reference §2.1) so the wallet displays and
+   signs over the transaction details.
 2. Open SSE on the exchange id; render the QR / same-device button.
 3. SSE `data.presentation`: once `vpTokenResponse.length > 0`, read
    `presentation[0]` (disclosed claims) and `verified` (decision). Accept only

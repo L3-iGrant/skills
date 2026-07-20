@@ -33,13 +33,28 @@ export interface IssueInTimeRequest {
   individualId?: string;
 }
 
+/**
+ * Wallet-displayed, wallet-signed transaction data (Strong Customer
+ * Authentication). Exactly one variant:
+ * - payment_data: simple payment (legacy shape)
+ * - payload: EUDI SCA rulebook (TS12) payment / e-mandate / login-risk /
+ *   account-access payload; OWS wraps it into the OpenID4VP transaction_data
+ *   array entry (type urn, credential_ids, hash alg)
+ * - qes_data: QES document signing
+ * The wallet's KB-JWT echoes matching transaction_data_hashes.
+ */
+export type TransactionData =
+  | { payment_data: { payee: string; currency_amount: { currency: string; value: string | number } } }
+  | { payload: Record<string, unknown> }
+  | { qes_data: { type: string; external_link: string } };
+
 export interface StartDeferredRequest {
   issuanceMode: "Deferred";
   credentialDefinitionId: string;
   /** Gate issuance behind a presentation ("dynamic" issuance). */
   presentationDefinitionId?: string;
   userPin?: string;
-  transactionData?: Record<string, unknown>;
+  transactionData?: TransactionData;
 }
 
 export type IssueCredentialRequest = IssueInTimeRequest | StartDeferredRequest;
@@ -93,7 +108,7 @@ export interface UpdateCredentialHistoryResponse {
 export interface SendVerificationRequest {
   requestByReference: boolean;
   presentationDefinitionId: string;
-  transactionData?: Record<string, unknown>;
+  transactionData?: TransactionData;
   individualId?: string;
   mapperId?: string;
   [k: string]: unknown;
