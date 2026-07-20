@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: DCQL, trusted_authorities, etsi_tl, trust list, EBSI, OpenID Federation, OpenID4VP, EUDIW, EUBW, eIDAS2
-  version: 2026.07.03
+  version: 2026.07.04
   source-doc: https://docs.igrant.io/docs/dcql-basic-credential-query-with-trusted-authority/
   requires-skills: igrantio-ows-overview, igrantio-verifier-backend
 ---
@@ -17,6 +17,8 @@ A verifier requests a University Degree credential, accepting it only if
 issued by an authority on the EU/EWC Trust List (or EBSI / an OpenID
 Federation trust anchor). Credentials from issuers outside the trust
 anchor (e.g. a plain `did:key` issuer) are rejected.
+
+**Before you build**: run the integrator intake in `igrantio-ows-overview` - environment, API key, tenancy, backend host, webhooks, frontend - one question at a time, a recommended default with each.
 
 ## The DCQL query
 ```json

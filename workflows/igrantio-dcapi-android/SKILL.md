@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: Digital Credentials API, DC API, Android, Chrome, OpenID4VP, EUDIW, EUBW, eIDAS2, same-device, verification
-  version: 2026.07.03
+  version: 2026.07.04
   source-doc: https://docs.igrant.io/docs/openID4vc-send-verify-credentials-dcapi-android/
   requires-skills: igrantio-ows-overview, igrantio-verifier-backend, igrantio-verifier-frontend
 ---
@@ -17,6 +17,8 @@ Verify a credential in the browser on Android without a QR scan on the same
 device: the page calls the W3C Digital Credentials API and Chrome invokes
 the wallet. Cross-device still works (Chrome shows a QR; Bluetooth must be
 on for the proximity check).
+
+**Before you build**: run the integrator intake in `igrantio-ows-overview` - environment, API key, tenancy, backend host, webhooks, frontend - one question at a time, a recommended default with each.
 
 ## Prerequisites
 - Chrome 141+ (or 128+ with `chrome://flags#web-identity-digital-credentials`).

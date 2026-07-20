@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: EUBW, European Business Wallet, EBWOID, LPID, EWC RFC005, OpenID4VCI, SD-JWT, eIDAS2, EUDIW
-  version: 2026.07.03
+  version: 2026.07.04
   source-doc: https://docs.igrant.io/docs/european-business-wallet-owner-id/
   requires-skills: igrantio-ows-overview, igrantio-issuer-backend
 ---
@@ -16,6 +16,8 @@ metadata:
 Issue the owner identity credential of a European Business Wallet: Legal
 Person Identification Data (LPID) per EWC RFC005. The credential type was
 renamed to EBW Owner ID; the schema identifier remains `LPID`.
+
+**Before you build**: run the integrator intake in `igrantio-ows-overview` - environment, API key, tenancy, backend host, webhooks, frontend - one question at a time, a recommended default with each.
 
 ## Workflow (OpenID4VCI, deferred)
 1. **API key** - organisation API key from iGrant.io

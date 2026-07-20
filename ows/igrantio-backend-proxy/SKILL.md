@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, OpenID4VCI, OpenID4VP, reverse proxy, multi-tenant, API key security
-  version: 2026.07.01
+  version: 2026.07.04
   api: https://docs.igrant.io/docs/developer-apis
   auth: OWS API key held server-side; injected per request. Browser sends no key.
   requires-skills: igrantio-ows-overview
@@ -18,6 +18,8 @@ Whenever the browser must call OWS but must not hold the API key - which is
 always. This is the "manages API key for a specific tenant organisation" piece.
 Compose it into an issuer or verifier backend (see `igrantio-issuer-backend` /
 `igrantio-verifier-backend`) or mount it in an existing Express app.
+
+**Before you build**: run the integrator intake in `igrantio-ows-overview` - environment, API key, tenancy, backend host, webhooks, frontend - one question at a time, a recommended default with each.
 
 ## What it does
 `GET|POST|PUT ${proxyPrefix}/{tenant}/{owsPath...}`:

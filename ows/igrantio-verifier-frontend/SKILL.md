@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VP, DCQL, Digital Credentials API, credential verification, QR code, transaction data, SCA
-  version: 2026.07.03
+  version: 2026.07.04
   api: https://docs.igrant.io/docs/category/openid4vc-api/verifier
   protocols: OpenID4VP-1.0, DCQL, SD-JWT-VC, Digital-Credentials-API
   auth: none in the browser - the verifier backend injects the OWS API key
@@ -21,6 +21,8 @@ a QR (or use the same-device wallet), and show the disclosed claims and the
 `igrantio-frontend-client` (vendored at `src/lib/ows/`) and an
 `igrantio-verifier-backend` deployment. Issuer UI is a separate skill
 (`igrantio-issuer-frontend`).
+
+**Before you build**: run the integrator intake in `igrantio-ows-overview` - environment, API key, tenancy, backend host, webhooks, frontend - one question at a time, a recommended default with each.
 
 ## What it provides
 - **`useVerification({ proxyBaseUrl, webhookBaseUrl })`** →

@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: DCQL, KYC, know your customer, Photo ID, proof of address, utility bill, bank statement, credential_sets, OpenID4VP, EUDIW, eIDAS2
-  version: 2026.07.03
+  version: 2026.07.04
   source-doc: https://docs.igrant.io/docs/dcql-2-4-4-kyc-request-photo-id-address-proof/
   requires-skills: igrantio-ows-overview, igrantio-verifier-backend
 ---
@@ -16,6 +16,8 @@ metadata:
 KYC onboarding needs BOTH: a Photo ID (identity) AND a proof of address,
 where either a Utility Bill or a Bank Statement satisfies the address
 requirement. Two required `credential_sets` in one request.
+
+**Before you build**: run the integrator intake in `igrantio-ows-overview` - environment, API key, tenancy, backend host, webhooks, frontend - one question at a time, a recommended default with each.
 
 ## The DCQL query
 ```json

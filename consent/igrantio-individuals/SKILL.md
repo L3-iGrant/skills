@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: consent management, GDPR, data agreement, eIDAS2, EUDIW, user onboarding, personal data
-  version: 2026.07.01
+  version: 2026.07.04
   api: https://docs.igrant.io/docs/category/consent-management-admin-api/individual
   auth: Organisation API key (Authorization "ApiKey <key>") - server-side only, never the browser
   requires-skills: igrantio-consent-records
@@ -18,6 +18,17 @@ When your app onboards a user, create a matching **individual** in the iGrant.io
 Consent Building Block and store the returned `individualId` against your own
 `userId`. That mapping is what later lets `igrantio-consent-records` record and
 manage consents for the right person.
+
+## Integrator intake
+Ask one question at a time, a recommended default with each; look up facts in
+the project, put only decisions to the integrator:
+1. **Environment** - demo (`https://demo-api.igrant.io`), staging, or a custom
+   Consent BB deployment (ask its base URL)? _Recommend demo to start._
+2. **API key** - organisation API key for the Consent Building Block? From
+   your iGrant.io organisation account; server-side only, never the browser.
+3. **Mapping storage** - where does the `userId` to `individualId` mapping
+   live: a column on the existing users table (recommended) or a separate
+   store?
 
 ## The mapping (the important part)
 ```

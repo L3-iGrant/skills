@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, OpenID4VCI, OpenID4VP, Server-Sent Events, SSE, live status
-  version: 2026.07.01
+  version: 2026.07.04
   api: https://docs.igrant.io/docs/developer-apis
   auth: none - reads only the local event store; correlation is by exchange id
   requires-skills: igrantio-ows-overview, igrantio-backend-webhooks
@@ -18,6 +18,8 @@ To notify the browser the moment an OWS webhook lands, instead of polling the OW
 history endpoint. Pairs with `igrantio-backend-webhooks` (which fills the store)
 and `igrantio-frontend-client`'s SSE consumer. Composed by the issuer/verifier
 backends.
+
+**Before you build**: run the integrator intake in `igrantio-ows-overview` - environment, API key, tenancy, backend host, webhooks, frontend - one question at a time, a recommended default with each.
 
 ## What it does
 Mounted at `/webhook`:

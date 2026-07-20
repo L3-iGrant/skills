@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: DCQL, multiple true, bank statements, loan application, credit check, OpenID4VP, EUDIW, EUBW, eIDAS2
-  version: 2026.07.03
+  version: 2026.07.04
   source-doc: https://docs.igrant.io/docs/dcql-2-4-6-loan-application-multiple-bank-statements/
   requires-skills: igrantio-ows-overview, igrantio-verifier-backend
 ---
@@ -16,6 +16,8 @@ metadata:
 A loan provider assesses an application and needs six recent
 `BankStatement` credentials. `multiple: true` lets the wallet return
 several instances of the same credential type in one presentation.
+
+**Before you build**: run the integrator intake in `igrantio-ows-overview` - environment, API key, tenancy, backend host, webhooks, frontend - one question at a time, a recommended default with each.
 
 ## The DCQL query
 ```json

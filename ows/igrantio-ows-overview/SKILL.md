@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VCI, OpenID4VP, DCQL, verifiable credentials, digital identity wallet, transaction data, SCA
-  version: 2026.07.03
+  version: 2026.07.04
   api: https://docs.igrant.io/docs/developer-apis
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0, DCQL, SD-JWT-VC, W3C-VC-2.0, mso_mdoc
   auth: OWS API key (Authorization "ApiKey <key>") - held only by the tenant backend, never the browser
@@ -16,8 +16,40 @@ metadata:
 ## When to use
 Read this skill before or alongside any of the `igrantio-*` backend/frontend
 skills. It defines the shared architecture and is the **single source of truth**
-for OWS endpoints, request payloads, and the response fields you must process.
-Every other skill in this collection assumes the contracts described here.
+for OWS endpoints, request payloads, the response fields you must process, and
+the integrator intake below. Every other skill in this collection assumes the
+contracts described here.
+
+## Integrator intake
+
+Run this interview before writing any integration code. Ask **one question at
+a time**, wait for the answer, and offer the recommended default with each.
+Facts you can discover in the project (framework, existing env vars, an
+existing backend) - look them up instead of asking; only the decisions go to
+the integrator. Record the answers; every later choice hangs off them.
+
+1. **Environment** - demo (`https://demo-api.igrant.io`), staging
+   (`https://staging-api.igrant.io`), or a custom OWS deployment (ask for its
+   base URL)? _Recommend demo to start; switching later is a config change._
+2. **API key** - do you have an Organisation Wallet Suite API key? If not:
+   create an organisation at <https://demo.igrant.io> or contact
+   [support@igrant.io](mailto:support@igrant.io). It lives server-side only
+   (env var / secret manager) - the browser never sees it.
+3. **Tenancy** - one organisation, or multiple tenants each with their own
+   API key? _Single tenant is one env var; multi-tenant needs a
+   `TenantStore` (see `igrantio-backend-proxy`)._
+4. **Backend host** - extend an existing Node/TypeScript backend, or
+   scaffold a fresh Express service? _Look this up first; ask only if the
+   repo is empty or ambiguous._
+5. **Webhook reachability** - what public URL will receive OWS webhooks?
+   _Local dev needs a tunnel (e.g. an ngrok-style forwarder) or the SSE
+   fallback of polling history endpoints._
+6. **Frontend** - which framework, and default iGrant.io look
+   (`igrantio-usecase-ui`) or the integrator's own design system? QR
+   options (centre logo, green tick) are asked by `igrantio-qr-code`.
+
+The interview is done when each answer is recorded and none conflicts with a
+discovered fact.
 
 ## The architecture in one paragraph
 The browser never holds an OWS API key. A **tenant backend** proxies a small

@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, OpenID4VCI, OpenID4VP, webhooks, HMAC, digital identity wallet
-  version: 2026.07.01
+  version: 2026.07.04
   api: https://docs.igrant.io/docs/openid4vc-api/config-create-webhook
   auth: OWS API key to register; shared HMAC secretKey to verify deliveries
   requires-skills: igrantio-ows-overview, igrantio-backend-sse
@@ -17,6 +17,8 @@ metadata:
 Whenever your backend must be notified when a wallet completes an issuance or
 verification. Pairs with `igrantio-backend-sse` (which streams the stored events
 to the browser). Composed by `igrantio-issuer-backend` / `igrantio-verifier-backend`.
+
+**Before you build**: run the integrator intake in `igrantio-ows-overview` - environment, API key, tenancy, backend host, webhooks, frontend - one question at a time, a recommended default with each.
 
 ## What it does
 - **Register (idempotent)** - `POST /v2/config/webhook` with `payloadUrl`,

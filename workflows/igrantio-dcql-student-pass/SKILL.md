@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: DCQL, credential_sets, optional credentials, required false, student ID, transport pass, PID, OpenID4VP, EUDIW, eIDAS2
-  version: 2026.07.03
+  version: 2026.07.04
   source-doc: https://docs.igrant.io/docs/dcql-2-4-5-student-transport-pass/
   requires-skills: igrantio-ows-overview, igrantio-verifier-backend
 ---
@@ -18,6 +18,8 @@ A transport authority sells a discounted student pass. Mandatory: PID
 Optional (`required: false`): local-residency proof (Utility Bill OR
 Rental Agreement) for an additional discount - the wallet presents it only
 if the holder has and consents to it.
+
+**Before you build**: run the integrator intake in `igrantio-ows-overview` - environment, API key, tenancy, backend host, webhooks, frontend - one question at a time, a recommended default with each.
 
 ## The DCQL query
 ```json

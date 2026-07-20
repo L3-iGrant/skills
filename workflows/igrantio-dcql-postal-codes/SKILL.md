@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: DCQL, values constraint, claim value matching, postal code, delivery zones, address credential, OpenID4VP, EUDIW, eIDAS2
-  version: 2026.07.03
+  version: 2026.07.04
   source-doc: https://docs.igrant.io/docs/dcql-2-4-7-delivery-service-restricted-postal-codes/
   requires-skills: igrantio-ows-overview, igrantio-verifier-backend
 ---
@@ -17,6 +17,8 @@ A delivery service requests the holder's residential address credential but
 accepts it only when `postal_code` is in its allowed delivery zones. The
 `values` array on a claim query makes the wallet match the claim VALUE, not
 just its presence.
+
+**Before you build**: run the integrator intake in `igrantio-ows-overview` - environment, API key, tenancy, backend host, webhooks, frontend - one question at a time, a recommended default with each.
 
 ## The DCQL query
 ```json

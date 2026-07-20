@@ -1,11 +1,11 @@
 ---
 name: igrantio-qr-code
-description: 'Wallet QR code panel for EUDI Wallet (EUDIW) and European Business Wallet (EUBW) flows on the iGrant.io Organisation Wallet Suite: render the credential-offer or presentation-request QR with an optional centre logo (error-correction level H), an optional green tick overlay on scan, a refresh action that mints a new exchange, an "open in wallet" same-device deep-link button, a pre-authorised transaction-code block, and pending/scanned/error status. Use whenever an issuer or verifier frontend renders a wallet QR. Composes igrantio-frontend-client; used by igrantio-issuer-frontend and igrantio-verifier-frontend.'
+description: 'Wallet QR code panel for EUDI Wallet (EUDIW) and European Business Wallet (EUBW) flows on the iGrant.io Organisation Wallet Suite: credential-offer / presentation-request QR with optional centre logo, optional green tick on scan, refresh that mints a new exchange, open-in-wallet deep link, transaction-code block, and pending/scanned/error states. Use whenever an issuer or verifier frontend renders a wallet QR.'
 license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, QR code, credential offer, OpenID4VCI, OpenID4VP, deep link, open in wallet, centre logo, EUDI Wallet
-  version: 2026.07.03
+  version: 2026.07.04
   auth: none
   requires-skills: igrantio-frontend-client
 ---
@@ -19,6 +19,8 @@ verification `vpTokenQrCode` URI. This skill is the single QR pattern for the
 instead of hand-rolling a QR component. For the bare URI-to-image helper only,
 `igrantio-frontend-client` ships a minimal `QrCode`; this skill is the full
 panel (logo, refresh, wallet button, tx code, states).
+
+**Before you build**: run the integrator intake in `igrantio-ows-overview` - environment, API key, tenancy, backend host, webhooks, frontend - one question at a time, a recommended default with each.
 
 ## Ask the integrator first
 Two visual options are deliberate brand choices. If the user has not already

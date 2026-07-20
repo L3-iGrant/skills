@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VCI, OpenID4VP, React hooks, SSE, browser client
-  version: 2026.07.03
+  version: 2026.07.04
   api: https://docs.igrant.io/docs/developer-apis
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0, DCQL, SD-JWT-VC
   auth: none in the browser - the tenant backend injects the OWS API key
@@ -19,6 +19,8 @@ The shared frontend building block for any OWS integration. `igrantio-issuer-fro
 and `igrantio-verifier-frontend` both build on it. It replaces the internal
 `@igrant/usecase-sdk` / `igrant-api-lib` with self-contained, framework-agnostic
 code you own. Read `igrantio-ows-overview` for the endpoint/response contract.
+
+**Before you build**: run the integrator intake in `igrantio-ows-overview` - environment, API key, tenancy, backend host, webhooks, frontend - one question at a time, a recommended default with each.
 
 ## What it provides
 Framework-agnostic core (only `fetch` + `EventSource`):

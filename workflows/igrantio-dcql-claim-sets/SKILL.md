@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: DCQL, claim_sets, selective disclosure, age verification, is_over_21, PID, OpenID4VP, EUDIW, eIDAS2, GDPR
-  version: 2026.07.03
+  version: 2026.07.04
   source-doc: https://docs.igrant.io/docs/dcql-2-4-2-claim-set-age-verification/
   requires-skills: igrantio-ows-overview, igrantio-verifier-backend
 ---
@@ -16,6 +16,8 @@ metadata:
 A verifier needs an age check. It prefers the minimal boolean `is_over_21`;
 if the wallet's PID lacks it, the query falls back to `birth_date`.
 `claim_sets` are ordered - the wallet satisfies the first set it can.
+
+**Before you build**: run the integrator intake in `igrantio-ows-overview` - environment, API key, tenancy, backend host, webhooks, frontend - one question at a time, a recommended default with each.
 
 ## The DCQL query
 ```json

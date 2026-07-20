@@ -46,7 +46,11 @@ what to build:
 ## Available skills
 
 Start with the overview skill. The issuer and verifier skills compose the
-building blocks, so your agent installs only what the task needs.
+building blocks, so your agent installs only what the task needs. Every skill
+opens with an **integrator intake**: environment (demo / staging / custom),
+API key, tenancy, webhooks, and frontend choices, asked one question at a
+time with a recommended default, so the agent locks the setup before writing
+code.
 
 <!-- BEGIN SKILLS -->
 | Skill | What it teaches the agent | Builds on |
@@ -96,7 +100,7 @@ an integration from scratch.
 Each skill is versioned individually through the `metadata.version` field in
 its `SKILL.md`, following the `yyyy.mm.NN` scheme, where `yyyy.mm` is the year
 and month of the release and `NN` is the release number within that month. The
-current release is `2026.07.03`. Versions are bumped whenever a skill's
+current release is `2026.07.04`. Versions are bumped whenever a skill's
 contract changes.
 
 To update installed skills to the latest release:

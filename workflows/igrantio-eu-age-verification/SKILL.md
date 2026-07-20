@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: EU age verification, age_over_18, mso_mdoc, eu.europa.ec.av.1, EUDIW, eIDAS2, OpenID4VCI, OpenID4VP, DCQL, selective disclosure
-  version: 2026.07.03
+  version: 2026.07.04
   source-doc: https://docs.igrant.io/docs/eu-age-verification/
   requires-skills: igrantio-ows-overview, igrantio-issuer-backend, igrantio-verifier-backend
 ---
@@ -17,6 +17,8 @@ Prove an age threshold (18, 21, 65, any `age_over_NN`) without revealing
 birthdate or identity. The attestation is an **ISO/IEC 18013-5 mdoc**,
 doctype **`eu.europa.ec.av.1`**, with boolean `age_over_NN` claims and
 selective disclosure.
+
+**Before you build**: run the integrator intake in `igrantio-ows-overview` - environment, API key, tenancy, backend host, webhooks, frontend - one question at a time, a recommended default with each.
 
 ## Workflow
 **Issuer side (once per user):**

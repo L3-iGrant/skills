@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: Digital Credentials API, DC API, iOS, Safari, ISO 18013-7, mdoc, mDL, OpenID4VP, EUDIW, eIDAS2, verification
-  version: 2026.07.03
+  version: 2026.07.04
   source-doc: https://docs.igrant.io/docs/openID4vc-send-verify-credentials-dcapi-ios/
   requires-skills: igrantio-ows-overview, igrantio-verifier-backend, igrantio-verifier-frontend
 ---
@@ -18,6 +18,8 @@ platform difference vs Android: on iOS the Digital Credentials API runs
 over **ISO 18013-7 Annex C only**, with **ISO/IEC 18013-5 mdoc/mDL**
 credentials, and the request is **always signed** - `expectedOrigins` is
 mandatory.
+
+**Before you build**: run the integrator intake in `igrantio-ows-overview` - environment, API key, tenancy, backend host, webhooks, frontend - one question at a time, a recommended default with each.
 
 ## Prerequisites
 - A DC-API-capable browser (Chrome 141+, or flag-enabled earlier builds).
