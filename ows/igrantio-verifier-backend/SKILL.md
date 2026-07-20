@@ -63,6 +63,9 @@ Default `PORT=6002` so it can run alongside an issuer backend.
 See `igrantio-ows-overview/references/api-reference.md` §2 and §4.
 
 ## Adapting
+- **Query patterns**: ready-made DCQL workflows (trusted authority, claim
+  sets, credential sets, KYC, optional groups, multiple instances, value
+  matching) live in the `igrantio-dcql-*` workflow skills.
 - **Multi-instance**: replace `InMemoryEventStore` with a shared store.
 - **Key storage**: replace `EnvTenantStore` with a DB/secret-manager `TenantStore`.
 - **Path scope**: `VERIFIER_PERMITTED_PREFIXES` in `server.ts` is the allow-list.

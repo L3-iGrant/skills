@@ -67,6 +67,8 @@ If `requestPresentation` returns a `verificationHistory.dcApiRequest`, call
 `invokeWallet(dcApiRequest)` from `dcApi.ts`, then post the result back to OWS via
 the proxy (`buildReceivePayload`) on an allow-listed receive path. The SSE stream
 still delivers the final verified result, so the render path is unchanged.
+Platform-specific end-to-end recipes: `igrantio-dcapi-android` (OpenID4VP) and
+`igrantio-dcapi-ios` (ISO 18013-7 Annex C, signed).
 
 ## Clean-code notes
 - No `@igrant/*` SDK; OWS specifics live in the client, flow logic in the hook,

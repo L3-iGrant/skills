@@ -64,6 +64,27 @@ building blocks, so your agent installs only what the task needs.
 | [`igrantio-qr-code`](./ows/igrantio-qr-code) | Wallet QR panel: centre logo, green tick, refresh, open-in-wallet, tx code | frontend-client |
 | [`igrantio-individuals`](./consent/igrantio-individuals) | Onboard users as Consent BB individuals (userId to individualId mapping) | none |
 | [`igrantio-consent-records`](./consent/igrantio-consent-records) | Record, read, withdraw, and erase consents | individuals |
+
+### Workflow recipes
+
+Tailored end-to-end workflows. Each mirrors one iGrant.io documentation
+workflow, embeds its exact payloads, links its source page (the skill defers
+to the doc if they ever disagree), and tells the agent what the integrator
+may adjust.
+
+| Skill | Workflow |
+| --- | --- |
+| [`igrantio-ebw-owner-id`](./workflows/igrantio-ebw-owner-id) | Issue the European Business Wallet Owner ID (LPID, EWC RFC005) |
+| [`igrantio-eu-age-verification`](./workflows/igrantio-eu-age-verification) | EU Age Verification: mdoc age_over_NN issue + verify |
+| [`igrantio-dcapi-android`](./workflows/igrantio-dcapi-android) | Verify via the Digital Credentials API on Android (OpenID4VP) |
+| [`igrantio-dcapi-ios`](./workflows/igrantio-dcapi-ios) | Verify via the Digital Credentials API on iOS (ISO 18013-7 Annex C) |
+| [`igrantio-dcql-trusted-authority`](./workflows/igrantio-dcql-trusted-authority) | DCQL: accept only trust-list-anchored issuers |
+| [`igrantio-dcql-claim-sets`](./workflows/igrantio-dcql-claim-sets) | DCQL: preferred claim with fallback (age check) |
+| [`igrantio-dcql-credential-sets`](./workflows/igrantio-dcql-credential-sets) | DCQL: identity alternatives (PID / Passport / Photo ID) |
+| [`igrantio-dcql-kyc`](./workflows/igrantio-dcql-kyc) | DCQL: KYC with Photo ID + address proof |
+| [`igrantio-dcql-student-pass`](./workflows/igrantio-dcql-student-pass) | DCQL: mandatory + optional groups (student pass) |
+| [`igrantio-dcql-multiple-statements`](./workflows/igrantio-dcql-multiple-statements) | DCQL: multiple instances of one credential (bank statements) |
+| [`igrantio-dcql-postal-codes`](./workflows/igrantio-dcql-postal-codes) | DCQL: claim value matching (restricted postal codes) |
 <!-- END SKILLS -->
 
 Every skill ships a runnable TypeScript reference implementation in its
