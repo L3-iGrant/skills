@@ -75,7 +75,13 @@ Each skill is versioned individually through the `metadata.version` field in
 its `SKILL.md`, following the `yyyy.mm.NN` scheme, where `yyyy.mm` is the year
 and month of the release and `NN` is the release number within that month. The
 current release is `2026.07.02`. Versions are bumped whenever a skill's
-contract changes; re-run the install command to pick up updates.
+contract changes.
+
+To update installed skills to the latest release:
+
+```bash
+npx skills update
+```
 
 ## Support
 
