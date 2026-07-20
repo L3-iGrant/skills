@@ -33,20 +33,132 @@ export interface IssueInTimeRequest {
   individualId?: string;
 }
 
+// ------------------------------------------------- Transaction data (SCA) ---
+
+/** A payee / merchant shown by the wallet. */
+export interface ScaParty {
+  name: string;
+  id?: string;
+  logo?: string;
+  website?: string;
+}
+
+/** A payment / account-information service provider (PISP or AISP). */
+export interface ScaProvider {
+  legal_name: string;
+  brand_name: string;
+  domain_name: string;
+}
+
+/** Merchant-initiated-transaction limits inside a recurrence block. */
+export interface ScaMitOptions {
+  amount_variable?: boolean;
+  min_amount?: number;
+  max_amount?: number;
+  total_amount?: number;
+  initial_amount?: number;
+  initial_amount_number?: number;
+  apr?: number;
+}
+
+/**
+ * Recurring schedule. Omit the whole block for one-off payments - OWS
+ * rejects an empty `frequency` string.
+ */
+export interface ScaRecurrence {
+  /** "yyyy-mm-dd" */
+  start_date: string;
+  /** "yyyy-mm-dd" */
+  end_date?: string;
+  /** Number of occurrences. */
+  number?: number;
+  /** TS12 frequency code, e.g. "MNTH" (monthly), "ADHO" (ad hoc). */
+  frequency: string;
+  mit_options?: ScaMitOptions;
+}
+
+/** `urn:eudi:sca:payment:1` - payment confirmation (card or account). */
+export interface ScaPaymentPayload {
+  transaction_id: string;
+  /** ISO 8601 date-time. */
+  date_time: string;
+  payee: ScaParty;
+  /** Present for account payments initiated via a PISP. */
+  pisp?: ScaProvider;
+  /** "yyyy-mm-dd"; "" or omitted = immediate, future date = scheduled. */
+  execution_date?: string;
+  /** ISO 4217 code. */
+  currency: string;
+  amount: number;
+  amount_estimated?: boolean;
+  amount_earmarked?: boolean;
+  /** SEPA instant credit transfer. */
+  sct_inst?: boolean;
+  recurrence?: ScaRecurrence;
+}
+
+/** `urn:eudi:sca:emandate:1` - e-mandate (SEPA direct debit / card MIT). */
+export interface ScaEMandatePayload {
+  transaction_id: string;
+  date_time: string;
+  /** Mandate validity, "yyyy-mm-dd". */
+  start_date: string;
+  end_date: string;
+  reference_number: string;
+  creditor_id: string;
+  purpose: string;
+  /** Per-charge economics; populate `recurrence` for recurring mandates. */
+  payment_payload: ScaPaymentPayload;
+}
+
+/** `urn:eudi:sca:login_risk_transaction:1` - login / risk-based action. */
+export interface ScaLoginRiskPayload {
+  transaction_id: string;
+  date_time: string;
+  /** e.g. "Piggy Bank Online Banking". */
+  service: string;
+  /** The action being authorised, e.g. "Change daily transaction limit". */
+  action: string;
+  action_type?: string;
+}
+
+/** `urn:eudi:sca:account_access:1` - AISP account-information consent. */
+export interface ScaAccountAccessPayload {
+  transaction_id: string;
+  date_time: string;
+  aisp: ScaProvider;
+  /** Keep short - OWS enforces a length limit. */
+  description: string;
+}
+
+/** EUDI SCA rulebook (TS12) payload; the family implies the `type` urn. */
+export type ScaPayload =
+  | ScaPaymentPayload
+  | ScaEMandatePayload
+  | ScaLoginRiskPayload
+  | ScaAccountAccessPayload;
+
+/** QES document signing: the wallet signs the linked document. */
+export interface QesData {
+  /** Document type, e.g. "pdf". */
+  type: string;
+  external_link: string;
+}
+
 /**
  * Wallet-displayed, wallet-signed transaction data (Strong Customer
  * Authentication). Exactly one variant:
  * - payment_data: simple payment (legacy shape)
- * - payload: EUDI SCA rulebook (TS12) payment / e-mandate / login-risk /
- *   account-access payload; OWS wraps it into the OpenID4VP transaction_data
- *   array entry (type urn, credential_ids, hash alg)
+ * - payload: EUDI SCA rulebook (TS12) payload; OWS wraps it into the
+ *   OpenID4VP transaction_data array entry (type urn, credential_ids,
+ *   hash alg)
  * - qes_data: QES document signing
  * The wallet's KB-JWT echoes matching transaction_data_hashes.
  */
 export type TransactionData =
   | { payment_data: { payee: string; currency_amount: { currency: string; value: string | number } } }
-  | { payload: Record<string, unknown> }
-  | { qes_data: { type: string; external_link: string } };
+  | { payload: ScaPayload }
+  | { qes_data: QesData };
 
 export interface StartDeferredRequest {
   issuanceMode: "Deferred";

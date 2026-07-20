@@ -123,28 +123,86 @@ Exactly one key:
    ```
 2. **EUDI SCA rulebook (TS12) payload** - send only the inner payload; OWS
    wraps it into the OpenID4VP `transaction_data` array entry (`type` urn,
-   `credential_ids`, `transaction_data_hashes_alg`) for you:
+   `credential_ids`, `transaction_data_hashes_alg`) for you. Four payload
+   families; the family implies the `type` urn. Exact TypeScript models
+   (`ScaPaymentPayload` etc.) are in the frontend skills' `lib/ows/types.ts`.
+
+   **Payment** (`urn:eudi:sca:payment:1`) - card or account payment:
    ```jsonc
    {
      "payload": {
-       "transaction_id": "txn-84729", "date_time": "2026-05-05T15:30:00Z",
-       "payee": { "name": "Fast ferries", "id": "MERCH-FF-99384", "logo": "https://…", "website": "https://…" },
-       "pisp": { "legal_name": "…", "brand_name": "…", "domain_name": "…" },  // account payment via a PISP
-       "execution_date": "2026-05-12",                                        // scheduled (future-dated) payment
-       "currency": "EUR", "amount": 120.00,
-       "amount_estimated": false, "amount_earmarked": true, "sct_inst": false,
-       "recurrence": { "start_date": "2026-06-01", "end_date": "2027-05-01", "number": 12, "frequency": "MNTH" },
-       "mit_options": { "amount_variable": true, "min_amount": 85.00, "max_amount": 100.00, "total_amount": 1020.00 }
+       "transaction_id": "txn-84729",                // required
+       "date_time": "2026-05-05T15:30:00Z",          // required, ISO 8601
+       "payee": {                                    // required
+         "name": "Travel Company",                   //   required
+         "id": "SE556789-5678",                      //   optional (org / merchant id)
+         "logo": "https://…", "website": "https://…" //   optional
+       },
+       "pisp": {                                     // optional - account payment via a PISP
+         "legal_name": "Worldline SA", "brand_name": "Worldline", "domain_name": "worldline.com"
+       },
+       "execution_date": "2026-05-12",               // optional "yyyy-mm-dd"; "" = immediate, future = scheduled
+       "currency": "SEK",                            // required, ISO 4217
+       "amount": 1250,                               // required, number
+       "amount_estimated": false,                    // optional
+       "amount_earmarked": false,                    // optional
+       "sct_inst": true,                             // optional - SEPA instant
+       "recurrence": {                               // optional - ONLY for recurring payments
+         "start_date": "2026-06-01",                 //   required "yyyy-mm-dd"
+         "end_date": "2027-06-01",                   //   optional
+         "number": 12,                               //   optional occurrence count
+         "frequency": "MNTH",                        //   required TS12 code ("MNTH", "ADHO", …) - never ""
+         "mit_options": {                            //   optional merchant-initiated-transaction limits
+           "amount_variable": false, "min_amount": 0, "max_amount": 0,
+           "total_amount": 15000, "initial_amount": 0, "initial_amount_number": 0, "apr": 0
+         }
+       }
      }
    }
    ```
-   Payload families (the `urn:eudi:sca:*:1` types): **payment** (above);
-   **e-mandate** (`start_date`, `end_date`, `reference_number`, `creditor_id`,
-   `purpose`, nested `payment_payload`); **login / risk transaction**
-   (`transaction_id`, `date_time`, `service`, `action`); **account access /
-   AISP** (`aisp { legal_name, brand_name, domain_name }`, `description`).
    Omit `recurrence` entirely for one-off payments - OWS rejects an empty
-   `frequency` string.
+   `frequency` string. Note `mit_options` nests **inside** `recurrence`.
+
+   **E-mandate** (`urn:eudi:sca:emandate:1`) - SEPA direct debit / card MIT:
+   ```jsonc
+   {
+     "payload": {
+       "transaction_id": "mandate-998811",           // required
+       "date_time": "2026-05-05T19:20:00Z",          // required
+       "start_date": "2026-06-01",                   // required - mandate validity "yyyy-mm-dd"
+       "end_date": "2027-06-01",                     // required
+       "reference_number": "MANDATE-FF-555888",      // required
+       "creditor_id": "SE903289-1935",               // required
+       "purpose": "Monthly travel subscription authorisation",  // required
+       "payment_payload": { /* a full Payment payload (above) - recurrence populated for recurring mandates */ }
+     }
+   }
+   ```
+
+   **Login / risk transaction** (`urn:eudi:sca:login_risk_transaction:1`):
+   ```jsonc
+   {
+     "payload": {
+       "transaction_id": "login-abc123",             // required
+       "date_time": "2026-05-05T18:05:00Z",          // required
+       "service": "Piggy Bank Online Banking",       // required
+       "action": "Change daily transaction limit from 1,000 SEK to 10,000 SEK",  // required
+       "action_type": "change_limit"                 // optional
+     }
+   }
+   ```
+
+   **Account access / AISP** (`urn:eudi:sca:account_access:1`):
+   ```jsonc
+   {
+     "payload": {
+       "transaction_id": "aisp-445566",              // required
+       "date_time": "2026-05-05T21:00:00Z",          // required
+       "aisp": { "legal_name": "Insurance Company AB", "brand_name": "Insurance Company", "domain_name": "insurancecompany.se" },  // required
+       "description": "Read access to account balance and transaction history."  // required - keep short, OWS enforces a length limit
+     }
+   }
+   ```
 3. **QES document signing** - the wallet signs the linked document:
    ```jsonc
    { "qes_data": { "type": "pdf", "external_link": "https://…/service/file/<fileId>" } }
