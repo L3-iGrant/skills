@@ -17,6 +17,11 @@ Credential formats and standards covered: SD-JWT VC, W3C VC 2.0, mso_mdoc, and
 webhook/SSE patterns for wallet interactions under eIDAS 2.0
 (EU Regulation 2024/1183).
 
+> [!NOTE]
+> Each skill is versioned individually through the `metadata.version` field in
+> its `SKILL.md`, and versions are bumped whenever a skill's contract changes.
+> Re-run the install command to pick up updates.
+
 ## Quick start
 
 ```bash
