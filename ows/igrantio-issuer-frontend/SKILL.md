@@ -33,7 +33,10 @@ Depends on `igrantio-frontend-client` (vendored at `src/lib/ows/`) and an
 ## Flow (what happens)
 1. `POST …/credential/issue` → read `credentialHistory.CredentialExchangeId`
    (SSE key) and `credentialHistory.credentialOffer` (QR URI).
-2. Open SSE on the exchange id; render the QR / same-device button.
+2. Open SSE on the exchange id; render the QR / same-device button. For the
+   full QR panel (optional centre logo, green tick on scan, refresh,
+   open-in-wallet button, tx-code block) use `igrantio-qr-code` - it asks the
+   integrator about the logo and tick options.
 3. SSE `data.credential.status`:
    - `offer_received` → (deferred) push claims via `PUT …/credential/history/{id}`.
    - `credential_accepted` / `token_issued` → **done**, close SSE.

@@ -1,0 +1,29 @@
+{
+  "name": "igrantio-qr-code",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Wallet QR panel: centre logo, refresh, open-in-wallet, tx code, and pending/scanned/error states for OWS flows.",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "qrcode": ">=1.5"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "qrcode": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/qrcode": "1.5.6",
+    "@types/react": "18.3.31",
+    "qrcode": "1.5.4",
+    "react": "18.3.1",
+    "typescript": "5.9.3"
+  }
+}

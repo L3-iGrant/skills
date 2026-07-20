@@ -35,7 +35,9 @@ React layer (peer deps: `react`, and `qrcode` for `QrCode`):
 - **`useSSE()`** → `{ open, close }`
 - **`useOwsClient(baseUrl, apiKey?)`** - memoised client
 - **`useCredentialHistory` / `useVerificationHistory`** - optional polling reads
-- **`QrCode`** component + **`openInWallet(uri)`** deep-link helper
+- **`QrCode`** component + **`openInWallet(uri)`** deep-link helper - minimal
+  URI-to-image only; for the full panel (centre logo, green tick, refresh,
+  wallet button, tx code) use `igrantio-qr-code`
 
 ## Reference layout (vendor into your app)
 Copy [`./references/lib/ows`](./references/lib/ows) into your app at `src/lib/ows/`.

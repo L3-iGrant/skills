@@ -41,7 +41,10 @@ a QR (or use the same-device wallet), and show the disclosed claims and the
    QES signing - typed as `TransactionData` in `lib/ows/types.ts`; shapes in
    `igrantio-ows-overview` api-reference §2.1) so the wallet displays and
    signs over the transaction details.
-2. Open SSE on the exchange id; render the QR / same-device button.
+2. Open SSE on the exchange id; render the QR / same-device button. For the
+   full QR panel (optional centre logo, green tick on scan, refresh,
+   open-in-wallet button) use `igrantio-qr-code` - it asks the integrator
+   about the logo and tick options.
 3. SSE `data.presentation`: once `vpTokenResponse.length > 0`, read
    `presentation[0]` (disclosed claims) and `verified` (decision). Accept only
    when `verified === true` (plus your trust rules).
