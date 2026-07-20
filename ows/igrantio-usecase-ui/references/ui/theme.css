@@ -1,34 +1,68 @@
 /*
  * iGrant.io use-case UI theme.
  * Design tokens plus the default shell layout and primitive styles. Import once
- * (AppShell does this for you). Values are ported from the iGrant.io landing
- * page (src/styles/_variables.scss, Navbar.astro, Footer.astro); do not invent
- * new numbers, reuse these.
+ * (AppShell does this for you). Chrome values (navbar/footer) are ported from
+ * the iGrant.io landing page (Navbar.astro, Footer.astro, _variables.scss);
+ * use-case values (layout, stepper, buttons, headings, content card) are ported
+ * from the iGrant.io use-case SDK (@igrant/usecase-sdk styles/_variables.scss
+ * and its component styles). Do not invent new numbers, reuse these.
  */
 
-@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap");
+
+/*
+ * Headings use the proprietary "Byrd" face. To match exactly, copy
+ * Byrd-Bold and Byrd-Regular (woff2/woff) from an iGrant.io deployment's
+ * /assets/fonts/ into a fonts/ folder next to this file; until then the
+ * heading font falls back to Plus Jakarta Sans.
+ */
+@font-face {
+  font-family: "Byrd";
+  src: url("./fonts/Byrd-Bold.woff2") format("woff2"),
+    url("./fonts/Byrd-Bold.woff") format("woff");
+  font-weight: bold;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Byrd";
+  src: url("./fonts/Byrd-Regular.woff2") format("woff2"),
+    url("./fonts/Byrd-Regular.woff") format("woff");
+  font-weight: normal;
+  font-display: swap;
+}
 
 :root {
   /* Type */
   --igr-font-base: "Plus Jakarta Sans", sans-serif;
+  --igr-font-heading: "Byrd", "Plus Jakarta Sans", sans-serif;
 
   /* Monochrome palette */
   --igr-black: #000;
   --igr-white: #fff;
-  --igr-muted: #e5e5e5;   /* gray-400: footer text, dividers on light */
-  --igr-divider: #464646; /* footer social divider borders */
-  --igr-canvas: #f4f4f5;  /* app background */
+  --igr-primary: #111827;     /* active step borders, step lead headings */
+  --igr-muted: #e5e5e5;       /* gray-400: footer text, dividers on light */
+  --igr-gray-500: #adb5bd;
+  --igr-gray-600: #606060;
+  --igr-gray-700: #333;
+  --igr-divider: #464646;     /* footer social divider borders */
+  --igr-canvas: #f4f4f5;      /* app background */
+  --igr-card-border: #e5e7eb; /* step indicator cards */
+  --igr-btn-border: #dfdfdf;
+  --igr-link: #228be6;
 
-  /* Status */
-  --igr-success: #15803d;
+  /* Status (usecase-sdk) */
+  --igr-success: #28a745;
+  --igr-success-dark: #155724; /* completed-step tick circle */
   --igr-success-bg: #dcfce7;
-  --igr-alert: #b91c1c;
+  --igr-alert: #dc3545;
   --igr-alert-bg: #fee2e2;
 
-  /* Chrome dimensions (from _variables.scss) */
+  /* Chrome and layout dimensions */
   --igr-navbar-height: 5.4375rem; /* 87px */
   --igr-logo-height: 3.4375rem;   /* 55px */
   --igr-container-max: 1170px;
+  --igr-stepper-top: 20px;
 }
 
 /* Base ---------------------------------------------------------------- */
@@ -57,124 +91,300 @@
 }
 
 /* Buttons ------------------------------------------------------------- */
-/* Sharp-corner, black, uppercase (app-flow buttons, not the navbar CTA). */
+/* Ported from usecase-sdk Button.module.scss: 32px, uppercase, 2px tracking.
+   Default is white with a light border; hover inverts to black. */
 .btn {
-  appearance: none;
-  border: 1px solid var(--igr-black);
-  border-radius: 0;
-  background: var(--igr-black);
-  color: var(--igr-white);
-  font-family: var(--igr-font-base);
-  font-size: 0.875rem;
-  font-weight: 600;
-  letter-spacing: 0.0625rem;
-  text-transform: uppercase;
-  padding: 0.75rem 1.5rem;
-  cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease;
-  text-decoration: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-}
-
-.btn:hover {
+  appearance: none;
   background: var(--igr-white);
   color: var(--igr-black);
+  border: 1px solid var(--igr-btn-border);
+  border-radius: 0;
+  padding: 0 1rem;
+  height: 32px;
+  font-family: var(--igr-font-base);
+  font-size: 0.875rem;
+  font-weight: 400;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--igr-black);
+  color: var(--igr-white);
+  border-color: var(--igr-black);
 }
 
 .btn:disabled {
-  opacity: 0.4;
+  opacity: 0.6;
   cursor: not-allowed;
+}
+
+.btn.primary {
+  background: var(--igr-black);
+  color: var(--igr-white);
+  border-color: var(--igr-black);
+  font-weight: 500;
+}
+
+.btn.primary:hover:not(:disabled) {
+  background: #1f1f1f;
+  border-color: #1f1f1f;
+  color: var(--igr-white);
 }
 
 .btn.ghost {
   background: transparent;
-  color: var(--igr-black);
+  border: none;
 }
 
-.btn.ghost:hover {
+.btn.ghost:hover:not(:disabled) {
   background: var(--igr-black);
   color: var(--igr-white);
 }
 
-/* Two-column stepper plus panel layout -------------------------------- */
+/* Split layout (usecase-sdk SplitLayout: stepper sidebar + main) ------- */
 .igr-layout {
   display: grid;
-  grid-template-columns: minmax(16rem, 22rem) 1fr;
-  gap: 2rem;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  padding: 12px;
+  width: 100%;
+  max-width: var(--igr-container-max);
+  margin: 0 auto;
   align-items: start;
 }
 
-@media (max-width: 820px) {
+@media (min-width: 768px) {
   .igr-layout {
-    grid-template-columns: 1fr;
+    padding: 16px;
   }
 }
 
-/* Stepper */
+@media (min-width: 992px) {
+  .igr-layout {
+    grid-template-columns: 4fr 8fr;
+    padding: 20px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .igr-layout {
+    padding: 24px;
+  }
+}
+
+.igr-sidebar {
+  width: 100%;
+  position: sticky;
+  top: var(--igr-stepper-top);
+  padding-top: 36px;
+  min-width: 0;
+}
+
+.igr-content {
+  width: 100%;
+  padding-top: 4px;
+  min-width: 0;
+}
+
+/* Stepper (usecase-sdk VerticalStepper + StepIndicator cards) ---------- */
 .stepper {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
+  width: 100%;
+  position: sticky;
+  top: var(--igr-stepper-top);
+  max-height: 66vh;
+  overflow-y: auto;
 }
 
 .step {
+  position: relative;
+  background: var(--igr-white);
+  border: 1px solid var(--igr-card-border);
+  border-radius: 0.25rem;
+  margin-bottom: 12px;
+  width: 100%;
+  min-height: 72px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0.75rem;
+}
+
+.step.active {
+  border-color: var(--igr-primary);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.step.active .step-title,
+.step.active .step-detail {
+  font-weight: 600;
+  color: var(--igr-primary);
+}
+
+.step .step-content {
   display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.9rem 0;
-  border-bottom: 1px solid var(--igr-muted);
-  line-height: 1.5;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0.75rem 1.25rem;
+  min-width: 0;
 }
 
-.step:last-child {
-  border-bottom: none;
+.step .step-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 5px;
+  min-width: 0;
 }
 
-.step .step-marker {
-  flex: 0 0 auto;
-  width: 1.5rem;
-  height: 1.5rem;
-  border: 1px solid var(--igr-black);
-  border-radius: 0;
-  display: inline-flex;
+/* The iGrant.io step number: a 25px box with an offset L-shaped shadow. */
+.step .step-number {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
+.step .step-number::before {
+  content: "";
+  position: absolute;
+  left: -5px;
+  bottom: 1px;
+  width: 25px;
+  height: 25px;
+  border-left: 2px solid var(--igr-black);
+  border-bottom: 2px solid var(--igr-black);
+  pointer-events: none;
+}
+
+.step .step-number span {
+  position: relative;
+  width: 25px;
+  height: 25px;
+  border: 2px solid var(--igr-black);
+  border-radius: 4px;
+  background: var(--igr-white);
+  display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  background: var(--igr-white);
-}
-
-.step.active .step-marker {
-  background: var(--igr-black);
-  color: var(--igr-white);
-}
-
-/* Light-green tick when the step is done. */
-.step.done .step-marker {
-  background: var(--igr-success-bg);
-  border-color: var(--igr-success);
-  color: var(--igr-success);
-}
-
-.step .step-body {
-  flex: 1;
+  font-weight: 700;
+  color: var(--igr-black);
+  font-size: 14px;
+  margin-top: 5px;
 }
 
 .step .step-title {
+  flex: 1;
+  min-width: 0;
+  color: var(--igr-black);
+  font-family: var(--igr-font-heading);
+  font-size: 1rem;
   font-weight: 600;
   margin: 0;
+  line-height: 1.4;
+  overflow-wrap: break-word;
+}
+
+/* Completed: solid dark-green circle with a white tick. */
+.step .step-tick {
+  background: var(--igr-success-dark);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--igr-white);
+  font-size: 14px;
 }
 
 .step .step-detail {
-  margin: 0.25rem 0 0;
-  color: var(--igr-divider);
-  font-size: 0.875rem;
+  font-family: var(--igr-font-base);
+  color: var(--igr-black);
+  font-size: 1rem;
+  line-height: 1.4;
+  font-weight: 400;
+  margin: 0;
+  padding-left: 5px;
+  overflow-wrap: break-word;
+}
+
+/* Title sits after 5px padding + 36px number + 8px gap = 49px. */
+.step .step-detail.with-number {
+  padding-left: 49px;
+}
+
+/* Headings (usecase-sdk Typography: Byrd) ------------------------------ */
+.igr-h1,
+.igr-h2,
+.igr-h3,
+.igr-h4,
+.igr-h5,
+.igr-h6 {
+  font-family: var(--igr-font-heading);
+  color: var(--igr-black);
+  margin: 0 0 1.5rem;
+  line-height: 1.2;
+}
+
+.igr-h1 { font-size: 3rem; font-weight: 700; }     /* 48px */
+.igr-h2 { font-size: 2.125rem; font-weight: 500; } /* 34px */
+.igr-h3 { font-size: 1.625rem; font-weight: 500; } /* 26px, intro title */
+.igr-h4 { font-size: 1.25rem; font-weight: 500; }  /* 20px */
+.igr-h5 { font-size: 1.125rem; font-weight: 600; } /* 18px */
+.igr-h6 { font-size: 1rem; font-weight: 700; }     /* 16px, section title */
+
+/* Content card (usecase-sdk ContentCard: a step's main column) --------- */
+.content-card {
+  width: 100%;
+  min-height: 0;
+  background: transparent;
+  padding: 2rem;
+  border-radius: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  scroll-margin-top: 5.5rem;
+}
+
+.content-card .content-wrapper {
+  width: 100%;
+  max-width: 800px;
+}
+
+.content-card .content-wrapper p {
+  margin-bottom: 1.25rem;
+}
+
+/* Every step's lead heading: bold, left-aligned, 1.6rem, dark grey. */
+.content-card .content-wrapper > h1:first-of-type,
+.content-card .content-wrapper > h2:first-of-type,
+.content-card .content-wrapper > h3:first-of-type {
+  text-align: left;
+  font-weight: 600;
+  font-size: 1.6rem;
+  line-height: 1.2;
+  color: var(--igr-primary);
+  margin: 0 0 0.6rem;
+}
+
+/* Step navigation (usecase-sdk StepNavigation) ------------------------- */
+.step-nav {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 2rem;
 }
 
 /* Panel */

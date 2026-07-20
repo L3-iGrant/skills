@@ -1,12 +1,12 @@
 ---
 name: igrantio-usecase-ui
-description: 'Default iGrant.io look and feel for EUDI Wallet (EUDIW) and European Business Wallet (EUBW) use-case frontends: a theme (design tokens plus Plus Jakarta Sans, monochrome palette, sharp-corner black uppercase buttons, two-column stepper-plus-panel layout, QR box, status stages), a page shell (Header + Footer ported 1:1 from the iGrant.io landing page), a few primitives (Stepper/Step, Panel, Field, Button, QrBox, StatusStage), and strings-driven i18n. Used by default when the user has not specified their own UI or layout. No component-library sprawl; no runtime deps beyond React (peer) plus qrcode.'
+description: 'Default iGrant.io look and feel for EUDI Wallet (EUDIW) and European Business Wallet (EUBW) use-case frontends, ported at exact values from the iGrant.io use-case SDK and landing page: design tokens (Plus Jakarta Sans body, Byrd headings, monochrome palette), the 4fr/8fr split layout with sticky stepper sidebar, StepIndicator cards with the offset-shadow number box and green completion tick, 32px uppercase buttons, content card, QR box, status stages, a page shell (Header + Footer ported 1:1 from the landing page), and strings-driven i18n. Used by default when the user has not specified their own UI or layout. No component-library sprawl; no runtime deps beyond React (peer) plus qrcode.'
 license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, UI theme, design tokens, React, i18n
-  version: 2026.07.01
-  design-source: iGrant.io landing page (Navbar.astro, Footer.astro, _variables.scss)
+  version: 2026.07.03
+  design-source: iGrant.io landing page (Navbar.astro, Footer.astro, _variables.scss) + use-case SDK (@igrant/usecase-sdk styles and components)
   font: Plus Jakarta Sans
   auth: none
   requires-skills: igrantio-frontend-client
@@ -28,13 +28,23 @@ No component-library sprawl, and no runtime deps beyond what
 ## What it provides (`references/`)
 - **`assets/`** - vendored brand assets: `iGrant_210_55_BW.svg` (the white
   iGrant.io logo) and `whatsapp.png`.
-- **`ui/theme.css`** - design tokens plus Plus Jakarta Sans; monochrome palette
-  (`#000`, `#fff`, muted `#e5e5e5`, divider `#464646`, canvas `#f4f4f5`),
-  success `#15803d` / `#dcfce7`, alert red; sharp-corner black uppercase buttons
-  (`.btn`, `.btn.ghost`); form fields; the two-column stepper-plus-panel layout
-  (`.igr-layout`); `.step` with a light-green tick when done; QR box; and status
-  stages (content left-aligned, action buttons right-aligned). Also holds the
-  navbar/footer chrome classes at their exact ported values.
+- **`ui/theme.css`** - design tokens and use-case styles at the exact SDK
+  values: Plus Jakarta Sans body plus **Byrd headings** (`--igr-font-heading`;
+  copy `Byrd-Regular`/`Byrd-Bold` woff2 from an iGrant.io deployment's
+  `/assets/fonts/` into `ui/fonts/` to match exactly, otherwise it falls back
+  to Plus Jakarta Sans); monochrome palette plus `#111827` primary, card
+  border `#e5e7eb`, success `#28a745` (tick circle `#155724`), error
+  `#dc3545`; **buttons** at 32px height, `2px` letter-spacing, uppercase,
+  white default / `.primary` black / `.ghost`; the **split layout**
+  (`.igr-layout`: 1 column mobile, `4fr 8fr` from 992px, max 1170px, sticky
+  sidebar top 20px); **stepper cards** (`.step`: white, `0.25rem` radius,
+  min-height 72px, active `#111827` border + shadow, the 25px number box with
+  the offset L-shaped shadow, dark-green tick circle when done, Byrd titles);
+  Byrd heading classes (`.igr-h1`..`.igr-h6`, 48/34/26/20/18/16px); the
+  **content card** (transparent, 2rem padding, content capped at 800px, lead
+  heading 1.6rem/600/`#111827`); step navigation; form fields; QR box; status
+  stages. Also holds the navbar/footer chrome classes at their exact ported
+  landing-page values.
 - **`ui/Header.tsx`** and **`ui/Footer.tsx`** - a 1:1 port of the landing-page
   `Navbar.astro` and `Footer.astro` (navbar 5.4375rem = 87px, logo 3.4375rem =
   55px, black `#000` bar, nav links 16px with 0.125rem letter-spacing and
@@ -44,9 +54,10 @@ No component-library sprawl, and no runtime deps beyond what
   not invented.
 - **`ui/AppShell.tsx`** - the default page frame: `<Header/> {children}
   <Footer/>` plus the theme. Consumers wrap a flow in this.
-- **`ui/primitives.tsx`** - small styled building blocks only: `Stepper` /
-  `Step`, `Panel`, `Field`, `Button`, `QrBox`, `StatusStage`. Nothing beyond
-  these.
+- **`ui/primitives.tsx`** - small styled building blocks only: `SplitLayout`,
+  `Stepper` / `Step` (number box, tick, active card), `ContentCard`,
+  `StepNav`, `Panel`, `Field`, `Button` (`primary` / `secondary` / `ghost`),
+  `QrBox`, `StatusStage`. Nothing beyond these.
 - **`ui/strings.ts`** - a typed `UiStrings` object plus the default English
   `en`. All visible chrome text (and the nav/social/legal links) lives here; to
   localize, spread `en` and override.
@@ -65,22 +76,27 @@ assets/
 
 ## Usage
 ```tsx
-import { AppShell, Stepper, Step, Panel, Field, Button, QrBox, StatusStage } from "./ui";
+import { AppShell, SplitLayout, Stepper, Step, ContentCard, StepNav, Button, QrBox, StatusStage } from "./ui";
 
 <AppShell>
-  <div className="igr-layout">
-    <Stepper>
-      <Step title="Request" done />
-      <Step title="Scan QR" active />
-      <Step title="Issued" />
-    </Stepper>
-    <Panel>
+  <SplitLayout
+    sidebar={
+      <Stepper>
+        <Step number={1} title="Request" done />
+        <Step number={2} title="Scan QR" detail="Use your EUDI Wallet" active />
+        <Step number={3} title="Issued" />
+      </Stepper>
+    }
+  >
+    <ContentCard>
+      <h2>Scan the QR code</h2>
       <QrBox><img src={qrDataUri} alt="Scan to continue" /></QrBox>
-      <StatusStage tone="success" actions={<Button>Done</Button>}>
+      <StatusStage tone="success" actions={<Button variant="primary">Done</Button>}>
         Credential accepted.
       </StatusStage>
-    </Panel>
-  </div>
+      <StepNav back={<Button>Back</Button>} next={<Button variant="primary">Next</Button>} />
+    </ContentCard>
+  </SplitLayout>
 </AppShell>
 ```
 
