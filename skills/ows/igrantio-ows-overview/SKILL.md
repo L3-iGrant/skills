@@ -1,6 +1,6 @@
 ---
 name: igrantio-ows-overview
-description: Architecture, glossary, and the full iGrant.io Organisation Wallet Suite (OWS) API reference for issuance (OpenID4VCI) and verification (OpenID4VP + DCQL), including which response fields to extract and how webhooks correlate to a browser session over SSE. Read this first before building an OWS issuer or verifier backend/frontend, or whenever you need the exact OWS endpoint, payload, or response shape.
+description: Architecture, glossary, and the full iGrant.io Organisation Wallet Suite (OWS) API reference for issuing and verifying EUDI Wallet and European Business Wallet credentials, covering issuance (OpenID4VCI) and verification (OpenID4VP + DCQL), including which response fields to extract and how webhooks correlate to a browser session over SSE. Read this first before building an OWS issuer or verifier backend/frontend, or whenever you need the exact OWS endpoint, payload, or response shape.
 license: Apache-2.0
 metadata:
   provider: iGrant.io
