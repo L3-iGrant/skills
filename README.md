@@ -57,6 +57,7 @@ building blocks, so your agent installs only what the task needs.
 | [`igrantio-backend-webhooks`](./ows/igrantio-backend-webhooks) | Register, receive, and HMAC-verify OWS webhooks | overview |
 | [`igrantio-backend-sse`](./ows/igrantio-backend-sse) | Stream webhook events to the browser over SSE | webhooks |
 | [`igrantio-frontend-client`](./ows/igrantio-frontend-client) | Dependency-free typed OWS browser client plus React hooks | overview |
+| [`igrantio-usecase-ui`](./ows/igrantio-usecase-ui) | Default iGrant.io look and feel: theme, app shell, primitives, strings-driven i18n | frontend-client |
 | [`igrantio-individuals`](./consent/igrantio-individuals) | Onboard users as Consent BB individuals (userId to individualId mapping) | none |
 | [`igrantio-consent-records`](./consent/igrantio-consent-records) | Record, read, withdraw, and erase consents | individuals |
 <!-- END SKILLS -->
