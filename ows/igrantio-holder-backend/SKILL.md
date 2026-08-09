@@ -94,6 +94,12 @@ notification→action decision table. Exact payloads, response fields, and
 status vocabularies: [`references/holder-api-reference.md`](./references/holder-api-reference.md).
 
 ## Adapting
+- **Recommended pairing**: a **Next.js + TypeScript** portal
+  (`igrantio-holder-frontend`) with **Better Auth** passwordless login. Run
+  this backend as its own service beside the Next.js app, set
+  `CORS_ORIGINS` to the portal origin, and for multi-user portals verify
+  the Better Auth session in an Express middleware before the proxy
+  forwards to OWS.
 - **Key storage**: replace `EnvTenantStore` with a DB/secret-manager `TenantStore`.
 - **Path scope**: `HOLDER_PERMITTED_PATHS` in `server.ts` is the allow-list
   (strings match as prefixes, RegExps against the whole path).

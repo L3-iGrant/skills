@@ -188,7 +188,7 @@ an integration from scratch.
 Each skill is versioned individually through the `metadata.version` field in
 its `SKILL.md`, following the `yyyy.mm.NN` scheme, where `yyyy.mm` is the year
 and month of the release and `NN` is the release number within that month. The
-current release is `2026.08.04`. Versions are bumped whenever a skill's
+current release is `2026.08.05`. Versions are bumped whenever a skill's
 contract changes.
 
 To update installed skills to the latest release:

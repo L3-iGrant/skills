@@ -4,8 +4,8 @@ description: Umbrella recipe for building a CUSTOM European Business Wallet (EBW
 license: Apache-2.0
 metadata:
   provider: iGrant.io
-  keywords: EUBW, EBW, European Business Wallet, EUDIW, eIDAS2, holder, wallet portal, custom portal, OpenID4VCI, OpenID4VP, DCQL, notifications
-  version: 2026.08.04
+  keywords: EUBW, EBW, European Business Wallet, EUDIW, eIDAS2, holder, wallet portal, custom portal, OpenID4VCI, OpenID4VP, DCQL, notifications, Next.js, TypeScript, Better Auth, passwordless
+  version: 2026.08.05
   api: https://docs.igrant.io/docs/developer-apis
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0, DCQL, SD-JWT-VC, W3C-VC-2.0, mso_mdoc
   auth: OWS API key held only by the holder backend; the portal browser sends no key
@@ -25,15 +25,34 @@ payload), go straight to `igrantio-api-holder`.
 **Before you build**: run the integrator intake in `igrantio-ows-overview` - environment, API key, tenancy, backend host, webhooks, frontend - one question at a time, a recommended default with each. Then add the portal questions below.
 
 ## Portal intake (ask after the overview intake)
-1. **Scope** - which pages? _Recommend all four: base configuration,
+1. **Stack** - which web stack? _Recommend **Next.js (App Router) +
+   TypeScript** with **Better Auth** passwordless login (see "Recommended
+   stack" below); accept the customer's standing stack if they have one._
+2. **Scope** - which pages? _Recommend all four: base configuration,
    received credentials, shared credentials, notifications._
-2. **Scaffold or custom** - start from the ready `HolderPortal` scaffold and
+3. **Scaffold or custom** - start from the ready `HolderPortal` scaffold and
    restyle, or build custom views on the hooks + engines?
    _Recommend the scaffold first; every view works standalone._
-3. **Look** - the customer's design system, or the default iGrant.io look
+4. **Look** - the customer's design system, or the default iGrant.io look
    (`igrantio-usecase-ui`)? _The reference components are unstyled on purpose._
-4. **EBW onboarding state** - is the organisation's wallet unit already
-   `valid` (WUA + Owner ID/LPID issued)? If not, plan step 6.
+5. **EBW onboarding state** - is the organisation's wallet unit already
+   `valid` (WUA + Owner ID/LPID issued)? If not, plan step 7.
+
+## Recommended stack
+Unless the customer has a standing choice, recommend and scaffold:
+- **Next.js (App Router) + TypeScript** for the portal
+  (`npx create-next-app@latest --typescript`). All reference code is strict
+  TypeScript; mount the holder views in client components (`"use client"`) -
+  they use `EventSource`, the clipboard, and `window`.
+- **Better Auth (<https://www.better-auth.com>) for passwordless portal
+  login** - magic link or email OTP (add passkeys where wanted) so portal
+  users sign in without passwords. Protect the portal routes with the Better
+  Auth session (middleware). Portal login is **orthogonal to wallet auth**:
+  the OWS API key lives only in the holder backend, whoever is signed in.
+- Run the holder backend (the Express reference) as its own service beside
+  the Next.js app. Set its `CORS_ORIGINS` to the portal origin; for
+  multi-user portals, verify the Better Auth session in a proxy middleware
+  before forwarding to OWS.
 
 ## Build order
 
@@ -41,11 +60,12 @@ payload), go straight to `igrantio-api-holder`.
 | --- | --- | --- |
 | 1 | Architecture, glossary, intake | `igrantio-ows-overview` |
 | 2 | Deploy the tenant backend: API-key-hiding proxy scoped to holder endpoints + notifications SSE relay (port 6003; **no webhooks** - the holder runs on notifications) | `igrantio-holder-backend` |
-| 3 | Scaffold the portal: vendor `lib/ows`, copy `features/holder`, mount `<HolderPortal proxyBaseUrl="…/ows/<tenant>"/>` | `igrantio-holder-frontend` |
-| 4 | Wire the live inbox: SSE stream, decision table (transaction code / authorize / deferred / respond / review), delete-as-handled | `igrantio-holder-notifications` (already vendored by step 3) |
-| 5 | Restyle: swap the unstyled components into the customer's design system, or apply the default chrome | customer design system, or `igrantio-usecase-ui` |
-| 6 | EBW onboarding: bring the wallet unit to `valid` - WUA, then the Owner ID (LPID) | `igrantio-ebw-owner-id` |
-| 7 | Test every flow end to end | DCQL workflow skills (below) |
+| 3 | Scaffold the portal in the Next.js + TypeScript app: vendor `lib/ows`, copy `features/holder`, mount `<HolderPortal proxyBaseUrl="…/ows/<tenant>"/>` in a client component | `igrantio-holder-frontend` |
+| 4 | Portal login: passwordless sign-in (magic link / email OTP) guarding the portal routes | Better Auth (see Recommended stack) |
+| 5 | Wire the live inbox: SSE stream, decision table (transaction code / authorize / deferred / respond / review), delete-as-handled | `igrantio-holder-notifications` (already vendored by step 3) |
+| 6 | Restyle: swap the unstyled components into the customer's design system, or apply the default chrome | customer design system, or `igrantio-usecase-ui` |
+| 7 | EBW onboarding: bring the wallet unit to `valid` - WUA, then the Owner ID (LPID) | `igrantio-ebw-owner-id` |
+| 8 | Test every flow end to end | DCQL workflow skills (below) |
 
 ## Page map (portal page → where its rules and code live)
 

@@ -4,8 +4,8 @@ description: Build the browser UI for an EUDI Wallet / European Business Wallet 
 license: Apache-2.0
 metadata:
   provider: iGrant.io
-  keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, holder, wallet portal, OpenID4VCI, OpenID4VP, DCQL, claim sets, credential sets, trust list, notifications
-  version: 2026.08.03
+  keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, holder, wallet portal, OpenID4VCI, OpenID4VP, DCQL, claim sets, credential sets, trust list, notifications, Next.js, TypeScript, Better Auth, passwordless
+  version: 2026.08.05
   api: https://docs.igrant.io/docs/developer-apis
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0, DCQL, SD-JWT-VC, W3C-VC-2.0, mso_mdoc
   auth: none in the browser - the holder backend injects the OWS API key
@@ -75,10 +75,18 @@ verifier UIs are separate skills.
    notification is the "handled" signal.
 
 ## Steps
-1. Vendor `igrantio-frontend-client/references/lib/ows` into `src/lib/ows/`.
-2. Copy [`./references/features/holder`](./references/features/holder) into
+1. Host app: recommend **Next.js (App Router) + TypeScript**
+   (`npx create-next-app@latest --typescript`) unless the integrator has a
+   standing stack. The holder views run in client components
+   (`"use client"`) - they use `EventSource`, the clipboard, and `window`.
+   For portal sign-in, recommend **Better Auth** passwordless (magic link /
+   email OTP); see `igrantio-business-wallet-portal` for the full stack
+   recipe. Portal login is separate from wallet auth - the OWS key still
+   never reaches the browser.
+2. Vendor `igrantio-frontend-client/references/lib/ows` into `src/lib/ows/`.
+3. Copy [`./references/features/holder`](./references/features/holder) into
    `src/features/holder/` (includes the vendored `notificationsClient.ts`).
-3. Wire it up:
+4. Wire it up:
    ```tsx
    <HolderPortal proxyBaseUrl="https://host/ows/acme" />
    ```
