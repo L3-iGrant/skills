@@ -93,6 +93,8 @@ disagree, the agent must follow the page and check it for updates.
 | [`igrantio-api-key-management`](./apis/igrantio-api-key-management) | Keys, CSR, certificate chains, QTSP, secure vault |
 | [`igrantio-api-sandboxes`](./apis/igrantio-api-sandboxes) | Sandbox organisations and the sandbox call style |
 | [`igrantio-api-api-keys`](./apis/igrantio-api-api-keys) | API keys and sandbox binding |
+| [`igrantio-api-team-management`](./apis/igrantio-api-team-management) | Organisation admins (Manage Team): create, read, delete, list, and the passwordless-login switch per admin |
+| [`igrantio-api-user-management`](./apis/igrantio-api-user-management) | The signed-in admin's account (Manage User): profile, avatar, password, and passwordless-login methods with SSE |
 
 ### Credential schema skills
 
