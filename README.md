@@ -64,6 +64,7 @@ code.
 | [`igrantio-holder-backend`](./ows/igrantio-holder-backend) | Tenant backend for the wallet **holder** side: receive, hold, present | proxy, holder-notifications |
 | [`igrantio-holder-frontend`](./ows/igrantio-holder-frontend) | Holder portal UI: receive offers, wallet views, DCQL share wizard, trust badges | frontend-client, holder-notifications |
 | [`igrantio-holder-notifications`](./ows/igrantio-holder-notifications) | Holder notifications: REST + live SSE stream (relay + browser client) | overview |
+| [`igrantio-business-wallet-portal`](./ows/igrantio-business-wallet-portal) | Umbrella recipe: build a custom EBW portal from the holder skills | holder-backend, holder-frontend, holder-notifications |
 | [`igrantio-backend-proxy`](./ows/igrantio-backend-proxy) | API-key-hiding, multi-tenant reverse proxy building block | overview |
 | [`igrantio-backend-webhooks`](./ows/igrantio-backend-webhooks) | Register, receive, and HMAC-verify OWS webhooks | overview |
 | [`igrantio-backend-sse`](./ows/igrantio-backend-sse) | Stream webhook events to the browser over SSE | webhooks |
@@ -187,7 +188,7 @@ an integration from scratch.
 Each skill is versioned individually through the `metadata.version` field in
 its `SKILL.md`, following the `yyyy.mm.NN` scheme, where `yyyy.mm` is the year
 and month of the release and `NN` is the release number within that month. The
-current release is `2026.08.03`. Versions are bumped whenever a skill's
+current release is `2026.08.04`. Versions are bumped whenever a skill's
 contract changes.
 
 To update installed skills to the latest release:
