@@ -144,8 +144,14 @@ export class NotificationsClient {
     return (json?.notification ?? []) as HolderNotification[];
   }
 
-  /** PUT …/notification/{id} - e.g. mark a notification handled. */
-  async update(id: string, body: Record<string, unknown>): Promise<any> {
+  /** GET …/notification/{id} - read one notification. */
+  async get(id: string): Promise<HolderNotification> {
+    const json = await this.request("GET", this.url(`${NOTIFICATION_PATH}/${id}`));
+    return (json?.notification ?? json) as HolderNotification;
+  }
+
+  /** PUT …/notification/{id} - update the status; response is `{ notification: … }`. */
+  async update(id: string, body: { status: string }): Promise<any> {
     return this.request("PUT", this.url(`${NOTIFICATION_PATH}/${id}`), body);
   }
 
@@ -229,6 +235,12 @@ export function openNotificationsStream(opts: NotificationsStreamOptions): () =>
     source.onmessage = (e) => deliver(e.data);
     source.addEventListener("close", () => source?.close());
     source.onerror = (err) => {
+      // A server-sent `event: error` arrives here as a MessageEvent with data;
+      // the stream is still open, so report it and keep listening.
+      if ((err as MessageEvent).data !== undefined) {
+        opts.onError?.((err as MessageEvent).data);
+        return;
+      }
       opts.onError?.(err);
       source?.close();
       if (closed || attempts >= (opts.maxAttempts ?? 5)) return;

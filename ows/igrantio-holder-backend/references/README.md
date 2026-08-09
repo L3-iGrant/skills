@@ -18,7 +18,8 @@ npm run dev               # http://localhost:6003
 
 Allow-listed OWS paths (proxy): `…/sdjwt/credential/receive|exchange-code`,
 `…/sdjwt/credential/{id}` (+ `user-pin`, `receive-deferred`, `accept`,
-`configure`), `…/sdjwt/credentials`, `…/sdjwt/verification/receive|{id}|{id}/send`
+`configure`, `request`, `revocation-status`), `…/sdjwt/credentials`,
+`…/sdjwt/verification/receive|{id}|{id}/send`
 (v3) and `{id}/filter` + delete (v2), `…/sdjwt/verifications`, notifications
 REST, `…/holder/global-configuration(s)`, `…/wallet-unit/status`. The issuer's
 `credential/issue|history` and the verifier's `verification/send|history` are

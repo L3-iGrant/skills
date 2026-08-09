@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, holder, wallet, OpenID4VCI, OpenID4VP, DCQL, receive credential, present credential, notifications, wallet unit
-  version: 2026.08.01
+  version: 2026.08.02
   api: https://docs.igrant.io/docs/developer-apis
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0, DCQL, SD-JWT-VC, W3C-VC-2.0, mso_mdoc
   auth: OWS API key (Authorization "ApiKey <key>") injected by the proxy; browser sends no key
@@ -73,6 +73,9 @@ references/
 3. Review: `PUT …/credential/{id}/accept`, or `DELETE …/credential/{id}` to
    reject. List with `GET …/sdjwt/credentials` (response keys `credential` +
    `pagination`).
+4. Lifecycle: `PUT …/credential/{id}/request` requests reissuance of an
+   expired or near-expiry credential; `GET …/credential/{id}/revocation-status`
+   checks the IETF Token Status List.
 
 ### Present credentials (OpenID4VP + DCQL)
 1. `POST …/sdjwt/verification/receive` (v3) with `{ vpTokenQrCode, … }` →

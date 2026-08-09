@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, holder, wallet, notifications, Server-Sent Events, SSE, OpenID4VCI, OpenID4VP
-  version: 2026.08.01
+  version: 2026.08.02
   api: https://docs.igrant.io/docs/developer-apis
   auth: OWS API key injected by the backend relay/proxy; the SSE upstream reads the "authorization" query parameter
   requires-skills: igrantio-ows-overview
@@ -32,9 +32,10 @@ tenant backend proxy (`{backend}/ows/{tenant}/…`).
 | Method | Path | Purpose |
 | --- | --- | --- |
 | GET | `v2/config/digital-wallet/openid/notifications?limit=&offset=&search=&notificationType=` | list; the array is under the response's **`notification`** key |
-| PUT | `v2/config/digital-wallet/openid/notification/{id}` | update one (e.g. mark handled) |
-| DELETE | `v2/config/digital-wallet/openid/notification/{id}` | delete one (the usual "handled" signal) |
-| DELETE | `v2/config/digital-wallet/openid/notifications` | delete all |
+| GET | `v2/config/digital-wallet/openid/notification/{id}` | read one |
+| PUT | `v2/config/digital-wallet/openid/notification/{id}` | update one - body `{ "status": "<string>" }`, response `{ "notification": … }` |
+| DELETE | `v2/config/digital-wallet/openid/notification/{id}` | delete one (the usual "handled" signal, 204) |
+| DELETE | `v2/config/digital-wallet/openid/notifications` | delete all (204) |
 | GET (SSE) | `v2/config/digital-wallet/openid/notifications/sse?status=unread&limit=10&offset=0&authorization=…` | live stream |
 
 **Notification item**: `id`, `notificationType`, `notificationContent`
@@ -56,11 +57,14 @@ tenant backend proxy (`{backend}/ows/{tenant}/…`).
 | `review_credential` | `credentialStatus == "credential_acked"` | `PUT …/sdjwt/credential/{id}/accept` (or `DELETE` to reject) |
 
 **SSE specifics**:
-- Auth rides in the **`authorization` query parameter** (value e.g.
-  `ApiKey <key>` or `Bearer <jwt>`) because `EventSource` cannot send headers.
-  The key must not reach the browser, so the backend relay injects it.
-- Named events: `connected`, `config`, `notification`, `close`; also handle
-  untyped messages.
+- Auth rides in the **`authorization` query parameter** because `EventSource`
+  cannot send headers. The gateway falls back to it when the Authorization
+  header is absent and accepts both prefixes: `ApiKey <key>` and
+  `Bearer <jwt>`. The key must not reach the browser, so the backend relay
+  injects it.
+- Named events the server emits: `connected`, `notification`, `error`
+  (a server-side problem report - the stream stays open), plus `retry: 30000`
+  and a keep-alive comment every ~15s. Also handle untyped messages.
 - `notification` payloads come in two shapes: a root-level
   `{ notificationType, notificationContent, id }` or legacy
   `{ notification: [ … ] }`. De-duplicate by `id`.

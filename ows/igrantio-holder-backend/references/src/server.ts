@@ -18,8 +18,8 @@ const HOLDER_PERMITTED_PATHS: Array<string | RegExp> = [
   "v2/config/digital-wallet/openid/sdjwt/credential/receive",
   "v2/config/digital-wallet/openid/sdjwt/credential/exchange-code",
   "v2/config/digital-wallet/openid/sdjwt/credentials",
-  // one credential: GET/DELETE …/credential/{id} + user-pin / receive-deferred / accept / configure
-  /^v2\/config\/digital-wallet\/openid\/sdjwt\/credential\/(?!issue$|history(\/|$))[^/]+(\/(user-pin|receive-deferred|accept|configure))?$/,
+  // one credential: GET/DELETE …/credential/{id} + its sub-actions
+  /^v2\/config\/digital-wallet\/openid\/sdjwt\/credential\/(?!issue$|history(\/|$))[^/]+(\/(user-pin|receive-deferred|accept|configure|request|revocation-status))?$/,
   // Present credentials (OpenID4VP wallet side, v3): receive, read {id}, {id}/send, list
   "v3/config/digital-wallet/openid/sdjwt/verifications",
   /^v3\/config\/digital-wallet\/openid\/sdjwt\/verification\/(?!send$|history(\/|$))[^/]+(\/send)?$/,

@@ -131,6 +131,19 @@ PUT {base}/v2/config/digital-wallet/openid/sdjwt/credential/{credentialId}/confi
 { "autoPresent": true }   // present this credential without a manual consent step
 ```
 
+### 1.10 Request reissuance
+```
+PUT {base}/v2/config/digital-wallet/openid/sdjwt/credential/{credentialId}/request
+```
+Requests reissuance of an expired or near-expiry credential via OID4VCI.
+
+### 1.11 Check revocation status
+```
+GET {base}/v2/config/digital-wallet/openid/sdjwt/credential/{credentialId}/revocation-status
+```
+Queries the IETF Token Status List for the credential's current revocation
+status.
+
 ---
 
 ## 2. Present credentials (OpenID4VP + DCQL, wallet side)
@@ -235,18 +248,23 @@ SSE stream, and the notification→action decision table:
 | Method | Path |
 | --- | --- |
 | GET | `{base}/v2/config/digital-wallet/openid/notifications?limit=&offset=&search=&notificationType=` |
-| PUT / DELETE | `{base}/v2/config/digital-wallet/openid/notification/{id}` |
-| DELETE | `{base}/v2/config/digital-wallet/openid/notifications` |
+| GET / PUT / DELETE | `{base}/v2/config/digital-wallet/openid/notification/{id}` |
+| DELETE | `{base}/v2/config/digital-wallet/openid/notifications` (delete all, 204) |
 | GET (SSE) | `{base}/v2/config/digital-wallet/openid/notifications/sse?status=unread&limit=10&offset=0&authorization=…` |
+
+The PUT body is `{ "status": "<string>" }`; the response wraps the record as
+`{ "notification": … }`.
 
 ---
 
 ## 4. Holder global configuration
 
 ```
-GET  {base}/v2/config/digital-wallet/openid/holder/global-configurations
-POST {base}/v2/config/digital-wallet/openid/holder/global-configuration
-PUT  {base}/v2/config/digital-wallet/openid/holder/global-configuration/{holderGlobalConfigurationId}
+GET    {base}/v2/config/digital-wallet/openid/holder/global-configurations
+POST   {base}/v2/config/digital-wallet/openid/holder/global-configuration
+GET    {base}/v2/config/digital-wallet/openid/holder/global-configuration/{holderGlobalConfigurationId}
+PUT    {base}/v2/config/digital-wallet/openid/holder/global-configuration/{holderGlobalConfigurationId}
+DELETE {base}/v2/config/digital-wallet/openid/holder/global-configuration/{holderGlobalConfigurationId}
 ```
 Create/update body:
 ```jsonc
