@@ -31,8 +31,8 @@ For the holder side, read `igrantio-api-holder`. For the verifier side, read
 `igrantio-api-verifier`.
 
 ## Protocol scope
-- The issuer implements **OpenID4VCI 1.0**. Set `version` to `version_01` or
-  `v1.0-20260301` on the credential definition. Always send `version`, because
+- The issuer implements **OpenID4VCI 1.0**. Set `version` to `version_01`
+  on the credential definition. Always send `version`, because
   the issuer falls back to an earlier version of the specification when you
   leave the field out. You cannot change the value after you create the
   credential definition.
@@ -124,7 +124,7 @@ Record-level fields, valid only at the top level:
 
 | Field | Values | Note |
 | --- | --- | --- |
-| `version` | `version_01`, `v1.0-20260301` | OpenID4VCI 1.0. Always send it. You cannot change it later. |
+| `version` | `version_01` | OpenID4VCI 1.0. Always send it. You cannot change it later. |
 | `trustAnchor` | `jwk`, `did:key`, `did:ebsi`, `did:web`, `did:tdw`, `x509` | Default `did:key`. You cannot change it later. |
 | `kid` | key identifier | Must match a key in Key Management. An empty value selects the default key of the organisation. You cannot change it later. |
 | `enforceWUA` | boolean | `true` asks the holder for a valid Wallet Unit Attestation. Default `false`. |

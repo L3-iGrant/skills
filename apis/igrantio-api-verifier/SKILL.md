@@ -33,8 +33,8 @@ For the wallet side of a presentation, read `igrantio-api-holder`. For issuance,
 read `igrantio-api-issuer`.
 
 ## Protocol scope
-- The verifier implements **OpenID4VP 1.0**. Set `version` to `version_01` or
-  `v1.0-20260301` on the presentation definition. `iso18013_7_annex_c` selects
+- The verifier implements **OpenID4VP 1.0**. Set `version` to `version_01`
+  on the presentation definition. `iso18013_7_annex_c` selects
   the ISO 18013-7 Annex C profile for mDoc credentials over the Digital
   Credentials API.
 - **DCQL is the only way to give the credential requirements.** Presentation
@@ -114,7 +114,7 @@ Transport fields:
 
 | Field | Values | Note |
 | --- | --- | --- |
-| `version` | `version_01`, `v1.0-20260301`, `iso18013_7_annex_c` | The first two are OpenID4VP 1.0. `iso18013_7_annex_c` needs `trustAnchor` set to `x509` and `expectedOrigins`. |
+| `version` | `version_01`, `iso18013_7_annex_c` | `version_01` is OpenID4VP 1.0. `iso18013_7_annex_c` needs `trustAnchor` set to `x509` and `expectedOrigins`. |
 | `responseType` | `vp_token`, `id_token`, `device_response` | Default `vp_token`. `device_response` is only for `iso18013_7_annex_c`. |
 | `responseMode` | `direct_post`, `direct_post.jwt`, `dc_api`, `dc_api.jwt` | Default `direct_post`. The `.jwt` variants return an encrypted JWE. |
 | `clientIdScheme` | `redirect_uri`, `did`, `verifier_attestation`, `x509_san_dns`, `x509_hash` | Default `redirect_uri`. Send `null` for `iso18013_7_annex_c`. With the DC API response modes, `redirect_uri` is only a logical identifier. |

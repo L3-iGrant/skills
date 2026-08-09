@@ -43,12 +43,12 @@ read `igrantio-api-verifier`.
   request.
 - **Honest exceptions.** Two holder operations still work on draft versions:
   - The create credential offer operation accepts `draft_13` (default) and
-    `draft_17` only. It refuses `version_01` and `v1.0-20260301` with HTTP 400.
+    `draft_17` only. It refuses `version_01` with HTTP 400.
     Use `draft_13` until the backend adds 1.0 support.
   - The read credential issuer metadata operation takes `version` with the values
     `draft_13` (default), `draft_15` and `draft_17`.
   A credential record can therefore carry a `version` of `draft_13`,
-  `draft_15`, `draft_17`, `version_01` or `v1.0-20260301`.
+  `draft_15`, `draft_17` or `version_01`.
 
 ## Authentication
 Send the API key in the `Authorization` header with the `ApiKey` prefix and a
@@ -173,8 +173,7 @@ carries more than one credential configuration. Fields to read:
 - `credentialFormat` - `dc+sd-jwt`, `vc+sd-jwt`, `vp+sd-jwt`, `jwt_vc_json`,
   `jwt_vc` or `mso_mdoc`.
 - `revocationStatus` - `Operational`, `Revoked` or `Suspended`.
-- `version` - `draft_13`, `draft_15`, `draft_17`, `version_01` or
-  `v1.0-20260301`.
+- `version` - `draft_13`, `draft_15`, `draft_17` or `version_01`.
 - `issuer` (`name`, `location`, `cover`, `logo`, `description`),
   `credentialIssuer`, `credentialConfigurations`, `credential`,
   `credentialToken`, `autoPresent`, `presentationId`, `isWalletUnitAttestation`,
@@ -209,7 +208,7 @@ value.
 
 `credentialIssuer` is mandatory: the Credential Issuer Identifier whose metadata
 the holder reads. `version` accepts `draft_13` (default) and `draft_17` only;
-the service refuses `version_01` and `v1.0-20260301` with HTTP 400.
+the service refuses `version_01` with HTTP 400.
 `credentialConfigurationIds` names the entries of
 `credential_configurations_supported`, and it belongs to `draft_13` only.
 `scope` selects the credential definitions by scope, and it belongs to
