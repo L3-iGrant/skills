@@ -82,14 +82,23 @@ accepts it. **If you send both headers, `X-SandboxOrgId` wins**, and
 
 ### Which operations honour it
 The header is effectively universal across the OID4VC configuration surface:
-credential definitions, credentials, presentation definitions, verifications,
+credential definitions, presentation definitions, verifications,
 notifications, transaction data, trust authorities, files, scopes, key
 management, webhooks, and data agreements.
 
-The eight sandbox operations in the table above are the exception. They do
-**not** honour the header: they always work on the sandbox collection of the
-whole organisation. The wallet deploy and the deployment read
-(`POST` and `GET /v2/config/digital-wallet/openid`) also do not accept it.
+Exceptions:
+
+- The eight sandbox operations in the table above do **not** honour the
+  header: they always work on the sandbox collection of the whole
+  organisation. The wallet deploy and the deployment read
+  (`POST` and `GET /v2/config/digital-wallet/openid`) also do not accept it.
+- **The v2 holder credential operations reject a sandbox context** with the
+  error "Holder functionalities for sandbox organisation is disabled". This
+  covers receive, receive-deferred, user PIN, exchange-code, accept,
+  auto-present, list, read, delete, reissuance, the credential offer, the
+  issuer metadata read, and the holder-side filter and verification delete.
+  The v3 presentation operations, the holder global configuration, and the
+  notifications do support the sandbox context. See `igrantio-api-holder`.
 
 ### Errors
 The sandbox organisation must exist, must belong to your organisation, and must

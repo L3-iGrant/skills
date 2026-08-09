@@ -125,7 +125,7 @@ Record-level fields, valid only at the top level:
 | Field | Values | Note |
 | --- | --- | --- |
 | `version` | `version_01` | OpenID4VCI 1.0. Always send it. You cannot change it later. |
-| `trustAnchor` | `jwk`, `did:key`, `did:ebsi`, `did:web`, `did:tdw`, `x509` | Default `did:key`. You cannot change it later. |
+| `trustAnchor` | `did:key`, `x509` | Default `did:key`. You cannot change it later. |
 | `kid` | key identifier | Must match a key in Key Management. An empty value selects the default key of the organisation. You cannot change it later. |
 | `enforceWUA` | boolean | `true` asks the holder for a valid Wallet Unit Attestation. Default `false`. |
 | `supportInteractiveAuthorisationEndpoint` | boolean | Default `false`. |
@@ -150,7 +150,7 @@ mandatory in an entry.
 | `revocationMethod` | `status_list`, `status_list_2021`, `swiss_token_status_list_v1` | Default `status_list` (IETF Token Status List). `status_list_2021` is valid only with `jwt_vc_json`. |
 | `enforceCredentialUniqueness` | boolean | Default `false`. |
 | `supportCredentialReissuance` | boolean | Default `false`. |
-| `credentialBindingMethods` | `did:key`, `jwk`, `x5c`, `kid`, `cose_key` | `cose_key` is valid only with `mso_mdoc`. |
+| `credentialBindingMethods` | `jwk`, `did:key`, `cose_key` | `cose_key` is valid only with `mso_mdoc`. |
 | `authorizationRequestType` | `authorization_details`, `scope_based` | Default `authorization_details`, which forbids `scope`. `scope_based` needs `scope`. Every entry must use the same value. |
 | `scope` | string | Only with `scope_based`. Every entry must use the same value. Read the values with the list scope operation. |
 | `credentialResponseInterval` | number | Minimum polling interval, in seconds, for the Deferred Credential Endpoint. |

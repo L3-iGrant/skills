@@ -118,7 +118,7 @@ Transport fields:
 | `responseType` | `vp_token`, `id_token`, `device_response` | Default `vp_token`. `device_response` is only for `iso18013_7_annex_c`. |
 | `responseMode` | `direct_post`, `direct_post.jwt`, `dc_api`, `dc_api.jwt` | Default `direct_post`. The `.jwt` variants return an encrypted JWE. |
 | `clientIdScheme` | `redirect_uri`, `did`, `verifier_attestation`, `x509_san_dns`, `x509_hash` | Default `redirect_uri`. Send `null` for `iso18013_7_annex_c`. With the DC API response modes, `redirect_uri` is only a logical identifier. |
-| `trustAnchor` | `jwk`, `did:key`, `did:ebsi`, `did:web`, `did:tdw`, `x509` | Default `did:key`. |
+| `trustAnchor` | `did:key`, `x509` | Default `did:key`. |
 | `kid` | string | The verifier key. The organisation key is used when you send no value. The key must be valid when `dcApiRequestType` is `signed`. |
 | `dcApiRequestType` | `signed`, `unsigned` | Only with `dc_api` or `dc_api.jwt`. A missing value means `unsigned` for `dc_api` and `signed` for `dc_api.jwt`. Use `signed` in production. |
 | `expectedOrigins` | array of strings | Mandatory when the effective `dcApiRequestType` is `signed`, and for `iso18013_7_annex_c`. The wallet ignores it for an unsigned request. |

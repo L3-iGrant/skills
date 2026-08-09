@@ -92,6 +92,69 @@ disagree, the agent must follow the page and check it for updates.
 | [`igrantio-api-sandboxes`](./apis/igrantio-api-sandboxes) | Sandbox organisations and the sandbox call style |
 | [`igrantio-api-api-keys`](./apis/igrantio-api-api-keys) | API keys and sandbox binding |
 
+### Credential schema skills
+
+One skill per claim path pointer credential schema in the
+[iGrant.io verifiable data registry](https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/credentialSchemas/claimPathPointer).
+Each embeds the schema document and shows how to create the credential
+definition from it. The registry is the source of truth; the skills defer to
+it. Start with
+[`igrantio-schema-discovery`](./credential-schemas/igrantio-schema-discovery)
+when no skill matches: it also points to the
+[WE BUILD attestation rulebooks catalog](https://github.com/webuild-consortium/webuild-attestation-rulebooks-catalog)
+as the fallback source.
+
+| Skill | Credential schema |
+| --- | --- |
+| [`igrantio-credential-schema-age-verification`](./credential-schemas/igrantio-credential-schema-age-verification) | Age Verification |
+| [`igrantio-credential-schema-authenticator`](./credential-schemas/igrantio-credential-schema-authenticator) | Authenticator |
+| [`igrantio-credential-schema-boarding-pass`](./credential-schemas/igrantio-credential-schema-boarding-pass) | Boarding Pass |
+| [`igrantio-credential-schema-certificate-of-registration`](./credential-schemas/igrantio-credential-schema-certificate-of-registration) | Certificate Of Registration |
+| [`igrantio-credential-schema-e-receipt`](./credential-schemas/igrantio-credential-schema-e-receipt) | e Receipt |
+| [`igrantio-credential-schema-loyalty-card`](./credential-schemas/igrantio-credential-schema-loyalty-card) | Loyalty Card |
+| [`igrantio-credential-schema-lpid`](./credential-schemas/igrantio-credential-schema-lpid) | LPID |
+| [`igrantio-credential-schema-mobile-driving-license`](./credential-schemas/igrantio-credential-schema-mobile-driving-license) | Mobile Driving License |
+| [`igrantio-credential-schema-passport`](./credential-schemas/igrantio-credential-schema-passport) | Passport |
+| [`igrantio-credential-schema-payment-wallet-attestation`](./credential-schemas/igrantio-credential-schema-payment-wallet-attestation) | Payment Wallet Attestation |
+| [`igrantio-credential-schema-pda1`](./credential-schemas/igrantio-credential-schema-pda1) | PDA1 |
+| [`igrantio-credential-schema-photo-id`](./credential-schemas/igrantio-credential-schema-photo-id) | Photo ID |
+| [`igrantio-credential-schema-pid`](./credential-schemas/igrantio-credential-schema-pid) | PID |
+| [`igrantio-credential-schema-pid-v2`](./credential-schemas/igrantio-credential-schema-pid-v2) | PID V2 |
+| [`igrantio-credential-schema-qesac`](./credential-schemas/igrantio-credential-schema-qesac) | QESAC |
+| [`igrantio-credential-schema-sca-payment-account`](./credential-schemas/igrantio-credential-schema-sca-payment-account) | SCA Payment Account |
+| [`igrantio-credential-schema-sca-payment-card`](./credential-schemas/igrantio-credential-schema-sca-payment-card) | SCA Payment Card |
+| [`igrantio-credential-schema-sca-payment-user`](./credential-schemas/igrantio-credential-schema-sca-payment-user) | SCA Payment User |
+| [`igrantio-credential-schema-software-statement`](./credential-schemas/igrantio-credential-schema-software-statement) | Software Statement |
+| [`igrantio-credential-schema-student-id`](./credential-schemas/igrantio-credential-schema-student-id) | Student ID |
+
+### DCQL query skills
+
+One skill per DCQL query template in the
+[registry](https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/presentationDefinitions/dcqlQuery).
+Each embeds the claims document and shows how to create the presentation
+definition from it.
+
+| Skill | DCQL query |
+| --- | --- |
+| [`igrantio-dcql-query-age-verification`](./presentation-definitions/igrantio-dcql-query-age-verification) | Age Verification |
+| [`igrantio-dcql-query-authenticator`](./presentation-definitions/igrantio-dcql-query-authenticator) | Authenticator |
+| [`igrantio-dcql-query-certificate-of-registration`](./presentation-definitions/igrantio-dcql-query-certificate-of-registration) | Certificate Of Registration |
+| [`igrantio-dcql-query-loyalty-card`](./presentation-definitions/igrantio-dcql-query-loyalty-card) | Loyalty Card |
+| [`igrantio-dcql-query-lpid`](./presentation-definitions/igrantio-dcql-query-lpid) | LPID |
+| [`igrantio-dcql-query-mobile-driving-license`](./presentation-definitions/igrantio-dcql-query-mobile-driving-license) | Mobile Driving License |
+| [`igrantio-dcql-query-passport`](./presentation-definitions/igrantio-dcql-query-passport) | Passport |
+| [`igrantio-dcql-query-payment-wallet-attestation`](./presentation-definitions/igrantio-dcql-query-payment-wallet-attestation) | Payment Wallet Attestation |
+| [`igrantio-dcql-query-pda1`](./presentation-definitions/igrantio-dcql-query-pda1) | PDA1 |
+| [`igrantio-dcql-query-photo-id`](./presentation-definitions/igrantio-dcql-query-photo-id) | Photo ID |
+| [`igrantio-dcql-query-pid`](./presentation-definitions/igrantio-dcql-query-pid) | PID |
+| [`igrantio-dcql-query-pid-v2`](./presentation-definitions/igrantio-dcql-query-pid-v2) | PID V2 |
+| [`igrantio-dcql-query-qesac`](./presentation-definitions/igrantio-dcql-query-qesac) | QESAC |
+| [`igrantio-dcql-query-sca-payment-account`](./presentation-definitions/igrantio-dcql-query-sca-payment-account) | SCA Payment Account |
+| [`igrantio-dcql-query-sca-payment-card`](./presentation-definitions/igrantio-dcql-query-sca-payment-card) | SCA Payment Card |
+| [`igrantio-dcql-query-sca-payment-user`](./presentation-definitions/igrantio-dcql-query-sca-payment-user) | SCA Payment User |
+| [`igrantio-dcql-query-software-statement`](./presentation-definitions/igrantio-dcql-query-software-statement) | Software Statement |
+| [`igrantio-dcql-query-student-id`](./presentation-definitions/igrantio-dcql-query-student-id) | Student ID |
+
 ### Workflow recipes
 
 Tailored end-to-end workflows. Each mirrors one iGrant.io documentation

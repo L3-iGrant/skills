@@ -153,8 +153,7 @@ that the V3 receive operation made.
 `credentialOffer` is mandatory: the full `openid-credential-offer://` URI, or the
 credential offer URI that the issuer publishes. The wallet also accepts the field
 name `CredentialOffer` with a capital `C`. The other fields are `autoPresent`
-(default `false`), `trustAnchor` (`jwk`, `did:key`, `did:ebsi`, `did:web`,
-`did:tdw`, `x509`; default `did:key`), and `kid`.
+(default `false`), `trustAnchor` (`did:key` or `x509`; default `did:key`), and `kid`.
 
 The response holds `credential`, which is one object, or an array when the offer
 carries more than one credential configuration. Fields to read:
@@ -236,8 +235,7 @@ LPID credential), or `valid` (both).
 takes the mandatory `vpTokenQrCode`: the `openid4vp://` Authorization Request URI
 that the holder scanned or opened. The other fields are `autoPresent` (default
 `false`; the wallet skips the automatic step when the request asks for an ID
-Token), `kid`, and `trustAnchor` (`jwk`, `did:key`, `did:ebsi`, `did:web`,
-`did:tdw`, `x509`; default `did:key`).
+Token), `kid`, and `trustAnchor` (`did:key` or `x509`; default `did:key`).
 
 The response holds `presentation`. Fields to read: `presentationId`,
 `presentationExchangeId`, `status` (`presentation_pending` or
@@ -316,22 +314,25 @@ keeps the connection open and writes one frame for each new notification.
   which clients ignore; and `event: error` when the stream fails.
 
 ## Sandbox call style
-Every Holder operation carries the optional `X-SandboxOrgId` header.
+Holder functionality is split for sandbox organisations:
 
-- With a **bearer access token**, send `X-SandboxOrgId: <sandboxOrgId>`. The
-  service then runs the call against the wallet of that sandbox organisation and
-  not against the main wallet. Leave the header out to use the main wallet.
-- With an **API key**, the header does nothing. The service takes the sandbox
-  organisation from the key. Bind the key first with
-  `PUT /v2/config/admin/apikey/{apiKeyId}/sandbox-org`.
-- `X-SubwalletId` is the deprecated name of the header. The service still accepts
-  it, and `X-SandboxOrgId` wins when you send both.
-- The sandbox organisation must exist, must belong to your organisation, and must
-  be deployed. Any other identifier fails with HTTP 400.
+- **The v2 holder credential operations do not work in a sandbox context.**
+  This covers receive, receive-deferred, user PIN, exchange-code, accept,
+  auto-present, list, read, delete, reissuance, the credential offer, the
+  issuer metadata read, and the holder-side filter and verification delete.
+  When the call carries a sandbox context (a bound API key), the service
+  rejects it with "Holder functionalities for sandbox organisation is
+  disabled". These operations do not take the `X-SandboxOrgId` header.
+- **The v3 presentation operations support the sandbox context** (receive,
+  read, send, list). With a bearer access token, send
+  `X-SandboxOrgId: <sandboxOrgId>`. With an API key, bind the key first with
+  `PUT /v2/config/admin/apikey/{apiKeyId}/sandbox-org`; the header itself is
+  ignored under API-key authentication.
+- The holder global configuration and notification operations also support
+  the sandbox context in the same way.
 
-A sandbox organisation gives each test holder its own wallet, so it is the usual
-way to run an end-to-end issue-and-verify test against one deployment. Read
-`igrantio-api-sandboxes` for the sandbox organisation lifecycle.
+Read `igrantio-api-sandboxes` for the sandbox organisation lifecycle and the
+full call-style rules.
 
 ## Cross-references
 - `igrantio-ows-overview` - architecture, glossary, and the shared contracts.
