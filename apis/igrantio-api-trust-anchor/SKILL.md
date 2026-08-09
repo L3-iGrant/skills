@@ -6,7 +6,7 @@ metadata:
   provider: iGrant.io
   keywords: trust anchor, trust authority, trust list, ETSI_TL, ETSI TS 119 612, issuer validation, verifier validation, OpenID4VP, OID4VCI, EUDIW, eIDAS2
   version: 2026.08.01
-  source-doc: https://docs.igrant.io/docs/openid4vc-api/
+  source-doc: https://docs.igrant.io/docs/developer-apis/
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0, ETSI TS 119 612 trust lists
   auth: OWS API key (Authorization "ApiKey <key>") or bearer access token
 ---

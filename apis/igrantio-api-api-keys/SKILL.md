@@ -6,7 +6,7 @@ metadata:
   provider: iGrant.io
   keywords: API key, apikey, scopes, config scope, bearer token, RBAC, organisation administrator, token rotation, expiryInDays, sandbox organisation binding, OpenID4VCI, OpenID4VP, eIDAS2
   version: 2026.08.01
-  source-doc: https://docs.igrant.io/docs/openid4vc-api/
+  source-doc: https://docs.igrant.io/docs/developer-apis/
   protocols: OAuth-2.0-bearer, JWT
   auth: Bearer access token for the CRUD operations (organisation administrator only); the keys that you create are used as Authorization "ApiKey <key>"
 ---

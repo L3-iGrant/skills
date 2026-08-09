@@ -6,7 +6,7 @@ metadata:
   provider: iGrant.io
   keywords: wallet provider, wallet unit, Wallet Unit Attestation, WUA, LPID, assertionToken, client assertion, EUDIW, EUBW, eIDAS2, OpenID4VCI, OpenID4VP, wallet deployment, performance statistics
   version: 2026.08.01
-  source-doc: https://docs.igrant.io/docs/openid4vc-api/
+  source-doc: https://docs.igrant.io/docs/developer-apis/
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0, OAuth-2.0-client-assertion
   auth: OWS API key (Authorization "ApiKey <key>") or a bearer access token - the key is held only by the tenant backend, never the browser
 ---

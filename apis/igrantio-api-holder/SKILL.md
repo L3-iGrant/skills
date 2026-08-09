@@ -6,7 +6,7 @@ metadata:
   provider: iGrant.io
   keywords: OpenID4VCI, OpenID4VP, holder wallet, organisation wallet, credential offer, deferred credential, tx_code, auto present, DCQL selection, claim sets, notifications, SSE, Wallet Unit Attestation, EUDIW, EUBW
   version: 2026.08.01
-  source-doc: https://docs.igrant.io/docs/openid4vc-api/
+  source-doc: https://docs.igrant.io/docs/developer-apis/
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0, DCQL, SD-JWT-VC, mso_mdoc, Server-Sent-Events
   auth: Organisation Wallet Suite API key (Authorization "ApiKey <key>") or a bearer access token
   requires-skills: igrantio-ows-overview
@@ -357,5 +357,5 @@ on a payload shape, fetch the linked page, or the raw specification at
 updates. Follow the documentation and report the drift so this skill can be
 corrected.
 
-- Holder API index: <https://docs.igrant.io/docs/openid4vc-api/>
+- Holder API index: <https://docs.igrant.io/docs/developer-apis/>
 - Holder notification handling: `igrantio-holder-notifications`.

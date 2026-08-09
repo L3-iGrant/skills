@@ -6,7 +6,7 @@ metadata:
   provider: iGrant.io
   keywords: user management, manage user, admin profile, avatar image, reset password, authentication configuration, passwordless login, PID, Person Identification Data, iGrant.io Authenticator, credential offer, SSE, EUDI Wallet, eIDAS2
   version: 2026.08.01
-  source-doc: https://docs.igrant.io/docs/openid4vc-api/
+  source-doc: https://docs.igrant.io/docs/developer-apis/
   protocols: OAuth-2.0-bearer, JWT, SSE
   auth: Bearer access token of the admin; the operations act on the account that owns the token
 ---

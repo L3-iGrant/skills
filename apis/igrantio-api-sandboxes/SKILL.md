@@ -6,7 +6,7 @@ metadata:
   provider: iGrant.io
   keywords: sandbox organisation, sandbox org, X-SandboxOrgId, X-SubwalletId, subwallet, test wallet, multi-wallet, OpenID4VCI, OpenID4VP, EUDIW, EUBW, eIDAS2, API key binding
   version: 2026.08.01
-  source-doc: https://docs.igrant.io/docs/openid4vc-api/
+  source-doc: https://docs.igrant.io/docs/developer-apis/
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0
   auth: OWS API key (Authorization "ApiKey <key>") or a bearer access token - the key is held only by the tenant backend, never the browser
 ---

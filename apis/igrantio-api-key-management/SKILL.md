@@ -6,7 +6,7 @@ metadata:
   provider: iGrant.io
   keywords: key management, secure vault, JWK, ES256, P-256, CSR, X.509, x5c, certificate chain, QTSP, CSC API, Hashicorp Vault, remote qualified electronic signature, eIDAS2
   version: 2026.08.01
-  source-doc: https://docs.igrant.io/docs/openid4vc-api/
+  source-doc: https://docs.igrant.io/docs/developer-apis/
   protocols: JWK (RFC 7517), ECDSA P-256 / ES256, PKCS#10 CSR, X.509, CSC API 1.0.4.0 / 2.2.0.0
   auth: OWS API key (Authorization "ApiKey <key>") or bearer access token
 ---

@@ -6,7 +6,7 @@ metadata:
   provider: iGrant.io
   keywords: webhook, webhook delivery, HMAC, X-IGrant-Signature, event types, payload URL, OID4VC, EUDIW, eIDAS2, callback
   version: 2026.08.01
-  source-doc: https://docs.igrant.io/docs/openid4vc-api/
+  source-doc: https://docs.igrant.io/docs/developer-apis/
   protocols: HTTP webhooks, HMAC-SHA256
   auth: OWS API key (Authorization "ApiKey <key>") or bearer access token
 ---

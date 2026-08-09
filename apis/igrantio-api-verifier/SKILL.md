@@ -6,7 +6,7 @@ metadata:
   provider: iGrant.io
   keywords: OpenID4VP, DCQL, presentation definition, verification, relying party, transaction data, Digital Credentials API, dc_api, direct_post.jwt, mso_mdoc, SD-JWT VC, ISO 18013-7, EUDIW, EUBW, eIDAS2
   version: 2026.08.01
-  source-doc: https://docs.igrant.io/docs/openid4vc-api/
+  source-doc: https://docs.igrant.io/docs/developer-apis/
   protocols: OpenID4VP-1.0, DCQL, SD-JWT-VC, mso_mdoc, ISO-18013-7-Annex-C, W3C-Digital-Credentials-API
   auth: Organisation Wallet Suite API key (Authorization "ApiKey <key>") or a bearer access token
   requires-skills: igrantio-ows-overview
@@ -298,6 +298,6 @@ on a payload shape, fetch the linked page, or the raw specification at
 updates. Follow the documentation and report the drift so this skill can be
 corrected.
 
-- Verifier API index: <https://docs.igrant.io/docs/openid4vc-api/>
+- Verifier API index: <https://docs.igrant.io/docs/developer-apis/>
 - Workflow, send and verify credentials (OID4VP): <https://docs.igrant.io/docs/openID4vc-send-verify-credentials/>
 - DCQL patterns: the `igrantio-dcql-*` workflow skills.

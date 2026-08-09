@@ -6,7 +6,7 @@ metadata:
   provider: iGrant.io
   keywords: team management, manage team, organisation admin, admin invitation, pendingInvitation, roleName, passwordless login, EUDI Wallet, oidcPasswordless, RBAC, eIDAS2
   version: 2026.08.01
-  source-doc: https://docs.igrant.io/docs/openid4vc-api/
+  source-doc: https://docs.igrant.io/docs/developer-apis/
   protocols: OAuth-2.0-bearer, JWT
   auth: Bearer access token from an organisation administrator
 ---

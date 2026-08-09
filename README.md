@@ -78,7 +78,7 @@ code.
 
 One skill per group of the OID4VC API. Each holds the exact endpoint and
 field reference from the OpenAPI specification and links every operation to
-its page on [docs.igrant.io](https://docs.igrant.io/docs/openid4vc-api/). The
+its page on [docs.igrant.io](https://docs.igrant.io/docs/developer-apis/). The
 documentation is the source of truth: when a skill and the linked page
 disagree, the agent must follow the page and check it for updates.
 

@@ -6,7 +6,7 @@ metadata:
   provider: iGrant.io
   keywords: OpenID4VCI, credential definition, credential issuance, claim path pointer, SD-JWT VC, mso_mdoc, jwt_vc_json, revocation, status list, deferred issuance, pre-authorized code, EUDIW, EUBW, eIDAS2
   version: 2026.08.01
-  source-doc: https://docs.igrant.io/docs/openid4vc-api/
+  source-doc: https://docs.igrant.io/docs/developer-apis/
   protocols: OpenID4VCI-1.0, SD-JWT-VC, W3C-VC-2.0, mso_mdoc, Token-Status-List
   auth: Organisation Wallet Suite API key (Authorization "ApiKey <key>") or a bearer access token
   requires-skills: igrantio-ows-overview
@@ -310,5 +310,5 @@ on a payload shape, fetch the linked page, or the raw specification at
 updates. Follow the documentation and report the drift so this skill can be
 corrected.
 
-- Issuer API index: <https://docs.igrant.io/docs/openid4vc-api/>
+- Issuer API index: <https://docs.igrant.io/docs/developer-apis/>
 - Workflow, issue a credential (OID4VCI): <https://docs.igrant.io/docs/openID4vci-issue-credential-intime/>
