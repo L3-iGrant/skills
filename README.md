@@ -72,6 +72,26 @@ code.
 | [`igrantio-individuals`](./consent/igrantio-individuals) | Onboard users as Consent BB individuals (userId to individualId mapping) | none |
 | [`igrantio-consent-records`](./consent/igrantio-consent-records) | Record, read, withdraw, and erase consents | individuals |
 
+### API reference skills
+
+One skill per group of the OID4VC API. Each holds the exact endpoint and
+field reference from the OpenAPI specification and links every operation to
+its page on [docs.igrant.io](https://docs.igrant.io/docs/openid4vc-api/). The
+documentation is the source of truth: when a skill and the linked page
+disagree, the agent must follow the page and check it for updates.
+
+| Skill | API group |
+| --- | --- |
+| [`igrantio-api-issuer`](./apis/igrantio-api-issuer) | Issuer: credential definitions (claim path pointers, `credentialDefinitions[]`), issuance, history, revocation |
+| [`igrantio-api-holder`](./apis/igrantio-api-holder) | Holder: receive and hold credentials, present, deny, notifications with SSE stream |
+| [`igrantio-api-verifier`](./apis/igrantio-api-verifier) | Verifier: DCQL presentation definitions, transaction data, v3 verification, DC API |
+| [`igrantio-api-webhooks`](./apis/igrantio-api-webhooks) | Webhook configuration, event types, ping, deliveries |
+| [`igrantio-api-trust-anchor`](./apis/igrantio-api-trust-anchor) | Trust authorities the wallet accepts |
+| [`igrantio-api-wallet-provider`](./apis/igrantio-api-wallet-provider) | Wallet units, WUA, statistics, wallet deployment |
+| [`igrantio-api-key-management`](./apis/igrantio-api-key-management) | Keys, CSR, certificate chains, QTSP, secure vault |
+| [`igrantio-api-sandboxes`](./apis/igrantio-api-sandboxes) | Sandbox organisations and the sandbox call style |
+| [`igrantio-api-api-keys`](./apis/igrantio-api-api-keys) | API keys and sandbox binding |
+
 ### Workflow recipes
 
 Tailored end-to-end workflows. Each mirrors one iGrant.io documentation
