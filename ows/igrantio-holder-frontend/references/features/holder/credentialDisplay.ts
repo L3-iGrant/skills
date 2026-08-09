@@ -323,6 +323,31 @@ export function notificationTypeLabel(type: string): string {
     .join(" ");
 }
 
+/** SSE snackbar copy per notification type. */
+export function snackbarText(type: string): string {
+  const texts: Record<string, string> = {
+    credential_received: "New credential is received",
+    credential_revoked: "A credential is archived",
+    credential_acked: "New credential has been acknowledged",
+    credential_pending: "New Pending Credential is received",
+  };
+  return texts[type] ?? `Notification: ${type}`;
+}
+
+/** Age-attestation chip colours: age_over_NN true / false. */
+export const AGE_CHIP = { above: "#AEDD94", under: "#E692F8" } as const;
+
+/** Claims for copy-to-clipboard: the visible claims minus `id` for JWT formats. */
+export function copyableClaims(record: CredentialRecord): AnyRecord {
+  const claims = extractClaims(record);
+  const format = str(record.credentialFormat) ?? "";
+  if (format === "jwt_vc" || format === "jwt_vc_json") {
+    const { id: _id, ...rest } = claims;
+    return rest;
+  }
+  return claims;
+}
+
 /** "Just now" / "Xm ago" / "Xh ago" / absolute date. Numbers are unix seconds. */
 export function timeAgo(value: string | number | undefined): string {
   if (value === undefined) return "Just now";

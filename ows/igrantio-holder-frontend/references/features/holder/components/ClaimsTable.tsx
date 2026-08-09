@@ -6,7 +6,7 @@
  */
 
 import { Fragment } from "react";
-import { COLORS, isPortraitKey } from "../credentialDisplay";
+import { AGE_CHIP, COLORS, isPortraitKey } from "../credentialDisplay";
 import { tdStyle, tableStyle } from "./ui";
 
 const isBase64Image = (v: unknown): v is string =>
@@ -92,27 +92,51 @@ export function ClaimsTable({ claims, blur }: { claims: Record<string, unknown>;
 
   // First portrait-like base64 value becomes the avatar above the table.
   const portrait = entries.find(([k, v]) => isPortraitKey(k) && isBase64Image(v));
+  // age_over_NN becomes a chip pinned to the avatar; the row is removed only
+  // when an avatar is present (mirrors the reference wallet).
+  const age = entries.find(([k, v]) => /^age_over_\d+$/.test(k) && typeof v === "boolean");
+  const hiddenKeys = new Set<string>(
+    [portrait?.[0], portrait && age ? age[0] : undefined].filter((k): k is string => !!k),
+  );
 
   return (
     <div>
       {portrait && (
-        <img
-          src={imageSrc(portrait[1] as string)}
-          alt="portrait"
-          style={{
-            width: 120,
-            height: 120,
-            borderRadius: "50%",
-            objectFit: "cover",
-            filter: blur ? "blur(4px)" : undefined,
-            marginBottom: 12,
-          }}
-        />
+        <div style={{ position: "relative", width: 120, marginBottom: 12 }}>
+          <img
+            src={imageSrc(portrait[1] as string)}
+            alt="portrait"
+            style={{
+              width: 120,
+              height: 120,
+              borderRadius: "50%",
+              objectFit: "cover",
+              filter: blur ? "blur(4px)" : undefined,
+            }}
+          />
+          {age && (
+            <span
+              style={{
+                position: "absolute",
+                bottom: 0,
+                right: -8,
+                background: age[1] ? AGE_CHIP.above : AGE_CHIP.under,
+                borderRadius: 12,
+                padding: "2px 8px",
+                fontSize: 11,
+                fontWeight: 600,
+                filter: blur ? "blur(4px)" : undefined,
+              }}
+            >
+              {age[1] ? `Above ${age[0].split("_")[2]}` : `Under ${age[0].split("_")[2]}`}
+            </span>
+          )}
+        </div>
       )}
       <table style={tableStyle}>
         <tbody>
           <Rows
-            data={portrait ? Object.fromEntries(entries.filter(([k]) => k !== portrait[0])) : claims}
+            data={Object.fromEntries(entries.filter(([k]) => !hiddenKeys.has(k)))}
             blur={blur}
             depth={0}
           />

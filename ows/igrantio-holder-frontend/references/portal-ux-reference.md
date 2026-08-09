@@ -147,11 +147,9 @@ all use `credentialId` strings. Wrap as `{credentials}` when the record has a
 
 **Before consent**, show: verifier identity (`clientMetadata.clientName` /
 `logoUri` / `location`, fallbacks "Unknown" / "Not Discoverable") + trust
-badge; `transactionDataDecoded` entries - `data_agreement_record` /
-`data_disclosure_agreement_record` → policy cards,
-`qes_data.external_link` → "View Unsigned File" (PDF preview);
-`dataAgreement.policy` → policy card. Transaction-data signing happens
-through the send call itself - there is no separate sign step.
+badge; from `transactionDataDecoded`, a `qes_data.external_link` entry →
+"View Unsigned File" (PDF preview). Transaction-data signing happens through
+the send call itself - there is no separate sign step.
 
 **After send**: if `presentation.responseRedirectUri` is non-blank, open it
 in a new tab (warn if the popup is blocked); refresh the lists.

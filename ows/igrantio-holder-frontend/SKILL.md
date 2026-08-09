@@ -44,12 +44,18 @@ verifier UIs are separate skills.
   `useWalletUnitStatus`, `useReceiveCredential` (with
   `captureAuthorizationCode()` for the front-channel return leg),
   `useShareFlow`, `useHolderNotifications` (list + live SSE).
-- **`components/`** - working views: `HolderPortal` (full scaffold),
+- **`components/`** - working views: `HolderPortal` (full scaffold: status
+  bar + bell + drawer inbox + snackbars + deep-link capture),
   `ReceivedCredentialsView` (stats, active/archived, auto-present, refresh),
-  `SharedCredentialsView` (stats-as-filter, disclosed-claims detail),
-  `ShareWizard`, `ReceivePanel`, `NotificationsInbox`, `CredentialDetail`
-  (blur-by-default claims, portraits, review mode), `TrustBadge`
-  (green/red trust-list shield with provider details), `ClaimsTable`.
+  `SharedCredentialsView` (stats-as-filter, disclosed-claims detail,
+  presentation lifecycle), `BaseConfigurationView` (wallet solution settings
+  + wallet-unit stepper), `ShareWizard`, `ReceivePanel`,
+  `NotificationsInbox` (state filter + search), `NotificationSnackbars`
+  (max 5 toasts, 6s auto-hide, dedupe), `CredentialDetail` (blur-by-default
+  claims, portraits, age chips, copy, review mode), `TrustBadge` (green/red
+  trust-list shield with provider details), `ClaimsTable`, `LifecycleModal`
+  (+ wallet-unit and presentation stage data), `Drawer`, `NotificationBell`
+  (99+/nK+ count formatting).
 - **`portal-ux-reference.md`** - the distilled UX rules of the reference
   wallet (conditions → UI behaviour) for building custom views.
 
@@ -87,6 +93,23 @@ verifier UIs are separate skills.
 - Personal data renders blurred until the user toggles the eye - keep that
   default in custom views.
 - Show the `TrustBadge` wherever an issuer or verifier name appears.
+
+## Related skills
+- `igrantio-api-holder` - the normative endpoint/field/enum dictionary for
+  every call this UI makes (paths, SSE frame protocol, sandbox call style).
+- `igrantio-holder-backend` - the tenant backend this UI talks to (proxy +
+  notifications SSE relay); its `holder-api-reference.md` is the narrative
+  contract.
+- `igrantio-holder-notifications` - the notification decision table and the
+  vendored `notificationsClient.ts`.
+- `igrantio-usecase-ui` - the default iGrant.io look (theme, app shell,
+  primitives) if the integrator wants it; the components here are unstyled
+  on purpose.
+- `igrantio-dcql-*` workflow skills (claim sets, credential sets, multiple
+  statements, KYC, student pass) - ready-made verifier requests to exercise
+  every branch of the share wizard.
+- `igrantio-credential-schema-*` - the claim structures of the credentials
+  the wallet will hold (PID, mDL, Photo ID, …).
 
 ## Validation / done criteria
 - `npm run typecheck` passes.

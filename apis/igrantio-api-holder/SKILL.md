@@ -336,6 +336,12 @@ full call-style rules.
 
 ## Cross-references
 - `igrantio-ows-overview` - architecture, glossary, and the shared contracts.
+- `igrantio-holder-backend` - runnable tenant backend for these endpoints
+  (API-key-hiding proxy + notifications SSE relay).
+- `igrantio-holder-frontend` - the holder portal UI: wallet views, the DCQL
+  share wizard, notifications inbox, trust badges.
+- `igrantio-holder-notifications` - notifications building block (SSE relay
+  + browser client + the notification-to-action decision table).
 - `igrantio-api-issuer` - the issuer that makes the credential offer.
 - `igrantio-api-verifier` - the verifier that sends the Authorization Request.
 - `igrantio-api-wallet-provider` - the wallet deployment and the Wallet Unit

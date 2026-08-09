@@ -20,6 +20,7 @@ import {
 import { TrustBadge } from "./TrustBadge";
 import { ClaimsTable } from "./ClaimsTable";
 import { ShareWizard } from "./ShareWizard";
+import { LifecycleModal, PRESENTATION_LIFECYCLE } from "./lifecycle";
 import { Button, Chip, SearchInput, StatCard, card, tableStyle, tdStyle, thStyle } from "./ui";
 import { EXCLUDED_CLAIM_KEYS } from "../credentialDisplay";
 
@@ -64,6 +65,7 @@ export function SharedCredentialsView({ proxyBaseUrl }: { proxyBaseUrl: string }
   const list = useSharedPresentations({ proxyBaseUrl });
   const flow = useShareFlow({ proxyBaseUrl });
   const [viewing, setViewing] = useState<PresentationRecord | null>(null);
+  const [lifecycleFor, setLifecycleFor] = useState<string | null>(null);
 
   const toggleFilter = (status: "presentation_acked" | "presentation_pending") =>
     list.setStatusFilter(list.statusFilter === status ? undefined : status);
@@ -120,7 +122,14 @@ export function SharedCredentialsView({ proxyBaseUrl }: { proxyBaseUrl: string }
                 </td>
                 <td style={tdStyle}>{formatDate(r.updatedAt)}</td>
                 <td style={tdStyle}>
-                  <Chip label={presentationStatusLabel(r.status)} fg={fg} bg={bg} />
+                  <Chip label={presentationStatusLabel(r.status)} fg={fg} bg={bg} />{" "}
+                  <span
+                    title="Presentation lifecycle"
+                    onClick={() => setLifecycleFor(r.status ?? "")}
+                    style={{ cursor: "pointer", color: COLORS.secondary, fontSize: 12 }}
+                  >
+                    ⓘ
+                  </span>
                 </td>
                 <td style={{ ...tdStyle, whiteSpace: "nowrap" }}>
                   {pending ? (
@@ -156,6 +165,16 @@ export function SharedCredentialsView({ proxyBaseUrl }: { proxyBaseUrl: string }
         </div>
       )}
       {viewing && <SharedDetail record={viewing} onClose={() => setViewing(null)} />}
+      {lifecycleFor !== null && (
+        <div style={{ marginTop: 12 }}>
+          <LifecycleModal
+            title="Presentation Lifecycle"
+            stages={PRESENTATION_LIFECYCLE}
+            currentKey={lifecycleFor}
+            onClose={() => setLifecycleFor(null)}
+          />
+        </div>
+      )}
     </div>
   );
 }

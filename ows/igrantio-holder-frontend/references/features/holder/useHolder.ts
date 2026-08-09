@@ -161,6 +161,24 @@ export interface PendingCredential {
 }
 
 /**
+ * Deep-link helper: when the portal is opened via an OpenID4VP link carrying
+ * `request_uri`, return the full URL (raw encoding preserved) to feed
+ * `useShareFlow.start({requestUrl})`, and strip `request_uri` /
+ * `request_uri_method` from the address bar.
+ */
+export function captureVerificationRequestUrl(): string | null {
+  if (typeof window === "undefined") return null;
+  if (!/[?&]request_uri=/.test(window.location.search)) return null;
+  const fullUrl = window.location.href;
+  const params = new URLSearchParams(window.location.search);
+  params.delete("request_uri");
+  params.delete("request_uri_method");
+  const qs = params.toString();
+  window.history.replaceState({}, "", `${window.location.pathname}${qs ? `?${qs}` : ""}`);
+  return fullUrl;
+}
+
+/**
  * Front-channel helper: capture `?code`/`?state` after the issuer redirects
  * back, and clean the URL. Call `exchangeCode` with the result.
  */
@@ -391,6 +409,8 @@ export function useShareFlow(config: HolderConfig) {
 export function useHolderNotifications(config: HolderConfig & { stream?: boolean }) {
   const [notifications, setNotifications] = useState<HolderNotification[]>([]);
   const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
   const client = useMemo(() => new NotificationsClient(config.proxyBaseUrl), [config.proxyBaseUrl]);
   const streamEnabled = config.stream !== false;
   const closeRef = useRef<(() => void) | null>(null);
@@ -398,13 +418,19 @@ export function useHolderNotifications(config: HolderConfig & { stream?: boolean
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      setNotifications(await client.list({ limit: 1000 }));
+      setNotifications(
+        await client.list({
+          limit: 1000,
+          search: search || undefined,
+          notificationType: typeFilter || undefined,
+        }),
+      );
     } catch {
       // keep the previous list on transient failures
     } finally {
       setLoading(false);
     }
-  }, [client]);
+  }, [client, search, typeFilter]);
 
   useEffect(() => {
     void refresh();
@@ -414,11 +440,21 @@ export function useHolderNotifications(config: HolderConfig & { stream?: boolean
     if (!streamEnabled) return;
     closeRef.current = openNotificationsStream({
       baseUrl: config.proxyBaseUrl,
+      // The stream has no replay: refetch on every (re)connect to close gaps.
+      onConnected: () => void refresh(),
       onNotification: (n) =>
         setNotifications((prev) => (prev.some((p) => p.id === n.id) ? prev : [n, ...prev])),
     });
-    return () => closeRef.current?.();
-  }, [config.proxyBaseUrl, streamEnabled]);
+    // Also refetch when the tab becomes visible again.
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void refresh();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      closeRef.current?.();
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [config.proxyBaseUrl, streamEnabled, refresh]);
 
   const remove = useCallback(
     async (id: string) => {
@@ -438,5 +474,8 @@ export function useHolderNotifications(config: HolderConfig & { stream?: boolean
     [],
   );
 
-  return { notifications, loading, refresh, remove, clearAll, actionOf };
+  return {
+    notifications, loading, refresh, remove, clearAll, actionOf,
+    search, setSearch, typeFilter, setTypeFilter,
+  };
 }

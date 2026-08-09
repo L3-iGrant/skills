@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import type { CredentialRecord } from "../holderClient";
 import {
   COLORS,
+  copyableClaims,
   credentialDates,
   credentialDetailTitle,
   extractClaims,
@@ -41,7 +42,6 @@ export function CredentialDetail({
   const issuer = issuerDisplay(record);
   const dates = credentialDates(record);
   const claims = extractClaims(record);
-  const policy = record.dataAgreement?.policy;
 
   useEffect(() => {
     // Titles can be registry URLs - resolve them to the display name.
@@ -83,6 +83,12 @@ export function CredentialDetail({
         <Button kind="secondary" onClick={() => setBlur((b) => !b)}>
           {blur ? "Show" : "Hide"}
         </Button>
+        <Button
+          kind="secondary"
+          onClick={() => void navigator.clipboard.writeText(JSON.stringify(copyableClaims(record), null, 2))}
+        >
+          Copy
+        </Button>
       </div>
 
       <ClaimsTable claims={claims} blur={blur} />
@@ -91,10 +97,6 @@ export function CredentialDetail({
         {dates.issued !== undefined && <div>Issued: {formatDate(dates.issued)}</div>}
         {dates.expires !== undefined && <div>Expiry: {formatDate(dates.expires)}</div>}
       </div>
-
-      {policy !== undefined && policy !== null && (
-        <div style={{ marginTop: 10, fontSize: 13, color: COLORS.blue }}>Data Agreement Policy ›</div>
-      )}
 
       <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16 }}>
         {reviewMode ? (

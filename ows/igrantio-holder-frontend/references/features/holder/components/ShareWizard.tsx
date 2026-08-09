@@ -164,26 +164,18 @@ function OptionGroup({
 }
 
 function TransactionDataSection({ items }: { items: Array<Record<string, unknown>> }) {
-  const policies = items.filter((i) => i.data_agreement_record || i.data_disclosure_agreement_record);
   const qes = items.find((i) => (i.qes_data as Record<string, unknown> | undefined)?.external_link);
-  if (!policies.length && !qes) return null;
+  if (!qes) return null;
   return (
     <div style={{ marginTop: 12, fontSize: 13 }}>
-      {policies.map((p, i) => (
-        <div key={i} style={{ color: COLORS.blue }}>
-          {p.data_disclosure_agreement_record ? "Data Disclosure Agreement Policy" : "Data Agreement Policy"} ›
-        </div>
-      ))}
-      {qes && (
-        <a
-          href={String((qes.qes_data as Record<string, unknown>).external_link)}
-          target="_blank"
-          rel="noreferrer"
-          style={{ color: COLORS.blue }}
-        >
-          View Unsigned File ›
-        </a>
-      )}
+      <a
+        href={String((qes.qes_data as Record<string, unknown>).external_link)}
+        target="_blank"
+        rel="noreferrer"
+        style={{ color: COLORS.blue }}
+      >
+        View Unsigned File ›
+      </a>
     </div>
   );
 }
@@ -293,9 +285,6 @@ export function ShareWizard({ flow, onClose }: { flow: ShareFlow; onClose: () =>
       )}
 
       <TransactionDataSection items={presentation.transactionDataDecoded ?? []} />
-      {presentation.dataAgreement?.policy != null && (
-        <div style={{ marginTop: 8, fontSize: 13, color: COLORS.blue }}>Data Agreement Policy ›</div>
-      )}
 
       {flow.error && <div style={{ color: COLORS.red, fontSize: 13, marginTop: 8 }}>{flow.error}</div>}
       {flow.status === "shared" && (

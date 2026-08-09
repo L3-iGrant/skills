@@ -148,6 +148,83 @@ export function StatCard({
   );
 }
 
+/** Right-anchored drawer - the reference wallet hosts every detail view in one. */
+export function Drawer({
+  open,
+  onClose,
+  children,
+  width = 600,
+}: {
+  open: boolean;
+  onClose: () => void;
+  children: ReactNode;
+  width?: number;
+}) {
+  if (!open) return null;
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 1301 }}>
+      <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)" }} />
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width: `min(${width}px, 100%)`,
+          background: "#fff",
+          overflowY: "auto",
+          padding: 16,
+          boxSizing: "border-box",
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/** Bell with the reference count formatting: >999 → "nK+", >99 → "99+". */
+export function NotificationBell({ count, onClick }: { count: number; onClick: () => void }) {
+  const label = count > 999 ? `${Math.floor(count / 1000)}K+` : count > 99 ? "99+" : String(count);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title="Notifications"
+      style={{
+        position: "relative",
+        background: "none",
+        border: "none",
+        cursor: "pointer",
+        color: count > 0 ? COLORS.text : COLORS.secondary,
+        fontSize: 20,
+        padding: 6,
+      }}
+    >
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5S10.5 3.17 10.5 4v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
+      </svg>
+      {count > 0 && (
+        <span
+          style={{
+            position: "absolute",
+            top: 0,
+            right: -2,
+            background: COLORS.red,
+            color: "#fff",
+            borderRadius: 10,
+            fontSize: 10,
+            fontWeight: 700,
+            padding: "1px 5px",
+          }}
+        >
+          {label}
+        </span>
+      )}
+    </button>
+  );
+}
+
 export function Avatar({ src, alt, size = 44 }: { src?: string; alt: string; size?: number }) {
   return src ? (
     <img

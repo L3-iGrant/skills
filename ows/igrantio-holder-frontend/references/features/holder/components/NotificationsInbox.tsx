@@ -20,7 +20,15 @@ import {
 } from "../credentialDisplay";
 import { CredentialDetail } from "./CredentialDetail";
 import { ShareWizard } from "./ShareWizard";
-import { Avatar, Button, Chip, card } from "./ui";
+import { Avatar, Button, Chip, SearchInput, card } from "./ui";
+
+const STATE_FILTERS: Array<[string, string]> = [
+  ["", "All States"],
+  ["credential_acked", "Credential Acknowledged"],
+  ["credential_pending", "Credential Pending"],
+  ["credential_expired", "Credential Expired"],
+  ["credential_revoked", "Credential Revoked"],
+];
 
 const ACTION_TEXT: Record<NotificationAction, string> = {
   transaction_code: "Click to enter transaction code to continue.",
@@ -97,8 +105,32 @@ export function NotificationsInbox({
         </Button>
       </div>
 
+      <div style={{ display: "flex", gap: 10, marginBottom: 10, flexWrap: "wrap" }}>
+        <select
+          value={inbox.typeFilter}
+          onChange={(e) => inbox.setTypeFilter(e.target.value)}
+          style={{ fontSize: 13 }}
+          aria-label="Filter by State"
+        >
+          {STATE_FILTERS.map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+        <SearchInput
+          value={inbox.search}
+          onChange={inbox.setSearch}
+          placeholder="Search by Credential Type, Issuer Name"
+        />
+      </div>
+
       {!inbox.notifications.length && (
-        <div style={{ color: COLORS.secondary, fontSize: 13 }}>No notifications yet</div>
+        <div style={{ color: COLORS.secondary, fontSize: 13 }}>
+          {inbox.search || inbox.typeFilter
+            ? "No notifications match your search or filter"
+            : "No notifications yet"}
+        </div>
       )}
 
       {inbox.notifications.map((n) => {
