@@ -32,6 +32,8 @@ check ows/igrantio-backend-proxy/references/tenants.ts \
       ows/igrantio-holder-backend/references/src/tenants.ts
 check ows/igrantio-holder-notifications/references/notificationsSse.ts \
       ows/igrantio-holder-backend/references/src/notificationsSse.ts
+check ows/igrantio-holder-notifications/references/notificationsClient.ts \
+      ows/igrantio-holder-frontend/references/features/holder/notificationsClient.ts
 check ows/igrantio-backend-sse/references/eventStore.ts \
       ows/igrantio-backend-webhooks/references/eventStore.ts \
       ows/igrantio-issuer-backend/references/src/eventStore.ts \
@@ -55,7 +57,8 @@ while IFS= read -r f; do
   rel="${f#"$CANON"/}"
   check "$f" \
         "ows/igrantio-issuer-frontend/references/lib/ows/$rel" \
-        "ows/igrantio-verifier-frontend/references/lib/ows/$rel"
+        "ows/igrantio-verifier-frontend/references/lib/ows/$rel" \
+        "ows/igrantio-holder-frontend/references/lib/ows/$rel"
 done < <(find "$CANON" -type f | sort)
 
 # Consent BB client (canonical in consent-records)

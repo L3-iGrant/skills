@@ -54,8 +54,8 @@ references/
    organisation.
 2. `npm install && npm run dev` - backend on `:6003` (alongside issuer `:6001`
    / verifier `:6002`).
-3. Point the holder frontend base URL at `${PROXY_PREFIX}/<tenant>`; open the
-   notifications stream on
+3. Point the holder frontend (`igrantio-holder-frontend`) base URL at
+   `${PROXY_PREFIX}/<tenant>`; open the notifications stream on
    `…/<tenant>/v2/config/digital-wallet/openid/notifications/sse`.
 
 ## Holder contract (what the frontend drives through this backend)

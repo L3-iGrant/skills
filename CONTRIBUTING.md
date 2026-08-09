@@ -27,7 +27,7 @@ then copy it byte-for-byte to the other locations. CI runs
 | `config.ts`, `proxy.ts`, `tenants.ts` | `ows/igrantio-backend-proxy/references/` |
 | `eventStore.ts`, `sse.ts` | `ows/igrantio-backend-sse/references/` |
 | `webhooks.ts`, `topics.ts`, `registerWebhook.ts` | `ows/igrantio-backend-webhooks/references/` |
-| `notificationsSse.ts` | `ows/igrantio-holder-notifications/references/` |
+| `notificationsSse.ts`, `notificationsClient.ts` | `ows/igrantio-holder-notifications/references/` |
 | `lib/ows/` (client and React hooks) | `ows/igrantio-frontend-client/references/lib/ows/` |
 | `consentClient.ts` | `consent/igrantio-consent-records/references/src/` |
 
