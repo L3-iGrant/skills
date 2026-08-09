@@ -16,17 +16,22 @@ check() {
   done
 }
 
-# Backend building blocks (canonical) vs composed issuer/verifier backends
+# Backend building blocks (canonical) vs composed issuer/verifier/holder backends
 check ows/igrantio-backend-proxy/references/config.ts \
       ows/igrantio-backend-webhooks/references/config.ts \
       ows/igrantio-issuer-backend/references/src/config.ts \
-      ows/igrantio-verifier-backend/references/src/config.ts
+      ows/igrantio-verifier-backend/references/src/config.ts \
+      ows/igrantio-holder-backend/references/src/config.ts
 check ows/igrantio-backend-proxy/references/proxy.ts \
       ows/igrantio-issuer-backend/references/src/proxy.ts \
-      ows/igrantio-verifier-backend/references/src/proxy.ts
+      ows/igrantio-verifier-backend/references/src/proxy.ts \
+      ows/igrantio-holder-backend/references/src/proxy.ts
 check ows/igrantio-backend-proxy/references/tenants.ts \
       ows/igrantio-issuer-backend/references/src/tenants.ts \
-      ows/igrantio-verifier-backend/references/src/tenants.ts
+      ows/igrantio-verifier-backend/references/src/tenants.ts \
+      ows/igrantio-holder-backend/references/src/tenants.ts
+check ows/igrantio-holder-notifications/references/notificationsSse.ts \
+      ows/igrantio-holder-backend/references/src/notificationsSse.ts
 check ows/igrantio-backend-sse/references/eventStore.ts \
       ows/igrantio-backend-webhooks/references/eventStore.ts \
       ows/igrantio-issuer-backend/references/src/eventStore.ts \

@@ -16,7 +16,7 @@ npm run register-webhook -- acme
 | Method | Path | Purpose |
 | --- | --- | --- |
 | GET | `/healthz` | liveness |
-| GET/POST/PUT | `/ows/:tenant/*` | proxy to OWS credential endpoints (injects ApiKey) |
+| GET/POST/PUT/DELETE | `/ows/:tenant/*` | proxy to OWS credential endpoints (injects ApiKey) |
 | POST | `/webhook` | OWS webhook receiver (HMAC-verified) |
 | GET | `/webhook/sse/:exchangeId` | SSE stream for a CredentialExchangeId |
 | DELETE | `/webhook/:exchangeId` | consume-and-delete |

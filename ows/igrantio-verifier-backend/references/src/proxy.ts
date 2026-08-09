@@ -7,7 +7,8 @@ import type { TenantStore } from "./tenants";
  *
  * Mounts at `${config.proxyPrefix}` and handles `/{tenant}/{owsPath...}`:
  *  - resolves the tenant's OWS API key from the TenantStore,
- *  - rejects any path not on `permittedPrefixes` (least privilege),
+ *  - rejects any path not on `permittedPrefixes` (least privilege) - a string
+ *    rule matches as a path prefix, a RegExp rule is tested against the path,
  *  - replaces Authorization with `ApiKey <key>` and forwards to OWS,
  *  - streams the upstream response back, stripping hop-by-hop headers.
  *
@@ -21,7 +22,10 @@ const HOP_BY_HOP = new Set([
   "keep-alive",
 ]);
 
-export function proxyRouter(store: TenantStore, permittedPrefixes: string[]): Router {
+export function proxyRouter(
+  store: TenantStore,
+  permittedPrefixes: Array<string | RegExp>,
+): Router {
   const r = Router();
   // Buffer the raw body for any content type so we can forward it verbatim.
   r.use(raw({ type: "*/*", limit: "10mb" }));
@@ -35,11 +39,14 @@ export function proxyRouter(store: TenantStore, permittedPrefixes: string[]): Ro
       res.status(404).json({ detail: "Unknown tenant or empty path" });
       return;
     }
-    if (!permittedPrefixes.some((p) => path.startsWith(p))) {
+    const permitted = permittedPrefixes.some((p) =>
+      typeof p === "string" ? path.startsWith(p) : p.test(path),
+    );
+    if (!permitted) {
       res.status(404).json({ detail: "Path not found" });
       return;
     }
-    if (!["GET", "POST", "PUT"].includes(req.method)) {
+    if (!["GET", "POST", "PUT", "DELETE"].includes(req.method)) {
       res.status(405).json({ detail: "Method not allowed" });
       return;
     }

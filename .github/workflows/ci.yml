@@ -25,6 +25,8 @@ jobs:
           - ows/igrantio-issuer-frontend/references
           - ows/igrantio-verifier-backend/references
           - ows/igrantio-verifier-frontend/references
+          - ows/igrantio-holder-backend/references
+          - ows/igrantio-holder-notifications/references
           - consent/igrantio-consent-records/references
           - consent/igrantio-individuals/references
     steps:

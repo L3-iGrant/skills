@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VP, DCQL, relying party, credential verification, verifiable presentations, transaction data, SCA, e-mandate, QES
-  version: 2026.07.04
+  version: 2026.08.01
   api: https://docs.igrant.io/docs/category/openid4vc-api/verifier
   protocols: OpenID4VP-1.0, DCQL, SD-JWT-VC
   auth: OWS API key (Authorization "ApiKey <key>") injected by the proxy; browser sends no key
@@ -24,7 +24,7 @@ issuer equivalent use `igrantio-issuer-backend` (separate skill). Read
 **Before you build**: run the integrator intake in `igrantio-ows-overview` - environment, API key, tenancy, backend host, webhooks, frontend - one question at a time, a recommended default with each.
 
 ## What it does
-- **Proxy** `GET|POST|PUT ${PROXY_PREFIX}/{tenant}/...` → OWS, injecting the tenant's
+- **Proxy** `GET|POST|PUT|DELETE ${PROXY_PREFIX}/{tenant}/...` → OWS, injecting the tenant's
   `ApiKey`. Allow-lists only OWS **verification** endpoints (send, history).
 - **Register** the verifier webhook idempotently (`VERIFIER_TOPICS`) via
   `scripts/register-webhook.ts`.

@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, OpenID4VCI, OpenID4VP, reverse proxy, multi-tenant, API key security
-  version: 2026.07.04
+  version: 2026.08.01
   api: https://docs.igrant.io/docs/developer-apis
   auth: OWS API key held server-side; injected per request. Browser sends no key.
   requires-skills: igrantio-ows-overview
@@ -22,9 +22,10 @@ Compose it into an issuer or verifier backend (see `igrantio-issuer-backend` /
 **Before you build**: run the integrator intake in `igrantio-ows-overview` - environment, API key, tenancy, backend host, webhooks, frontend - one question at a time, a recommended default with each.
 
 ## What it does
-`GET|POST|PUT ${proxyPrefix}/{tenant}/{owsPath...}`:
+`GET|POST|PUT|DELETE ${proxyPrefix}/{tenant}/{owsPath...}`:
 1. resolves `{tenant}` → OWS API key via a **TenantStore** (env or pluggable),
-2. rejects any path not on the caller-supplied allow-list (least privilege, 404),
+2. rejects any path not on the caller-supplied allow-list (least privilege, 404) -
+   a string rule matches as a path prefix, a RegExp rule against the whole path,
 3. sets `Authorization: ApiKey <key>` and forwards to OWS,
 4. streams the response back, stripping hop-by-hop headers.
 
@@ -56,8 +57,10 @@ app.use(config.proxyPrefix, proxyRouter(new EnvTenantStore(), ISSUER));
   organisations; rotate by updating the store - no frontend change.
 
 ## Clean-code notes
-- The allow-list is a parameter, so issuer/verifier scope the proxy to just their
-  endpoints (least privilege) with one array.
+- The allow-list is a parameter, so issuer/verifier/holder scope the proxy to
+  just their endpoints (least privilege) with one array; RegExp rules let the
+  holder share the `sdjwt/credential` namespace with the issuer without
+  exposing `credential/issue`.
 - OWS base URL lives only in `config.ts`; the proxy is transport, not policy.
 
 ## Validation / done criteria

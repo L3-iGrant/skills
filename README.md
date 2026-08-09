@@ -11,6 +11,7 @@ Wallet (EUBW)** integrations on the [iGrant.io](https://igrant.io)
 
 - **Credential issuance** using OpenID4VCI 1.0 (in-time and deferred)
 - **Credential verification** using OpenID4VP 1.0 + DCQL, including the same-device Digital Credentials API
+- **Credential holding** (the wallet side): receive credential offers, hold and present credentials, and stream holder notifications
 - **Consent management** for recording and managing individual consents against data agreements
 
 Credential formats and standards covered: SD-JWT VC, W3C VC 2.0, mso_mdoc, and
@@ -60,6 +61,8 @@ code.
 | [`igrantio-issuer-frontend`](./ows/igrantio-issuer-frontend) | Issuer UI: request issuance, render the QR or deep link, live status | frontend-client |
 | [`igrantio-verifier-backend`](./ows/igrantio-verifier-backend) | Tenant backend for **verification** (proxy + webhooks + SSE) | proxy, webhooks, sse |
 | [`igrantio-verifier-frontend`](./ows/igrantio-verifier-frontend) | Verifier UI: presentation request, QR or DC API, disclosed claims | frontend-client |
+| [`igrantio-holder-backend`](./ows/igrantio-holder-backend) | Tenant backend for the wallet **holder** side: receive, hold, present | proxy, holder-notifications |
+| [`igrantio-holder-notifications`](./ows/igrantio-holder-notifications) | Holder notifications: REST + live SSE stream (relay + browser client) | overview |
 | [`igrantio-backend-proxy`](./ows/igrantio-backend-proxy) | API-key-hiding, multi-tenant reverse proxy building block | overview |
 | [`igrantio-backend-webhooks`](./ows/igrantio-backend-webhooks) | Register, receive, and HMAC-verify OWS webhooks | overview |
 | [`igrantio-backend-sse`](./ows/igrantio-backend-sse) | Stream webhook events to the browser over SSE | webhooks |
@@ -100,7 +103,7 @@ an integration from scratch.
 Each skill is versioned individually through the `metadata.version` field in
 its `SKILL.md`, following the `yyyy.mm.NN` scheme, where `yyyy.mm` is the year
 and month of the release and `NN` is the release number within that month. The
-current release is `2026.07.04`. Versions are bumped whenever a skill's
+current release is `2026.08.01`. Versions are bumped whenever a skill's
 contract changes.
 
 To update installed skills to the latest release:
@@ -121,8 +124,8 @@ We welcome contributions to improve these skills. You can help by:
 
 - [Reporting bugs or inaccuracies](https://github.com/L3-iGrant/skills/issues)
   in the skill Markdown files or reference implementations.
-- Suggesting new skills to add to this repository (for example, holder-side
-  functions or additional iGrant.io recipes) by filing a feature request.
+- Suggesting new skills to add to this repository (for example, additional
+  iGrant.io recipes) by filing a feature request.
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines, including the
 canonical locations of the intentionally duplicated reference files.
