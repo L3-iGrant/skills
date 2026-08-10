@@ -96,6 +96,15 @@ disagree, the agent must follow the page and check it for updates.
 | [`igrantio-api-team-management`](./apis/igrantio-api-team-management) | Organisation admins (Manage Team): create, read, delete, list, and the passwordless-login switch per admin |
 | [`igrantio-api-user-management`](./apis/igrantio-api-user-management) | The signed-in admin's account (Manage User): profile, avatar, password, and passwordless-login methods with SSE |
 
+### Trust list skills
+
+The NXD Foundation trust-list backend: how automation registers issuer and
+verifier certificates (for example a WRPAC) in the signed trust lists.
+
+| Skill | Covers |
+| --- | --- |
+| [`igrantio-trustlist-entries`](./trust-list/igrantio-trustlist-entries) | Add, update, and remove trust-list entries as an OAuth2 client (client_credentials); scopes `read`/`write`/`write:review` and the Approvals queue |
+
 ### Credential schema skills
 
 One skill per claim path pointer credential schema in the
