@@ -53,7 +53,7 @@ export const en: UiStrings = {
   ],
   demo: { label: "Demo", href: "/demo" },
   footer: {
-    copyright: "© 2017-{year} LCubed AB, Sweden",
+    copyright: "© 2017-{year} iGrant Technologies AB, Sweden",
     iso27001Label: "ISO/IEC 27001",
     iso27001Href:
       "https://www.iafcertsearch.org/certification/km2vH6e1i3j2Ai0WISr9krvR",
