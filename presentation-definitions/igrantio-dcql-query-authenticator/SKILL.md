@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: DCQL, authenticator, passwordless login, email_address, io.igrant.authenticator, dc+sd-jwt, jwt_vc_json, mso_mdoc, OpenID4VP, presentation definition, EUDIW, eIDAS2
-  version: 2026.08.01
+  version: 2026.09.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/presentationDefinitions/dcqlQuery/authenticator
   requires-skills: igrantio-api-verifier
 ---
@@ -19,6 +19,41 @@ service reads that address and signs the person in to the matching account.
 
 The template discloses one claim only. It carries no name, no birth date, and no
 document number.
+
+## Prerequisites
+- An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
+  [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
+  an environment variable or a secret manager. The browser never sees it.
+- The **OWS environment** the key belongs to. The default is **demo**
+  (`https://demo-api.igrant.io`). Use **staging**
+  (`https://staging-api.igrant.io`) only when the integrator asks for it.
+  A key works only in its own environment.
+
+## Ask the integrator first
+Ask one question at a time. Wait for the answer. Give the recommended
+default with each question. Look up facts in the project (framework,
+environment variables, an existing backend) instead of asking for them.
+Record the answers before you write code.
+
+1. **Environment** - demo or staging? _Default demo
+   (`https://demo-api.igrant.io`); a switch later is a configuration
+   change._
+2. **API key** - do you have the OWS API key for that environment? If not,
+   request it from [support@igrant.io](mailto:support@igrant.io) before you
+   continue.
+3. **Format** - `dc+sd-jwt`, `jwt_vc_json` or `mso_mdoc`? _Match the format
+   the issuer used._
+4. **Claims** - which claims does the use case need? _Ask for the minimum._
+5. **Channel** - cross-device QR, same-device Digital Credentials API, or
+   both? _Recommend QR first; `igrantio-dcapi-android` and
+   `igrantio-dcapi-ios` cover the DC API._
+6. **Trusted authorities** - accept any issuer, or only issuers on a trust
+   list?
+7. **Trust list** - is your Wallet-Relying Party Access Certificate (WRPAC)
+   registered in the trust list? If not, contact
+   [support@igrant.io](mailto:support@igrant.io) and follow
+   <https://docs.igrant.io/docs/trust-relying-party-registration/>. Until then
+   the wallet shows an unverified warning for your request.
 
 ## Template facts
 Registry version: **2025.7.1**.

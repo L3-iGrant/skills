@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: OpenID4VCI, OpenID4VP, holder wallet, organisation wallet, credential offer, deferred credential, tx_code, auto present, DCQL selection, claim sets, notifications, SSE, Wallet Unit Attestation, EUDIW, EUBW
-  version: 2026.08.01
+  version: 2026.09.01
   source-doc: https://docs.igrant.io/docs/developer-apis/
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0, DCQL, SD-JWT-VC, mso_mdoc, Server-Sent-Events
   auth: Organisation Wallet Suite API key (Authorization "ApiKey <key>") or a bearer access token
@@ -33,6 +33,35 @@ Use it when you must:
 For the issuing side, read `igrantio-api-issuer`. For the relying-party side,
 read `igrantio-api-verifier`.
 
+## Prerequisites
+- An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
+  [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
+  an environment variable or a secret manager. The browser never sees it.
+- The **OWS environment** the key belongs to. The default is **demo**
+  (`https://demo-api.igrant.io`). Use **staging**
+  (`https://staging-api.igrant.io`) only when the integrator asks for it.
+  A key works only in its own environment.
+
+## Ask the integrator first
+Ask one question at a time. Wait for the answer. Give the recommended
+default with each question. Look up facts in the project (framework,
+environment variables, an existing backend) instead of asking for them.
+Record the answers before you write code.
+
+1. **Environment** - demo or staging? _Default demo
+   (`https://demo-api.igrant.io`); a switch later is a configuration
+   change._
+2. **API key** - do you have the OWS API key for that environment? If not,
+   request it from [support@igrant.io](mailto:support@igrant.io) before you
+   continue.
+3. **Organisation** - the main wallet, or a sandbox organisation? _A sandbox
+   needs the `X-SandboxOrgId` header and a bearer token; see
+   `igrantio-api-sandboxes`._
+4. **Operation** - receive an offer, list or accept held credentials, answer a
+   presentation request, or read notifications?
+5. **Live updates** - the notifications SSE stream, or polling? _Recommend
+   SSE._
+
 ## Protocol scope
 - The wallet implements **OpenID4VCI 1.0** for issuance and **OpenID4VP 1.0**
   with **DCQL** for presentation. Send a presentation with the **V3** operations.
@@ -58,8 +87,8 @@ space:
 Authorization: ApiKey <your-api-key>
 ```
 
-Demo base URL: `https://demo-api.igrant.io`. The bundle also lists
-`https://api.igrant.io` (production) and `https://staging-api.igrant.io`.
+Demo base URL: `https://demo-api.igrant.io`. Staging base URL:
+`https://staging-api.igrant.io`.
 The API key stays on your server. The browser never holds it.
 
 ## Correlation ids

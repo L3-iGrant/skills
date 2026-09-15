@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, holder, wallet portal, OpenID4VCI, OpenID4VP, DCQL, claim sets, credential sets, trust list, notifications, Next.js, TypeScript, Better Auth, passwordless
-  version: 2026.08.05
+  version: 2026.09.01
   api: https://docs.igrant.io/docs/developer-apis
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0, DCQL, SD-JWT-VC, W3C-VC-2.0, mso_mdoc
   auth: none in the browser - the holder backend injects the OWS API key
@@ -24,7 +24,34 @@ endpoint contract is in `igrantio-api-holder` and
 `igrantio-holder-backend/references/holder-api-reference.md`. Issuer and
 verifier UIs are separate skills.
 
-**Before you build**: run the integrator intake in `igrantio-ows-overview` - environment, API key, tenancy, backend host, webhooks, frontend - one question at a time, a recommended default with each. (Webhooks: not needed - the holder runs on the notifications stream. Additionally ask: full `HolderPortal` scaffold or individual views, and default look (`igrantio-usecase-ui`) or the integrator's design system.)
+## Prerequisites
+- An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
+  [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
+  an environment variable or a secret manager. The browser never sees it.
+- The **OWS environment** the key belongs to. The default is **demo**
+  (`https://demo-api.igrant.io`). Use **staging**
+  (`https://staging-api.igrant.io`) only when the integrator asks for it.
+  A key works only in its own environment.
+
+## Ask the integrator first
+Ask one question at a time. Wait for the answer. Give the recommended
+default with each question. Look up facts in the project (framework,
+environment variables, an existing backend) instead of asking for them.
+Record the answers before you write code.
+
+1. **Environment** - demo or staging? _Default demo
+   (`https://demo-api.igrant.io`); a switch later is a configuration
+   change._
+2. **API key** - do you have the OWS API key for that environment? If not,
+   request it from [support@igrant.io](mailto:support@igrant.io) before you
+   continue.
+3. **Framework** - React, Next.js, or another? _Look it up in the project
+   before you ask._
+4. **Scaffold** - the full `HolderPortal` scaffold, or individual views?
+   _Recommend the scaffold first._
+5. **Look** - the default iGrant.io look (`igrantio-usecase-ui`), or the
+   integrator's own design system?
+6. **Webhooks** - none. The holder runs on the notifications stream.
 
 ## What it provides
 - **`holderClient.ts`** - typed client for every holder endpoint (receive /

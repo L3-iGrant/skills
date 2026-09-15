@@ -19,7 +19,7 @@ app.use(
 const client = createConsentClient({ owsBaseUrl: config.owsBaseUrl, apiKey: config.apiKey });
 const mappings = new InMemoryMappingStore(); // replace with a DB-backed IndividualMappingStore
 
-/** DEMO ONLY: derive the user from your real session/JWT in production. */
+/** DEMO ONLY: derive the user from your real session/JWT in your real app. */
 function currentUserId(req: express.Request): string | undefined {
   return req.header("X-Demo-User-Id") || undefined;
 }

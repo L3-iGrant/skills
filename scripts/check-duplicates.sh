@@ -61,6 +61,14 @@ while IFS= read -r f; do
         "ows/igrantio-holder-frontend/references/lib/ows/$rel"
 done < <(find "$CANON" -type f | sort)
 
+# Wallet QR panel (canonical in igrantio-qr-code) vendored into the issuer/verifier frontends
+check ows/igrantio-qr-code/references/ui/WalletQrPanel.tsx \
+      ows/igrantio-issuer-frontend/references/features/issuer/walletQr/WalletQrPanel.tsx \
+      ows/igrantio-verifier-frontend/references/features/verifier/walletQr/WalletQrPanel.tsx
+check ows/igrantio-qr-code/references/ui/walletQr.css \
+      ows/igrantio-issuer-frontend/references/features/issuer/walletQr/walletQr.css \
+      ows/igrantio-verifier-frontend/references/features/verifier/walletQr/walletQr.css
+
 # Consent BB client (canonical in consent-records)
 check consent/igrantio-consent-records/references/src/consentClient.ts \
       consent/igrantio-individuals/references/src/consentClient.ts

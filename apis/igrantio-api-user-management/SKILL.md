@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: user management, manage user, admin profile, avatar image, reset password, authentication configuration, passwordless login, PID, Person Identification Data, iGrant.io Authenticator, credential offer, SSE, EUDI Wallet, eIDAS2
-  version: 2026.08.01
+  version: 2026.09.01
   source-doc: https://docs.igrant.io/docs/developer-apis/
   protocols: OAuth-2.0-bearer, JWT, SSE
   auth: Bearer access token of the admin; the operations act on the account that owns the token
@@ -28,6 +28,31 @@ This group is the API behind the **Manage User** page of the iGrant.io
 dashboard. Every operation acts on the account that owns the access token. To
 manage the other admins of the organisation, use
 **`igrantio-api-team-management`**.
+
+## Prerequisites
+- An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
+  [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
+  an environment variable or a secret manager. The browser never sees it.
+- The **OWS environment** the key belongs to. The default is **demo**
+  (`https://demo-api.igrant.io`). Use **staging**
+  (`https://staging-api.igrant.io`) only when the integrator asks for it.
+  A key works only in its own environment.
+
+## Ask the integrator first
+Ask one question at a time. Wait for the answer. Give the recommended
+default with each question. Look up facts in the project (framework,
+environment variables, an existing backend) instead of asking for them.
+Record the answers before you write code.
+
+1. **Environment** - demo or staging? _Default demo
+   (`https://demo-api.igrant.io`); a switch later is a configuration
+   change._
+2. **API key** - do you have the OWS API key for that environment? If not,
+   request it from [support@igrant.io](mailto:support@igrant.io) before you
+   continue.
+3. **Operation** - profile, avatar, password, or passwordless-login methods?
+4. **Login method** - a PID credential or an iGrant.io Authenticator
+   credential?
 
 ## Endpoint reference
 

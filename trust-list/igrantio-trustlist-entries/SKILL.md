@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: trust list, NXD Foundation, WRPAC, WRPRC, QEAA, EAA, Pub-EAA, PID, wallet provider, registrars, ETSI TS 119 612, ETSI TS 119 602, participant, trust anchor, OAuth2 client_credentials, approvals, write:review, x509 certificate, eIDAS2
-  version: 2026.08.11
+  version: 2026.09.01
   source-doc: https://github.com/NXD-Foundation/nxd-trust-list-backend
   protocols: OAuth-2.0-client-credentials, JWT
   auth: Bearer access token from POST /auth/token with grant_type=client_credentials
@@ -23,6 +23,39 @@ Use this skill when the task is one of these:
   certificate upload can be followed by a trust-list registration.
 
 ## Prerequisites
+- An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
+  [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
+  an environment variable or a secret manager. The browser never sees it.
+- The **OWS environment** the key belongs to. The default is **demo**
+  (`https://demo-api.igrant.io`). Use **staging**
+  (`https://staging-api.igrant.io`) only when the integrator asks for it.
+  A key works only in its own environment.
+- The organisation whose certificate you register must already hold the key
+  and certificate chain in OWS (`igrantio-api-key-management`).
+- A trust-list client id and secret (next section).
+
+## Ask the integrator first
+Ask one question at a time. Wait for the answer. Give the recommended
+default with each question. Look up facts in the project (framework,
+environment variables, an existing backend) instead of asking for them.
+Record the answers before you write code.
+
+1. **Environment** - demo or staging? _Default demo
+   (`https://demo-api.igrant.io`); a switch later is a configuration
+   change._
+2. **API key** - do you have the OWS API key for that environment? If not,
+   request it from [support@igrant.io](mailto:support@igrant.io) before you
+   continue.
+3. **Client** - do you have the trust-list client id and secret? _Created on
+   the backoffice OAuth2 Clients page; the secret shows once._
+4. **List** - which trust list: WRPAC (relying party), QEAA / EAA / Pub-EAA /
+   PID (issuer), Wallet, WRPRC, or Registrars?
+5. **Scope** - `write` (applies directly) or `write:review` (queued for
+   approval)?
+6. **Base URL** - which trust-list deployment (for example
+   `https://trustlist.nxd.foundation`)?
+
+## Trust-list client prerequisites
 
 1. A **client id** and **client secret** for the trust-list backend. A
    backoffice admin creates them on the **OAuth2 Clients** page of the

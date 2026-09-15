@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: key management, secure vault, JWK, ES256, P-256, CSR, X.509, x5c, certificate chain, QTSP, CSC API, Hashicorp Vault, remote qualified electronic signature, eIDAS2
-  version: 2026.08.01
+  version: 2026.09.01
   source-doc: https://docs.igrant.io/docs/developer-apis/
   protocols: JWK (RFC 7517), ECDSA P-256 / ES256, PKCS#10 CSR, X.509, CSC API 1.0.4.0 / 2.2.0.0
   auth: OWS API key (Authorization "ApiKey <key>") or bearer access token
@@ -27,6 +27,39 @@ Use this skill when you:
 Base URL for demo: `https://demo-api.igrant.io`.
 Auth header: `Authorization: ApiKey <key>` (note the trailing space in the
 prefix). A bearer access token also works.
+
+## Prerequisites
+- An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
+  [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
+  an environment variable or a secret manager. The browser never sees it.
+- The **OWS environment** the key belongs to. The default is **demo**
+  (`https://demo-api.igrant.io`). Use **staging**
+  (`https://staging-api.igrant.io`) only when the integrator asks for it.
+  A key works only in its own environment.
+
+## Ask the integrator first
+Ask one question at a time. Wait for the answer. Give the recommended
+default with each question. Look up facts in the project (framework,
+environment variables, an existing backend) instead of asking for them.
+Record the answers before you write code.
+
+1. **Environment** - demo or staging? _Default demo
+   (`https://demo-api.igrant.io`); a switch later is a configuration
+   change._
+2. **API key** - do you have the OWS API key for that environment? If not,
+   request it from [support@igrant.io](mailto:support@igrant.io) before you
+   continue.
+3. **Organisation** - the main wallet, or a sandbox organisation? _A sandbox
+   needs the `X-SandboxOrgId` header and a bearer token; see
+   `igrantio-api-sandboxes`._
+4. **Vault** - iGrant.io, Hashicorp, QTSP or DB-backed?
+5. **X.509** - do you need a CSR and a certificate chain (`x5c`)? _Needed for
+   `x509_san_dns`, mdoc, and the trust list._
+6. **QTSP** - remote qualified electronic signatures?
+7. **Trust list** - is your certificate registered in the trust list (the
+   trust anchor for an issuer, the WRPAC for a relying party)? If not, contact
+   [support@igrant.io](mailto:support@igrant.io) and follow
+   <https://docs.igrant.io/docs/trust-relying-party-registration/>.
 
 ## Endpoint reference
 
@@ -199,6 +232,21 @@ organisation, bind the key with
 it, but `X-SandboxOrgId` wins if you send both.
 
 See `igrantio-api-sandboxes` for creating and deploying a sandbox organisation.
+
+## Register your certificate in the trust list
+Wallets show your organisation as verified only when your certificate is in
+the trust list. Do this before you go live on any environment:
+
+1. Prepare the certificate. An issuer registers its trust anchor (the root
+   CA certificate). A relying party registers its Wallet-Relying Party
+   Access Certificate (WRPAC). `igrantio-api-key-management` shows how to
+   get the CSR and upload the signed chain (`x5c`).
+2. Contact [support@igrant.io](mailto:support@igrant.io) and follow
+   <https://docs.igrant.io/docs/trust-relying-party-registration/>.
+3. Confirm the verified badge in the wallet after the trust list refreshes.
+
+Until the entry is in place the wallet shows an unverified warning.
+`igrantio-trustlist-entries` covers registration from automation.
 
 ## Documentation is the source of truth
 If this skill and the linked documentation disagree, **the documentation wins**.

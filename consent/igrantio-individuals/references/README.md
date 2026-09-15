@@ -7,7 +7,7 @@ cp .env.example .env      # set OWS_ENV, OWS_API_KEY
 npm install
 npm run dev               # example server on :6003
 
-# demo onboard (userId comes from your session in production):
+# demo onboard (userId comes from your session in your real app):
 curl -s -XPOST localhost:6003/individuals/onboard \
   -H 'content-type: application/json' -H 'X-Demo-User-Id: u_123' \
   -d '{"name":"Ada Lovelace","email":"ada@example.com","phone":"+10000000000"}'

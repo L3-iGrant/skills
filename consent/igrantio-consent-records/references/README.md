@@ -8,7 +8,7 @@ cp .env.example .env      # set OWS_ENV, OWS_API_KEY
 npm install
 npm run dev               # example server on :6004
 
-# give consent (individualId comes from your session->mapping in production):
+# give consent (individualId comes from your session->mapping in your real app):
 curl -s -XPUT localhost:6004/consents/<dataAgreementId> \
   -H 'content-type: application/json' -H 'X-Demo-Individual-Id: <individualId>' \
   -d '{"optIn":true}'

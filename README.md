@@ -40,18 +40,27 @@ what to build:
 > *"Onboard my users into the Consent Building Block and add allow/withdraw
 > consent handling with the igrantio consent skills."*
 
-**Prerequisites:** an iGrant.io organisation account and API key. See
-[get started](https://docs.igrant.io/docs/get-started/) and the
+**Prerequisites:** an iGrant.io Organisation Wallet Suite (OWS) API key,
+obtained from [support@igrant.io](mailto:support@igrant.io), for the
+environment you integrate with: demo (`https://demo-api.igrant.io`, the
+default) or staging (`https://staging-api.igrant.io`).
+Issuers and verifiers also register their certificate in the trust list
+(contact support@igrant.io, see
+[trust-list registration](https://docs.igrant.io/docs/trust-relying-party-registration/)).
+See [get started](https://docs.igrant.io/docs/get-started/) and the
 [developer APIs](https://docs.igrant.io/docs/developer-apis).
 
 ## Available skills
 
 Start with the overview skill. The issuer and verifier skills compose the
 building blocks, so your agent installs only what the task needs. Every skill
-opens with an **integrator intake**: environment (demo / staging / custom),
-API key, tenancy, webhooks, and frontend choices, asked one question at a
-time with a recommended default, so the agent locks the setup before writing
-code.
+is interactive: it opens with **Prerequisites** (the OWS API key from
+support@igrant.io and the environment: demo or staging) and an
+**Ask the integrator first** interview, asked one question at a time with a
+recommended default, so the agent locks the setup before writing code. Issuer
+and verifier skills also remind you to register your certificate in the trust
+list. Every wallet QR is rendered by `igrantio-qr-code` at the exact look of
+the iGrant.io demonstrators.
 
 <!-- BEGIN SKILLS -->
 | Skill | What it teaches the agent | Builds on |
@@ -70,7 +79,7 @@ code.
 | [`igrantio-backend-sse`](./ows/igrantio-backend-sse) | Stream webhook events to the browser over SSE | webhooks |
 | [`igrantio-frontend-client`](./ows/igrantio-frontend-client) | Dependency-free typed OWS browser client plus React hooks | overview |
 | [`igrantio-usecase-ui`](./ows/igrantio-usecase-ui) | Default iGrant.io look and feel: theme, app shell, primitives, strings-driven i18n | frontend-client |
-| [`igrantio-qr-code`](./ows/igrantio-qr-code) | Wallet QR panel: centre logo, green tick, refresh, open-in-wallet, tx code | frontend-client |
+| [`igrantio-qr-code`](./ows/igrantio-qr-code) | Wallet QR panel at the demonstrator look: rounded frame, logo disc, refresh pill, open-in-wallet button, transaction code, hint | overview |
 | [`igrantio-individuals`](./consent/igrantio-individuals) | Onboard users as Consent BB individuals (userId to individualId mapping) | none |
 | [`igrantio-consent-records`](./consent/igrantio-consent-records) | Record, read, withdraw, and erase consents | individuals |
 
@@ -199,7 +208,7 @@ an integration from scratch.
 Each skill is versioned individually through the `metadata.version` field in
 its `SKILL.md`, following the `yyyy.mm.NN` scheme, where `yyyy.mm` is the year
 and month of the release and `NN` is the release number within that month. The
-current release is `2026.08.05`. Versions are bumped whenever a skill's
+current release is `2026.09.01`. Versions are bumped whenever a skill's
 contract changes.
 
 To update installed skills to the latest release:

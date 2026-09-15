@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, holder, wallet, notifications, Server-Sent Events, SSE, OpenID4VCI, OpenID4VP
-  version: 2026.08.02
+  version: 2026.09.01
   api: https://docs.igrant.io/docs/developer-apis
   auth: OWS API key injected by the backend relay/proxy; the SSE upstream reads the "authorization" query parameter
   requires-skills: igrantio-ows-overview
@@ -22,7 +22,31 @@ holder role has **no webhooks**; issuer/verifier backends use
 `igrantio-backend-webhooks` instead. `igrantio-holder-backend` composes this
 skill.
 
-**Before you build**: run the integrator intake in `igrantio-ows-overview` - environment, API key, tenancy, backend host, webhooks, frontend - one question at a time, a recommended default with each.
+## Prerequisites
+- An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
+  [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
+  an environment variable or a secret manager. The browser never sees it.
+- The **OWS environment** the key belongs to. The default is **demo**
+  (`https://demo-api.igrant.io`). Use **staging**
+  (`https://staging-api.igrant.io`) only when the integrator asks for it.
+  A key works only in its own environment.
+
+## Ask the integrator first
+Ask one question at a time. Wait for the answer. Give the recommended
+default with each question. Look up facts in the project (framework,
+environment variables, an existing backend) instead of asking for them.
+Record the answers before you write code.
+
+1. **Environment** - demo or staging? _Default demo
+   (`https://demo-api.igrant.io`); a switch later is a configuration
+   change._
+2. **API key** - do you have the OWS API key for that environment? If not,
+   request it from [support@igrant.io](mailto:support@igrant.io) before you
+   continue.
+3. **Relay** - stream through the tenant backend relay (recommended), or read
+   the list on a timer?
+4. **Handled** - mark a notification handled by delete (recommended) or by
+   status update?
 
 ## Contract
 

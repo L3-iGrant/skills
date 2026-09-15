@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, OpenID4VCI, OpenID4VP, Server-Sent Events, SSE, live status
-  version: 2026.07.04
+  version: 2026.09.01
   api: https://docs.igrant.io/docs/developer-apis
   auth: none - reads only the local event store; correlation is by exchange id
   requires-skills: igrantio-ows-overview, igrantio-backend-webhooks
@@ -19,7 +19,29 @@ history endpoint. Pairs with `igrantio-backend-webhooks` (which fills the store)
 and `igrantio-frontend-client`'s SSE consumer. Composed by the issuer/verifier
 backends.
 
-**Before you build**: run the integrator intake in `igrantio-ows-overview` - environment, API key, tenancy, backend host, webhooks, frontend - one question at a time, a recommended default with each.
+## Prerequisites
+- An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
+  [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
+  an environment variable or a secret manager. The browser never sees it.
+- The **OWS environment** the key belongs to. The default is **demo**
+  (`https://demo-api.igrant.io`). Use **staging**
+  (`https://staging-api.igrant.io`) only when the integrator asks for it.
+  A key works only in its own environment.
+
+## Ask the integrator first
+Ask one question at a time. Wait for the answer. Give the recommended
+default with each question. Look up facts in the project (framework,
+environment variables, an existing backend) instead of asking for them.
+Record the answers before you write code.
+
+1. **Environment** - demo or staging? _Default demo
+   (`https://demo-api.igrant.io`); a switch later is a configuration
+   change._
+2. **API key** - do you have the OWS API key for that environment? If not,
+   request it from [support@igrant.io](mailto:support@igrant.io) before you
+   continue.
+3. **Event store** - in-memory or shared? _Shared for more than one instance._
+4. **Frontend origin** - which origins may open the stream (CORS)?
 
 ## What it does
 Mounted at `/webhook`:

@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: webhook, webhook delivery, HMAC, X-IGrant-Signature, event types, payload URL, OID4VC, EUDIW, eIDAS2, callback
-  version: 2026.08.01
+  version: 2026.09.01
   source-doc: https://docs.igrant.io/docs/developer-apis/
   protocols: HTTP webhooks, HMAC-SHA256
   auth: OWS API key (Authorization "ApiKey <key>") or bearer access token
@@ -26,6 +26,37 @@ prefix). A bearer access token also works.
 
 The webhook operations carry only the `Webhook` tag. They serve every
 building block, not the OID4VC wallet alone.
+
+## Prerequisites
+- An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
+  [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
+  an environment variable or a secret manager. The browser never sees it.
+- The **OWS environment** the key belongs to. The default is **demo**
+  (`https://demo-api.igrant.io`). Use **staging**
+  (`https://staging-api.igrant.io`) only when the integrator asks for it.
+  A key works only in its own environment.
+
+## Ask the integrator first
+Ask one question at a time. Wait for the answer. Give the recommended
+default with each question. Look up facts in the project (framework,
+environment variables, an existing backend) instead of asking for them.
+Record the answers before you write code.
+
+1. **Environment** - demo or staging? _Default demo
+   (`https://demo-api.igrant.io`); a switch later is a configuration
+   change._
+2. **API key** - do you have the OWS API key for that environment? If not,
+   request it from [support@igrant.io](mailto:support@igrant.io) before you
+   continue.
+3. **Organisation** - the main wallet, or a sandbox organisation? _A sandbox
+   needs the `X-SandboxOrgId` header and a bearer token; see
+   `igrantio-api-sandboxes`._
+4. **Payload URL** - which public HTTPS URL receives the deliveries? _Local
+   dev needs a tunnel._
+5. **Events** - which event types? _Subscribe only to the topics your role
+   needs._
+6. **Secret** - who holds the HMAC secret? _One shared secret per webhook,
+   server-side only._
 
 ## Endpoint reference
 

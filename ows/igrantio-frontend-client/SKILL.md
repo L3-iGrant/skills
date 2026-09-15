@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VCI, OpenID4VP, React hooks, SSE, browser client
-  version: 2026.07.04
+  version: 2026.09.01
   api: https://docs.igrant.io/docs/developer-apis
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0, DCQL, SD-JWT-VC
   auth: none in the browser - the tenant backend injects the OWS API key
@@ -20,7 +20,30 @@ and `igrantio-verifier-frontend` both build on it. It replaces the internal
 `@igrant/usecase-sdk` / `igrant-api-lib` with self-contained, framework-agnostic
 code you own. Read `igrantio-ows-overview` for the endpoint/response contract.
 
-**Before you build**: run the integrator intake in `igrantio-ows-overview` - environment, API key, tenancy, backend host, webhooks, frontend - one question at a time, a recommended default with each.
+## Prerequisites
+- An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
+  [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
+  an environment variable or a secret manager. The browser never sees it.
+- The **OWS environment** the key belongs to. The default is **demo**
+  (`https://demo-api.igrant.io`). Use **staging**
+  (`https://staging-api.igrant.io`) only when the integrator asks for it.
+  A key works only in its own environment.
+
+## Ask the integrator first
+Ask one question at a time. Wait for the answer. Give the recommended
+default with each question. Look up facts in the project (framework,
+environment variables, an existing backend) instead of asking for them.
+Record the answers before you write code.
+
+1. **Environment** - demo or staging? _Default demo
+   (`https://demo-api.igrant.io`); a switch later is a configuration
+   change._
+2. **API key** - do you have the OWS API key for that environment? If not,
+   request it from [support@igrant.io](mailto:support@igrant.io) before you
+   continue.
+3. **Framework** - React (hooks) or another framework (core only)?
+4. **Backend** - the proxy base URL and the webhook base URL of your tenant
+   backend?
 
 ## What it provides
 Framework-agnostic core (only `fetch` + `EventSource`):
@@ -38,8 +61,9 @@ React layer (peer deps: `react`, and `qrcode` for `QrCode`):
 - **`useOwsClient(baseUrl, apiKey?)`** - memoised client
 - **`useCredentialHistory` / `useVerificationHistory`** - optional polling reads
 - **`QrCode`** component + **`openInWallet(uri)`** deep-link helper - minimal
-  URI-to-image only; for the full panel (centre logo, green tick, refresh,
-  wallet button, tx code) use `igrantio-qr-code`
+  URI-to-image only, for tests and tools. Any QR a user sees is the
+  demonstrator panel from `igrantio-qr-code` (rounded frame, logo disc,
+  refresh pill, wallet button, hint)
 
 ## Reference layout (vendor into your app)
 Copy [`./references/lib/ows`](./references/lib/ows) into your app at `src/lib/ows/`.

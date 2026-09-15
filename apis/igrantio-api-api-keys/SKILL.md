@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: API key, apikey, scopes, config scope, bearer token, RBAC, organisation administrator, token rotation, expiryInDays, sandbox organisation binding, OpenID4VCI, OpenID4VP, eIDAS2
-  version: 2026.08.01
+  version: 2026.09.01
   source-doc: https://docs.igrant.io/docs/developer-apis/
   protocols: OAuth-2.0-bearer, JWT
   auth: Bearer access token for the CRUD operations (organisation administrator only); the keys that you create are used as Authorization "ApiKey <key>"
@@ -25,6 +25,35 @@ Use this skill when the task is one of these:
 An API key replaces a bearer access token on the OID4VC endpoints. Send it as
 `Authorization: ApiKey <apiKey>`. The key lives only on the server side, in an
 environment variable or a secret manager. The browser never sees it.
+
+## Prerequisites
+- An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
+  [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
+  an environment variable or a secret manager. The browser never sees it.
+- The **OWS environment** the key belongs to. The default is **demo**
+  (`https://demo-api.igrant.io`). Use **staging**
+  (`https://staging-api.igrant.io`) only when the integrator asks for it.
+  A key works only in its own environment.
+
+## Ask the integrator first
+Ask one question at a time. Wait for the answer. Give the recommended
+default with each question. Look up facts in the project (framework,
+environment variables, an existing backend) instead of asking for them.
+Record the answers before you write code.
+
+1. **Environment** - demo or staging? _Default demo
+   (`https://demo-api.igrant.io`); a switch later is a configuration
+   change._
+2. **API key** - do you have the OWS API key for that environment? If not,
+   request it from [support@igrant.io](mailto:support@igrant.io) before you
+   continue.
+3. **Organisation** - the main wallet, or a sandbox organisation? _A sandbox
+   needs the `X-SandboxOrgId` header and a bearer token; see
+   `igrantio-api-sandboxes`._
+4. **Scopes** - `config`, `audit`, `service`, `onboard`? _Recommend the
+   minimum for the task._
+5. **Lifetime** - an explicit expiry, or the 30-day fallback?
+6. **Sandbox binding** - bind the key to a sandbox organisation?
 
 ## Endpoint reference
 

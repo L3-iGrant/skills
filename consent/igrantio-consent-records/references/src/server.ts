@@ -6,7 +6,7 @@ import { consentRouter, type IndividualIdResolver } from "./consentRouter";
 
 /**
  * Example consent backend. It mounts the consent router with a resolver that maps
- * the current request to an individualId. In production, resolve from your session
+ * the current request to an individualId. In your real app, resolve from your session
  * and the userId ↔ individualId mapping (see igrantio-individuals), NOT a header.
  */
 const app = express();

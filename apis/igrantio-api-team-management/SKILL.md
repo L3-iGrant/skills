@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: team management, manage team, organisation admin, admin invitation, pendingInvitation, roleName, passwordless login, EUDI Wallet, oidcPasswordless, RBAC, eIDAS2
-  version: 2026.08.01
+  version: 2026.09.01
   source-doc: https://docs.igrant.io/docs/developer-apis/
   protocols: OAuth-2.0-bearer, JWT
   auth: Bearer access token from an organisation administrator
@@ -24,6 +24,31 @@ Use this skill when the task is one of these:
 This group is the API behind the **Manage Team** page of the iGrant.io
 dashboard. For the account of the signed-in admin (profile, avatar, password,
 own login methods), use **`igrantio-api-user-management`**.
+
+## Prerequisites
+- An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
+  [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
+  an environment variable or a secret manager. The browser never sees it.
+- The **OWS environment** the key belongs to. The default is **demo**
+  (`https://demo-api.igrant.io`). Use **staging**
+  (`https://staging-api.igrant.io`) only when the integrator asks for it.
+  A key works only in its own environment.
+
+## Ask the integrator first
+Ask one question at a time. Wait for the answer. Give the recommended
+default with each question. Look up facts in the project (framework,
+environment variables, an existing backend) instead of asking for them.
+Record the answers before you write code.
+
+1. **Environment** - demo or staging? _Default demo
+   (`https://demo-api.igrant.io`); a switch later is a configuration
+   change._
+2. **API key** - do you have the OWS API key for that environment? If not,
+   request it from [support@igrant.io](mailto:support@igrant.io) before you
+   continue.
+3. **Operation** - create, read, delete or list admins, or toggle passwordless
+   login?
+4. **Passwordless** - which admins sign in with an EUDI Wallet?
 
 ## Endpoint reference
 

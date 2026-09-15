@@ -1,1 +1,1 @@
-export { WalletQrPanel, type WalletQrPanelProps } from "./WalletQrPanel";
+export { WalletQrPanel, walletQrLabelsEn, type WalletQrPanelProps, type WalletQrLabels } from "./WalletQrPanel";

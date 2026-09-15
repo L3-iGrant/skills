@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: sandbox organisation, sandbox org, X-SandboxOrgId, X-SubwalletId, subwallet, test wallet, multi-wallet, OpenID4VCI, OpenID4VP, EUDIW, EUBW, eIDAS2, API key binding
-  version: 2026.08.01
+  version: 2026.09.01
   source-doc: https://docs.igrant.io/docs/developer-apis/
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0
   auth: OWS API key (Authorization "ApiKey <key>") or a bearer access token - the key is held only by the tenant backend, never the browser
@@ -30,6 +30,31 @@ the main wallet.
 
 **Before you start**, the main wallet of the organisation must be deployed. See
 `igrantio-api-wallet-provider` for the deploy operation.
+
+## Prerequisites
+- An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
+  [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
+  an environment variable or a secret manager. The browser never sees it.
+- The **OWS environment** the key belongs to. The default is **demo**
+  (`https://demo-api.igrant.io`). Use **staging**
+  (`https://staging-api.igrant.io`) only when the integrator asks for it.
+  A key works only in its own environment.
+
+## Ask the integrator first
+Ask one question at a time. Wait for the answer. Give the recommended
+default with each question. Look up facts in the project (framework,
+environment variables, an existing backend) instead of asking for them.
+Record the answers before you write code.
+
+1. **Environment** - demo or staging? _Default demo
+   (`https://demo-api.igrant.io`); a switch later is a configuration
+   change._
+2. **API key** - do you have the OWS API key for that environment? If not,
+   request it from [support@igrant.io](mailto:support@igrant.io) before you
+   continue.
+3. **Bearer token** - do you have an admin access token? _The sandbox header
+   works only with a bearer token, not with an API key._
+4. **Bind** - should an API key be bound to the sandbox for server-side use?
 
 ## Endpoint reference
 

@@ -30,6 +30,7 @@ then copy it byte-for-byte to the other locations. CI runs
 | `notificationsSse.ts`, `notificationsClient.ts` | `ows/igrantio-holder-notifications/references/` |
 | `lib/ows/` (client and React hooks) | `ows/igrantio-frontend-client/references/lib/ows/` |
 | `consentClient.ts` | `consent/igrantio-consent-records/references/src/` |
+| `WalletQrPanel.tsx`, `walletQr.css` | `ows/igrantio-qr-code/references/ui/` |
 
 ## Versioning
 

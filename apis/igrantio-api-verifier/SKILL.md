@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: OpenID4VP, DCQL, presentation definition, verification, relying party, transaction data, Digital Credentials API, dc_api, direct_post.jwt, mso_mdoc, SD-JWT VC, ISO 18013-7, EUDIW, EUBW, eIDAS2
-  version: 2026.08.01
+  version: 2026.09.01
   source-doc: https://docs.igrant.io/docs/developer-apis/
   protocols: OpenID4VP-1.0, DCQL, SD-JWT-VC, mso_mdoc, ISO-18013-7-Annex-C, W3C-Digital-Credentials-API
   auth: Organisation Wallet Suite API key (Authorization "ApiKey <key>") or a bearer access token
@@ -32,6 +32,42 @@ Use it when you must:
 For the wallet side of a presentation, read `igrantio-api-holder`. For issuance,
 read `igrantio-api-issuer`.
 
+## Prerequisites
+- An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
+  [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
+  an environment variable or a secret manager. The browser never sees it.
+- The **OWS environment** the key belongs to. The default is **demo**
+  (`https://demo-api.igrant.io`). Use **staging**
+  (`https://staging-api.igrant.io`) only when the integrator asks for it.
+  A key works only in its own environment.
+
+## Ask the integrator first
+Ask one question at a time. Wait for the answer. Give the recommended
+default with each question. Look up facts in the project (framework,
+environment variables, an existing backend) instead of asking for them.
+Record the answers before you write code.
+
+1. **Environment** - demo or staging? _Default demo
+   (`https://demo-api.igrant.io`); a switch later is a configuration
+   change._
+2. **API key** - do you have the OWS API key for that environment? If not,
+   request it from [support@igrant.io](mailto:support@igrant.io) before you
+   continue.
+3. **Organisation** - the main wallet, or a sandbox organisation? _A sandbox
+   needs the `X-SandboxOrgId` header and a bearer token; see
+   `igrantio-api-sandboxes`._
+4. **Operation** - create a presentation definition, send a request, read the
+   history, or receive a DC API response?
+5. **Response mode** - cross-device QR (`direct_post`) or same-device Digital
+   Credentials API (`dc_api`)? _Recommend QR first._
+6. **Transaction data** - does the wallet sign over transaction details
+   (payment, e-mandate, QES)? _Only when the use case needs it._
+7. **Trust list** - is your Wallet-Relying Party Access Certificate (WRPAC)
+   registered in the trust list? If not, contact
+   [support@igrant.io](mailto:support@igrant.io) and follow
+   <https://docs.igrant.io/docs/trust-relying-party-registration/>. Until then
+   the wallet shows an unverified warning for your request.
+
 ## Protocol scope
 - The verifier implements **OpenID4VP 1.0**. Set `version` to `version_01`
   on the presentation definition. `iso18013_7_annex_c` selects
@@ -54,8 +90,8 @@ space:
 Authorization: ApiKey <your-api-key>
 ```
 
-Demo base URL: `https://demo-api.igrant.io`. The bundle also lists
-`https://api.igrant.io` (production) and `https://staging-api.igrant.io`.
+Demo base URL: `https://demo-api.igrant.io`. Staging base URL:
+`https://staging-api.igrant.io`.
 The API key stays on your server. The browser never holds it.
 
 ## Endpoint reference
@@ -120,7 +156,7 @@ Transport fields:
 | `clientIdScheme` | `redirect_uri`, `did`, `verifier_attestation`, `x509_san_dns`, `x509_hash` | Default `redirect_uri`. Send `null` for `iso18013_7_annex_c`. With the DC API response modes, `redirect_uri` is only a logical identifier. |
 | `trustAnchor` | `did:key`, `x509` | Default `did:key`. |
 | `kid` | string | The verifier key. The organisation key is used when you send no value. The key must be valid when `dcApiRequestType` is `signed`. |
-| `dcApiRequestType` | `signed`, `unsigned` | Only with `dc_api` or `dc_api.jwt`. A missing value means `unsigned` for `dc_api` and `signed` for `dc_api.jwt`. Use `signed` in production. |
+| `dcApiRequestType` | `signed`, `unsigned` | Only with `dc_api` or `dc_api.jwt`. A missing value means `unsigned` for `dc_api` and `signed` for `dc_api.jwt`. Use `signed` for live use. |
 | `expectedOrigins` | array of strings | Mandatory when the effective `dcApiRequestType` is `signed`, and for `iso18013_7_annex_c`. The wallet ignores it for an unsigned request. |
 | `encryptedResponseEncValuesSupported` | `A128CBC-HS256`, `A128GCM`, `A256GCM` | Mandatory for `direct_post.jwt`, and the verifier global configuration must permit encryption. An empty stored value falls back to all three. `dc_api.jwt` ignores this field and always uses `A256GCM`. |
 | `directPostRedirectUri` | string | Only for `direct_post`. The server refuses it for `direct_post.jwt`, and it has no meaning for the DC API modes. |
@@ -289,6 +325,21 @@ Read `igrantio-api-sandboxes` for the sandbox organisation lifecycle.
 - `igrantio-api-webhooks` - the presentation events that tell you when the
   holder answered.
 - `igrantio-api-sandboxes` - the sandbox organisation lifecycle.
+
+## Register your certificate in the trust list
+Wallets show your organisation as verified only when your certificate is in
+the trust list. Do this before you go live on any environment:
+
+1. Prepare the certificate. An issuer registers its trust anchor (the root
+   CA certificate). A relying party registers its Wallet-Relying Party
+   Access Certificate (WRPAC). `igrantio-api-key-management` shows how to
+   get the CSR and upload the signed chain (`x5c`).
+2. Contact [support@igrant.io](mailto:support@igrant.io) and follow
+   <https://docs.igrant.io/docs/trust-relying-party-registration/>.
+3. Confirm the verified badge in the wallet after the trust list refreshes.
+
+Until the entry is in place the wallet shows an unverified warning.
+`igrantio-trustlist-entries` covers registration from automation.
 
 ## Documentation is the source of truth
 This skill mirrors the iGrant.io OpenID4VC API documentation. If this skill and

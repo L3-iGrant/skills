@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: LPID, legal person identification data, LegalPersonIdentificationData, org.iso.18013.5.1.lpid, organisation identity, EUBW, European Business Wallet, SD-JWT VC, dc+sd-jwt, jwt_vc_json, mso_mdoc, claim path pointer, credential definition, eIDAS2
-  version: 2026.08.01
+  version: 2026.09.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/credentialSchemas/claimPathPointer/lpid
   schema-version: 2025.7.1
   formats: dc+sd-jwt, jwt_vc_json, mso_mdoc
@@ -31,6 +31,44 @@ The registry publishes this schema in **all three formats**:
 
 This page describes registry version **2025.7.1**, the latest version of the
 template.
+
+## Prerequisites
+- An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
+  [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
+  an environment variable or a secret manager. The browser never sees it.
+- The **OWS environment** the key belongs to. The default is **demo**
+  (`https://demo-api.igrant.io`). Use **staging**
+  (`https://staging-api.igrant.io`) only when the integrator asks for it.
+  A key works only in its own environment.
+
+## Ask the integrator first
+Ask one question at a time. Wait for the answer. Give the recommended
+default with each question. Look up facts in the project (framework,
+environment variables, an existing backend) instead of asking for them.
+Record the answers before you write code.
+
+1. **Environment** - demo or staging? _Default demo
+   (`https://demo-api.igrant.io`); a switch later is a configuration
+   change._
+2. **API key** - do you have the OWS API key for that environment? If not,
+   request it from [support@igrant.io](mailto:support@igrant.io) before you
+   continue.
+3. **Format** - which of the formats the registry publishes for this schema:
+   `dc+sd-jwt`, `jwt_vc_json` or `mso_mdoc`? _Recommend `dc+sd-jwt` unless the
+   rule book requires mdoc._
+4. **Claims** - all claims of the schema, or a subset? _Mandatory claims
+   stay._
+5. **Issuance mode** - `InTime` (claims known now) or `Deferred` (claims
+   arrive later)?
+6. **Revocation** - status list on? _Recommend on for any credential with a
+   lifetime._
+7. **Signing** - a DID key or an X.509 certificate (`x5c`)? _X.509 is needed
+   for mdoc and for the trust list._
+8. **Trust list** - is your issuer certificate (the trust anchor) registered
+   in the trust list? If not, contact
+   [support@igrant.io](mailto:support@igrant.io) and follow
+   <https://docs.igrant.io/docs/trust-relying-party-registration/>. Until then
+   wallets show your credentials as unverified.
 
 ## Claim path pointer document - dc+sd-jwt
 

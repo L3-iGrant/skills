@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: trust anchor, trust authority, trust list, ETSI_TL, ETSI TS 119 612, issuer validation, verifier validation, OpenID4VP, OID4VCI, EUDIW, eIDAS2
-  version: 2026.08.01
+  version: 2026.09.01
   source-doc: https://docs.igrant.io/docs/developer-apis/
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0, ETSI TS 119 612 trust lists
   auth: OWS API key (Authorization "ApiKey <key>") or bearer access token
@@ -26,6 +26,34 @@ prefix). A bearer access token also works.
 
 A trust authority points to a trust list. The service uses the trust lists to
 validate issuers and verifiers in OID4VCI and OpenID4VP flows.
+
+## Prerequisites
+- An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
+  [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
+  an environment variable or a secret manager. The browser never sees it.
+- The **OWS environment** the key belongs to. The default is **demo**
+  (`https://demo-api.igrant.io`). Use **staging**
+  (`https://staging-api.igrant.io`) only when the integrator asks for it.
+  A key works only in its own environment.
+
+## Ask the integrator first
+Ask one question at a time. Wait for the answer. Give the recommended
+default with each question. Look up facts in the project (framework,
+environment variables, an existing backend) instead of asking for them.
+Record the answers before you write code.
+
+1. **Environment** - demo or staging? _Default demo
+   (`https://demo-api.igrant.io`); a switch later is a configuration
+   change._
+2. **API key** - do you have the OWS API key for that environment? If not,
+   request it from [support@igrant.io](mailto:support@igrant.io) before you
+   continue.
+3. **Organisation** - the main wallet, or a sandbox organisation? _A sandbox
+   needs the `X-SandboxOrgId` header and a bearer token; see
+   `igrantio-api-sandboxes`._
+4. **Trust lists** - which trust list URLs must the organisation accept beyond
+   the 2 built-in ones?
+5. **Role** - restrict issuers (as a verifier) or verifiers (as a wallet)?
 
 ## Endpoint reference
 

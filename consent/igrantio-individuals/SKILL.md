@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: consent management, GDPR, data agreement, eIDAS2, EUDIW, user onboarding, personal data
-  version: 2026.07.04
+  version: 2026.09.01
   api: https://docs.igrant.io/docs/category/consent-management-admin-api/individual
   auth: Organisation API key (Authorization "ApiKey <key>") - server-side only, never the browser
   requires-skills: igrantio-consent-records
@@ -19,16 +19,30 @@ Consent Building Block and store the returned `individualId` against your own
 `userId`. That mapping is what later lets `igrantio-consent-records` record and
 manage consents for the right person.
 
-## Integrator intake
-Ask one question at a time, a recommended default with each; look up facts in
-the project, put only decisions to the integrator:
-1. **Environment** - demo (`https://demo-api.igrant.io`), staging, or a custom
-   Consent BB deployment (ask its base URL)? _Recommend demo to start._
-2. **API key** - organisation API key for the Consent Building Block? From
-   your iGrant.io organisation account; server-side only, never the browser.
-3. **Mapping storage** - where does the `userId` to `individualId` mapping
-   live: a column on the existing users table (recommended) or a separate
-   store?
+## Prerequisites
+- An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
+  [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
+  an environment variable or a secret manager. The browser never sees it.
+- The **OWS environment** the key belongs to. The default is **demo**
+  (`https://demo-api.igrant.io`). Use **staging**
+  (`https://staging-api.igrant.io`) only when the integrator asks for it.
+  A key works only in its own environment.
+- The same organisation API key serves the Consent Building Block.
+
+## Ask the integrator first
+Ask one question at a time. Wait for the answer. Give the recommended
+default with each question. Look up facts in the project (framework,
+environment variables, an existing backend) instead of asking for them.
+Record the answers before you write code.
+
+1. **Environment** - demo or staging? _Default demo
+   (`https://demo-api.igrant.io`); a switch later is a configuration
+   change._
+2. **API key** - do you have the OWS API key for that environment? If not,
+   request it from [support@igrant.io](mailto:support@igrant.io) before you
+   continue.
+3. **Mapping storage** - a column on the existing users table (recommended) or
+   a separate store?
 
 ## The mapping (the important part)
 ```

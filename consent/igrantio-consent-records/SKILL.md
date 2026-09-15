@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: consent management, GDPR, data agreement, eIDAS2, EUDIW, right to be forgotten, personal data
-  version: 2026.07.04
+  version: 2026.09.01
   api: https://docs.igrant.io/docs/category/consent-management-individual-api/consent-record
   auth: Organisation API key (Authorization "ApiKey <key>") + X-ConsentBB-IndividualId - server-side only
   requires-skills: igrantio-individuals
@@ -19,25 +19,38 @@ allow, read current state, withdraw, show history, or erase (right to be
 forgotten). Assumes you already have the `individualId` (from
 `igrantio-individuals`) and the `dataAgreementId` you are collecting consent for.
 
-## Integrator intake
-Ask one question at a time, a recommended default with each; look up facts in
-the project, put only decisions to the integrator:
-1. **Environment** - demo (`https://demo-api.igrant.io`), staging, or a custom
-   Consent BB deployment (ask its base URL)? _Recommend demo to start._
-2. **API key** - organisation API key for the Consent Building Block?
-   Server-side only, never the browser.
+## Prerequisites
+- An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
+  [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
+  an environment variable or a secret manager. The browser never sees it.
+- The **OWS environment** the key belongs to. The default is **demo**
+  (`https://demo-api.igrant.io`). Use **staging**
+  (`https://staging-api.igrant.io`) only when the integrator asks for it.
+  A key works only in its own environment.
+- `individualId` - the Consent BB individual for the user (see
+  `igrantio-individuals`; resolve it **server-side** from your session/userId
+  mapping).
+- `dataAgreementId` - the data agreement to record consent against.
+- The same organisation API key serves the Consent Building Block.
+
+## Ask the integrator first
+Ask one question at a time. Wait for the answer. Give the recommended
+default with each question. Look up facts in the project (framework,
+environment variables, an existing backend) instead of asking for them.
+Record the answers before you write code.
+
+1. **Environment** - demo or staging? _Default demo
+   (`https://demo-api.igrant.io`); a switch later is a configuration
+   change._
+2. **API key** - do you have the OWS API key for that environment? If not,
+   request it from [support@igrant.io](mailto:support@igrant.io) before you
+   continue.
 3. **Data agreement(s)** - which `dataAgreementId`(s) are consents recorded
    against? _Listed in the iGrant.io admin console; ask the integrator to
    paste them._
 4. **Erasure policy** - expose "delete all consents" (right to be forgotten)
    to end users, or admin-only? _Recommend admin-only unless the product
    requires self-service._
-
-## Prerequisites
-- `individualId` - the Consent BB individual for the user (see `igrantio-individuals`;
-  resolve it **server-side** from your session/userId mapping).
-- `dataAgreementId` - the data agreement to record consent against.
-- Organisation API key - server-side only.
 
 ## API (Consent BB individual, base `/v2`)
 Auth on every call: `Authorization: ApiKey <key>` **and**

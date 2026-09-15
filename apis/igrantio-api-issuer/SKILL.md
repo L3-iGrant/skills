@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: OpenID4VCI, credential definition, credential issuance, claim path pointer, SD-JWT VC, mso_mdoc, jwt_vc_json, revocation, status list, deferred issuance, pre-authorized code, EUDIW, EUBW, eIDAS2
-  version: 2026.08.01
+  version: 2026.09.01
   source-doc: https://docs.igrant.io/docs/developer-apis/
   protocols: OpenID4VCI-1.0, SD-JWT-VC, W3C-VC-2.0, mso_mdoc, Token-Status-List
   auth: Organisation Wallet Suite API key (Authorization "ApiKey <key>") or a bearer access token
@@ -30,6 +30,42 @@ Use it when you must:
 For the holder side, read `igrantio-api-holder`. For the verifier side, read
 `igrantio-api-verifier`.
 
+## Prerequisites
+- An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
+  [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
+  an environment variable or a secret manager. The browser never sees it.
+- The **OWS environment** the key belongs to. The default is **demo**
+  (`https://demo-api.igrant.io`). Use **staging**
+  (`https://staging-api.igrant.io`) only when the integrator asks for it.
+  A key works only in its own environment.
+
+## Ask the integrator first
+Ask one question at a time. Wait for the answer. Give the recommended
+default with each question. Look up facts in the project (framework,
+environment variables, an existing backend) instead of asking for them.
+Record the answers before you write code.
+
+1. **Environment** - demo or staging? _Default demo
+   (`https://demo-api.igrant.io`); a switch later is a configuration
+   change._
+2. **API key** - do you have the OWS API key for that environment? If not,
+   request it from [support@igrant.io](mailto:support@igrant.io) before you
+   continue.
+3. **Organisation** - the main wallet, or a sandbox organisation? _A sandbox
+   needs the `X-SandboxOrgId` header and a bearer token; see
+   `igrantio-api-sandboxes`._
+4. **Operation** - create or change a credential definition, issue a
+   credential, complete a deferred issuance, revoke, or read the history?
+5. **Format** - `dc+sd-jwt`, `jwt_vc_json` or `mso_mdoc`? _Recommend
+   `dc+sd-jwt` unless the rule book requires mdoc._
+6. **Signing** - a DID key or an X.509 certificate (`x5c`)? _X.509 is needed
+   for mdoc and for the trust list._
+7. **Trust list** - is your issuer certificate (the trust anchor) registered
+   in the trust list? If not, contact
+   [support@igrant.io](mailto:support@igrant.io) and follow
+   <https://docs.igrant.io/docs/trust-relying-party-registration/>. Until then
+   wallets show your credentials as unverified.
+
 ## Protocol scope
 - The issuer implements **OpenID4VCI 1.0**. Set `version` to `version_01`
   on the credential definition. Always send `version`, because
@@ -51,8 +87,8 @@ space:
 Authorization: ApiKey <your-api-key>
 ```
 
-Demo base URL: `https://demo-api.igrant.io`. The bundle also lists
-`https://api.igrant.io` (production) and `https://staging-api.igrant.io`.
+Demo base URL: `https://demo-api.igrant.io`. Staging base URL:
+`https://staging-api.igrant.io`.
 The API key stays on your server. The browser never holds it.
 
 ## Endpoint reference
@@ -301,6 +337,21 @@ Read `igrantio-api-sandboxes` for the sandbox organisation lifecycle.
 - `igrantio-api-webhooks` - the issuance events that tell you when the holder
   answered.
 - `igrantio-api-sandboxes` - the sandbox organisation lifecycle.
+
+## Register your certificate in the trust list
+Wallets show your organisation as verified only when your certificate is in
+the trust list. Do this before you go live on any environment:
+
+1. Prepare the certificate. An issuer registers its trust anchor (the root
+   CA certificate). A relying party registers its Wallet-Relying Party
+   Access Certificate (WRPAC). `igrantio-api-key-management` shows how to
+   get the CSR and upload the signed chain (`x5c`).
+2. Contact [support@igrant.io](mailto:support@igrant.io) and follow
+   <https://docs.igrant.io/docs/trust-relying-party-registration/>.
+3. Confirm the verified badge in the wallet after the trust list refreshes.
+
+Until the entry is in place the wallet shows an unverified warning.
+`igrantio-trustlist-entries` covers registration from automation.
 
 ## Documentation is the source of truth
 This skill mirrors the iGrant.io OpenID4VC API documentation. If this skill and

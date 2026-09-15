@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VCI, credential issuance, verifiable credentials, SD-JWT VC, mso_mdoc
-  version: 2026.08.01
+  version: 2026.09.01
   api: https://docs.igrant.io/docs/category/openid4vc-api/issuer
   protocols: OpenID4VCI-1.0, SD-JWT-VC, W3C-VC-2.0, mso_mdoc
   auth: OWS API key (Authorization "ApiKey <key>") injected by the proxy; browser sends no key
@@ -21,7 +21,40 @@ building blocks for the issuance flow only (least privilege):
 For the verifier equivalent use `igrantio-verifier-backend` (separate skill). Read
 `igrantio-ows-overview` first for the API and architecture.
 
-**Before you build**: run the integrator intake in `igrantio-ows-overview` - environment, API key, tenancy, backend host, webhooks, frontend - one question at a time, a recommended default with each.
+## Prerequisites
+- An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
+  [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
+  an environment variable or a secret manager. The browser never sees it.
+- The **OWS environment** the key belongs to. The default is **demo**
+  (`https://demo-api.igrant.io`). Use **staging**
+  (`https://staging-api.igrant.io`) only when the integrator asks for it.
+  A key works only in its own environment.
+
+## Ask the integrator first
+Ask one question at a time. Wait for the answer. Give the recommended
+default with each question. Look up facts in the project (framework,
+environment variables, an existing backend) instead of asking for them.
+Record the answers before you write code.
+
+1. **Environment** - demo or staging? _Default demo
+   (`https://demo-api.igrant.io`); a switch later is a configuration
+   change._
+2. **API key** - do you have the OWS API key for that environment? If not,
+   request it from [support@igrant.io](mailto:support@igrant.io) before you
+   continue.
+3. **Tenancy** - one organisation, or several tenants each with its own API
+   key? _Single tenant is one env var; multi-tenant needs a `TenantStore` (see
+   `igrantio-backend-proxy`)._
+4. **Backend host** - extend an existing Node/TypeScript backend, or scaffold
+   a fresh Express service? _Look this up first; ask only if the repo is empty
+   or ambiguous._
+5. **Webhook reachability** - which public HTTPS URL receives OWS webhooks?
+   _Local dev needs a tunnel or the polling fallback._
+6. **Trust list** - is your issuer certificate (the trust anchor) registered
+   in the trust list? If not, contact
+   [support@igrant.io](mailto:support@igrant.io) and follow
+   <https://docs.igrant.io/docs/trust-relying-party-registration/>. Until then
+   wallets show your credentials as unverified.
 
 ## What it does
 - **Proxy** `GET|POST|PUT|DELETE ${PROXY_PREFIX}/{tenant}/...` → OWS, injecting the tenant's
@@ -51,8 +84,8 @@ references/
 ```
 
 ## Steps
-1. `cd references && cp .env.example .env`, then set `OWS_BASE_URL`,
-   `WEBHOOK_SECRET_KEY`, `PUBLIC_BASE_URL`, `CORS_ORIGINS`, and one
+1. `cd references && cp .env.example .env`, then set `OWS_ENV`
+   (demo|staging, default demo), `WEBHOOK_SECRET_KEY`, `PUBLIC_BASE_URL`, `CORS_ORIGINS`, and one
    `OWS_TENANT_<SLUG>_API_KEY` per organisation.
 2. `npm install && npm run dev` - backend on `:6001`.
 3. Register the webhook once per tenant: `npm run register-webhook -- <tenant>`
@@ -79,6 +112,21 @@ See `igrantio-ows-overview/references/api-reference.md` §1 and §4.
 - A wrong/absent `X-iGrant-Signature` yields 401; a valid one stores the event.
 - Hitting a non-credential OWS path through the proxy yields 404 (least privilege).
 - The browser SSE fires within ~1s of the webhook arriving, keyed by `CredentialExchangeId`.
+
+## Register your certificate in the trust list
+Wallets show your organisation as verified only when your certificate is in
+the trust list. Do this before you go live on any environment:
+
+1. Prepare the certificate. An issuer registers its trust anchor (the root
+   CA certificate). A relying party registers its Wallet-Relying Party
+   Access Certificate (WRPAC). `igrantio-api-key-management` shows how to
+   get the CSR and upload the signed chain (`x5c`).
+2. Contact [support@igrant.io](mailto:support@igrant.io) and follow
+   <https://docs.igrant.io/docs/trust-relying-party-registration/>.
+3. Confirm the verified badge in the wallet after the trust list refreshes.
+
+Until the entry is in place the wallet shows an unverified warning.
+`igrantio-trustlist-entries` covers registration from automation.
 
 ## Documentation & workflows
 

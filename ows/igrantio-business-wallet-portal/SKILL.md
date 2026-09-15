@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: EUBW, EBW, European Business Wallet, EUDIW, eIDAS2, holder, wallet portal, custom portal, OpenID4VCI, OpenID4VP, DCQL, notifications, Next.js, TypeScript, Better Auth, passwordless
-  version: 2026.08.05
+  version: 2026.09.01
   api: https://docs.igrant.io/docs/developer-apis
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0, DCQL, SD-JWT-VC, W3C-VC-2.0, mso_mdoc
   auth: OWS API key held only by the holder backend; the portal browser sends no key
@@ -22,9 +22,33 @@ does not duplicate any contract; it tells you which skill to open for each
 part and in which order. For a single missing fact (a path, an enum, a
 payload), go straight to `igrantio-api-holder`.
 
-**Before you build**: run the integrator intake in `igrantio-ows-overview` - environment, API key, tenancy, backend host, webhooks, frontend - one question at a time, a recommended default with each. Then add the portal questions below.
+## Prerequisites
+- An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
+  [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
+  an environment variable or a secret manager. The browser never sees it.
+- The **OWS environment** the key belongs to. The default is **demo**
+  (`https://demo-api.igrant.io`). Use **staging**
+  (`https://staging-api.igrant.io`) only when the integrator asks for it.
+  A key works only in its own environment.
 
-## Portal intake (ask after the overview intake)
+## Ask the integrator first
+Ask one question at a time. Wait for the answer. Give the recommended
+default with each question. Look up facts in the project (framework,
+environment variables, an existing backend) instead of asking for them.
+Record the answers before you write code.
+
+1. **Environment** - demo or staging? _Default demo
+   (`https://demo-api.igrant.io`); a switch later is a configuration
+   change._
+2. **API key** - do you have the OWS API key for that environment? If not,
+   request it from [support@igrant.io](mailto:support@igrant.io) before you
+   continue.
+3. **Webhooks** - none for the holder role; the portal runs on the
+   notifications stream.
+
+Then ask the portal questions below.
+
+## Portal intake (ask after the questions above)
 1. **Stack** - which web stack? _Recommend **Next.js (App Router) +
    TypeScript** with **Better Auth** passwordless login (see "Recommended
    stack" below); accept the customer's standing stack if they have one._

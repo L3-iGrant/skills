@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, UI theme, design tokens, React, i18n
-  version: 2026.07.04
+  version: 2026.09.01
   design-source: iGrant.io landing page (Navbar.astro, Footer.astro, _variables.scss) + use-case SDK (@igrant/usecase-sdk styles and components)
   font: Plus Jakarta Sans
   auth: none
@@ -25,7 +25,34 @@ Intentionally minimal: a theme, a shell, a few primitives, strings-driven i18n.
 No component-library sprawl, and no runtime deps beyond what
 `igrantio-frontend-client` already uses (React peer plus `qrcode`).
 
-**Before you build**: run the integrator intake in `igrantio-ows-overview` - environment, API key, tenancy, backend host, webhooks, frontend - one question at a time, a recommended default with each.
+## Prerequisites
+- An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
+  [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
+  an environment variable or a secret manager. The browser never sees it.
+- The **OWS environment** the key belongs to. The default is **demo**
+  (`https://demo-api.igrant.io`). Use **staging**
+  (`https://staging-api.igrant.io`) only when the integrator asks for it.
+  A key works only in its own environment.
+
+## Ask the integrator first
+Ask one question at a time. Wait for the answer. Give the recommended
+default with each question. Look up facts in the project (framework,
+environment variables, an existing backend) instead of asking for them.
+Record the answers before you write code.
+
+1. **Environment** - demo or staging? _Default demo
+   (`https://demo-api.igrant.io`); a switch later is a configuration
+   change._
+2. **API key** - do you have the OWS API key for that environment? If not,
+   request it from [support@igrant.io](mailto:support@igrant.io) before you
+   continue.
+3. **Look** - the default iGrant.io look, or your own design system? _Skip
+   this skill for your own._
+4. **Languages** - which UI languages? _Strings live in `strings.ts`._
+5. **Fonts** - do you have the Byrd woff2 files? _Otherwise Plus Jakarta Sans
+   is used._
+6. **QR** - the wallet QR is rendered by `igrantio-qr-code` at the
+   demonstrator look; confirm the logo for its centre disc.
 
 ## What it provides (`references/`)
 - **`assets/`** - vendored brand assets: `iGrant_210_55_BW.svg` (the white
@@ -36,8 +63,10 @@ No component-library sprawl, and no runtime deps beyond what
   deployment's `/assets/fonts/` into `ui/fonts/`, otherwise it falls back to
   Plus Jakarta Sans), palette, buttons, split layout, stepper cards with the
   offset-shadow number box, heading scale, content card, step navigation,
-  form fields, QR box, status stages, and the navbar/footer chrome. Read the
-  file for the numbers; do not invent new ones.
+  form fields, status stages, and the navbar/footer chrome. Read the file
+  for the numbers; do not invent new ones. The QR box carries the frame
+  values of the demonstrator wallet QR panel (`igrantio-qr-code`); render
+  `WalletQrPanel` from that skill for the full panel.
 - **`ui/Header.tsx`** and **`ui/Footer.tsx`** - a 1:1 port of the landing-page
   `Navbar.astro` and `Footer.astro` (navbar 5.4375rem = 87px, logo 3.4375rem =
   55px, black `#000` bar, nav links 16px with 0.125rem letter-spacing and
@@ -69,7 +98,8 @@ assets/
 
 ## Usage
 ```tsx
-import { AppShell, SplitLayout, Stepper, Step, ContentCard, StepNav, Button, QrBox, StatusStage } from "./ui";
+import { AppShell, SplitLayout, Stepper, Step, ContentCard, StepNav, Button, StatusStage } from "./ui";
+import { WalletQrPanel } from "./components/walletQr"; // igrantio-qr-code
 
 <AppShell>
   <SplitLayout
@@ -83,7 +113,7 @@ import { AppShell, SplitLayout, Stepper, Step, ContentCard, StepNav, Button, QrB
   >
     <ContentCard>
       <h2>Scan the QR code</h2>
-      <QrBox><img src={qrDataUri} alt="Scan to continue" /></QrBox>
+      <WalletQrPanel uri={qrUri} logoSrc="/your-logo.png" onRefresh={recreate} />
       <StatusStage tone="success" actions={<Button variant="primary">Done</Button>}>
         Credential accepted.
       </StatusStage>
@@ -102,8 +132,9 @@ const sv = { ...en, langLabel: "Valj sprak", demo: { label: "Demo", href: "/demo
 ```
 
 ## Composition
-- Pairs with `igrantio-frontend-client`: render its `QrCode` inside `QrBox`, and
-  drive `Step`/`StatusStage` from the SSE status of `useIssuance` /
+- Pairs with `igrantio-frontend-client` and `igrantio-qr-code`: render
+  `WalletQrPanel` in the content card (its frame equals `QrBox`), and drive
+  `Step`/`StatusStage` from the SSE status of `useIssuance` /
   `useVerification`.
 - `igrantio-issuer-frontend` and `igrantio-verifier-frontend` use this shell by
   default for their demo components.
