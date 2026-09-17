@@ -3,7 +3,7 @@ name: igrantio-credential-schema-diploma
 description: 'Claim path pointer schema for the National Diploma credential (vct urn:education:diploma:1) used by the ITU / GovStack National Learner Registry and Education Wallet showcase. A dc+sd-jwt education credential the Ministry of Education issues to a learner, with the learner name, qualification, awarding institution, award date, programme, result, learner identifier (ULID) and the graduation decision hash. Use this skill when you build the diploma credential definition for the iGrant.io OpenID4VC API.'
 license: Apache-2.0
 metadata:
-  categories: [education, credential-schema]
+  categories: [credential-schema, education]
   provider: iGrant.io
   keywords: diploma, education credential, qualification, National Learner Registry, ULID, awarding institution, credential schema, claim path pointer, SD-JWT VC, EUDIW, GovStack, ITU
   version: 2026.09.01

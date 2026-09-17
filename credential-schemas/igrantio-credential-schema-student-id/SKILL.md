@@ -3,7 +3,7 @@ name: igrantio-credential-schema-student-id
 description: 'Claim path pointer schema for the Student ID credential, which attests the enrolment and the affiliation of a student. Holds the registry documents for the dc+sd-jwt, jwt_vc_json and mso_mdoc formats, with the eduPerson and SCHAC attributes of the education federations: eduPersonAffiliation, eduPersonPrincipalName, schacHomeOrganization and more. Use this skill when you build a Student ID credential definition for the iGrant.io OpenID4VC API.'
 license: Apache-2.0
 metadata:
-  categories: [education, credential-schema]
+  categories: [credential-schema, education]
   provider: iGrant.io
   keywords: Student ID, VerifiableStudentID, eduPerson, SCHAC, eduGAIN, affiliation, enrolment, credential schema, claim path pointer, SD-JWT VC, mso_mdoc, jwt_vc_json, EUDIW, verifiable data registry
   version: 2026.09.01

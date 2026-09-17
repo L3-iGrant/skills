@@ -3,7 +3,7 @@ name: igrantio-trustlist-entries
 description: 'Add, update, or remove entries (participants) in the NXD Foundation trust lists through the trust-list backend admin API, authenticating as an OAuth2 client with the client_credentials grant. Covers the token endpoint, the scope model (read, write, write:review, combinable), the exact request body for every trust list (QEAA, EAA, Pub-EAA, PID, Wallet, WRPAC, WRPRC, Registrars, and the legacy NXD-TL and EWC-TL) with their exact service type URIs, and the write-with-review model where a 202 means the change waits on the Approvals page for a super admin. Prerequisite: a client id and client secret created on the backoffice OAuth2 Clients page. Use when automation must register a verifier or issuer certificate (for example a WRPAC) in the trust list.'
 license: Apache-2.0
 metadata:
-  categories: [education, trust-list]
+  categories: [trust-list, education]
   provider: iGrant.io
   keywords: trust list, NXD Foundation, WRPAC, WRPRC, QEAA, EAA, Pub-EAA, PID, wallet provider, registrars, ETSI TS 119 612, ETSI TS 119 602, participant, trust anchor, OAuth2 client_credentials, approvals, write:review, x509 certificate, eIDAS2
   version: 2026.09.01

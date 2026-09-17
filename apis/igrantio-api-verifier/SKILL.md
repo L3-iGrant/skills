@@ -3,7 +3,7 @@ name: igrantio-api-verifier
 description: 'Verifier group of the iGrant.io OpenID4VC API: create presentation definitions that hold a DCQL query (credential queries, claim sets, credential sets, trusted authorities, transaction data templates), send an OpenID4VP 1.0 Authorization Request with the V3 send operation, read and list the verification history, receive a Digital Credentials API response, revalidate a finished exchange, and delete a verification record. Use this skill when you build the relying-party side of an EUDI Wallet (EUDIW) or European Business Wallet (EUBW) integration, or whenever you need the exact verifier path, DCQL field, or enum value.'
 license: Apache-2.0
 metadata:
-  categories: [education, ows-api]
+  categories: [ows-api, education]
   provider: iGrant.io
   keywords: OpenID4VP, DCQL, presentation definition, verification, relying party, transaction data, Digital Credentials API, dc_api, direct_post.jwt, mso_mdoc, SD-JWT VC, ISO 18013-7, EUDIW, EUBW, eIDAS2
   version: 2026.09.01

@@ -3,7 +3,7 @@ name: igrantio-api-api-keys
 description: 'API Key group of the iGrant.io OID4VC API: create, update, delete, and list the API keys of an organisation, and bind a key to a sandbox organisation. Covers the scope enum (config, audit, service, onboard), the 30-day expiry fallback, the fact that every answer carries the full signed token, and the token rotation that create, update, and bind each cause. Use when you provision server-side credentials for the OpenID4VCI and OpenID4VP endpoints, or when a key must run against a sandbox wallet.'
 license: Apache-2.0
 metadata:
-  categories: [education, ows-api]
+  categories: [ows-api, education]
   provider: iGrant.io
   keywords: API key, apikey, scopes, config scope, bearer token, RBAC, organisation administrator, token rotation, expiryInDays, sandbox organisation binding, OpenID4VCI, OpenID4VP, eIDAS2
   version: 2026.09.01

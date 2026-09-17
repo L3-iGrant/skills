@@ -3,7 +3,7 @@ name: igrantio-api-trust-anchor
 description: 'The Trust Anchor group of the iGrant.io OID4VC API: manage the ETSI trust lists (trust authorities) that the service uses to validate issuers and verifiers in OID4VCI and OpenID4VP flows. Create, read, update, enable or disable, delete and list trust authorities, and work with the two built-in trust lists that every organisation gets. Use when you decide which issuers a verifier accepts, or which verifiers a wallet trusts.'
 license: Apache-2.0
 metadata:
-  categories: [education, ows-api]
+  categories: [ows-api, education]
   provider: iGrant.io
   keywords: trust anchor, trust authority, trust list, ETSI_TL, ETSI TS 119 612, issuer validation, verifier validation, OpenID4VP, OID4VCI, EUDIW, eIDAS2
   version: 2026.09.01

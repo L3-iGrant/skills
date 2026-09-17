@@ -3,7 +3,7 @@ name: igrantio-dcql-query-sca-payment-card
 description: 'DCQL query template for the Payment Card Credential (TS12) from the iGrant.io verifiable data registry. The dc+sd-jwt query asks for pan_last_four, scheme and scheme_logo, and the vct is the card VCT metadata URL of the issuer. Use this skill when you build a Strong Customer Authentication (SCA) flow under ETSI TS 119 462 (TS12) and the holder must confirm which card pays: the presentation definition must set a transactionDataDefinitionType, and the send request must carry the matching transactionData.'
 license: Apache-2.0
 metadata:
-  categories: [education, dcql-query]
+  categories: [dcql-query, education]
   provider: iGrant.io
   keywords: DCQL, SCA, Strong Customer Authentication, TS12, ETSI TS 119 462, payment card, pan_last_four, card scheme, PSD2, transaction data, presentation definition, OpenID4VP, SD-JWT VC, EUDIW, eIDAS2
   version: 2026.09.01

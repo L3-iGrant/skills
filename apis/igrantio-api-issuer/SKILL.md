@@ -3,7 +3,7 @@ name: igrantio-api-issuer
 description: 'Issuer group of the iGrant.io OpenID4VC API: create and maintain credential definitions (claim path pointers, display, revocation, scopes, logo and cover images, templates, URI preview), issue credentials InTime or Deferred over OpenID4VCI 1.0, read and delete issuance history, update the revocation status of an issued credential, and validate transaction data. Use this skill when you build the issuing side of an EUDI Wallet (EUDIW) or European Business Wallet (EUBW) integration, or whenever you need the exact issuer path, request field, or enum value.'
 license: Apache-2.0
 metadata:
-  categories: [education, ows-api]
+  categories: [ows-api, education]
   provider: iGrant.io
   keywords: OpenID4VCI, credential definition, credential issuance, claim path pointer, SD-JWT VC, mso_mdoc, jwt_vc_json, revocation, status list, deferred issuance, pre-authorized code, EUDIW, EUBW, eIDAS2
   version: 2026.09.01
