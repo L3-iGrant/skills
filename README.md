@@ -132,6 +132,7 @@ as the fallback source.
 | [`igrantio-credential-schema-authenticator`](./credential-schemas/igrantio-credential-schema-authenticator) | Authenticator |
 | [`igrantio-credential-schema-boarding-pass`](./credential-schemas/igrantio-credential-schema-boarding-pass) | Boarding Pass |
 | [`igrantio-credential-schema-certificate-of-registration`](./credential-schemas/igrantio-credential-schema-certificate-of-registration) | Certificate Of Registration |
+| [`igrantio-credential-schema-diploma`](./credential-schemas/igrantio-credential-schema-diploma) | Diploma (education) |
 | [`igrantio-credential-schema-e-receipt`](./credential-schemas/igrantio-credential-schema-e-receipt) | e Receipt |
 | [`igrantio-credential-schema-loyalty-card`](./credential-schemas/igrantio-credential-schema-loyalty-card) | Loyalty Card |
 | [`igrantio-credential-schema-lpid`](./credential-schemas/igrantio-credential-schema-lpid) | LPID |
@@ -161,6 +162,7 @@ definition from it.
 | [`igrantio-dcql-query-age-verification`](./presentation-definitions/igrantio-dcql-query-age-verification) | Age Verification |
 | [`igrantio-dcql-query-authenticator`](./presentation-definitions/igrantio-dcql-query-authenticator) | Authenticator |
 | [`igrantio-dcql-query-certificate-of-registration`](./presentation-definitions/igrantio-dcql-query-certificate-of-registration) | Certificate Of Registration |
+| [`igrantio-dcql-query-diploma`](./presentation-definitions/igrantio-dcql-query-diploma) | Diploma qualification check (education) |
 | [`igrantio-dcql-query-loyalty-card`](./presentation-definitions/igrantio-dcql-query-loyalty-card) | Loyalty Card |
 | [`igrantio-dcql-query-lpid`](./presentation-definitions/igrantio-dcql-query-lpid) | LPID |
 | [`igrantio-dcql-query-mobile-driving-license`](./presentation-definitions/igrantio-dcql-query-mobile-driving-license) | Mobile Driving License |
