@@ -3,6 +3,7 @@ name: igrantio-dcql-kyc
 description: 'DCQL pattern: KYC request combining two required credential groups in one OpenID4VP verification on the iGrant.io Organisation Wallet Suite - a Photo ID (mso_mdoc) for identity plus proof of address where either a Utility Bill or a Bank Statement (dc+sd-jwt) is acceptable. Know-your-customer onboarding for banks, fintechs, and regulated services with EUDI Wallet (EUDIW) under eIDAS 2.0.'
 license: Apache-2.0
 metadata:
+  categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, KYC, know your customer, Photo ID, proof of address, utility bill, bank statement, credential_sets, OpenID4VP, EUDIW, eIDAS2
   version: 2026.09.01

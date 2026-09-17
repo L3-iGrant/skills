@@ -3,6 +3,7 @@ name: igrantio-credential-schema-pda1
 description: 'Claim path pointer schema for the Portable Document A1 (PDA1) credential, the EU social security document that states which member state legislation applies to a worker. Holds the registry documents for the dc+sd-jwt, jwt_vc_json and mso_mdoc formats, with all six PDA1 sections: personal data, applicable legislation, status confirmation, employer or self-employed activity, work places, and the issuing institution. Use this skill when you build a PDA1 credential definition for the iGrant.io OpenID4VC API, or when you need the exact PDA1 claim path.'
 license: Apache-2.0
 metadata:
+  categories: [credential-schema]
   provider: iGrant.io
   keywords: PDA1, Portable Document A1, social security, posted worker, EESSI, credential schema, claim path pointer, SD-JWT VC, mso_mdoc, jwt_vc_json, EUDIW, verifiable data registry
   version: 2026.09.01

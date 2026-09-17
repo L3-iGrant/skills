@@ -3,6 +3,7 @@ name: igrantio-dcql-query-passport
 description: 'DCQL query template for the Passport credential. It asks a wallet for the serial number, personal number, first and last name, birth date, gender, nationality, expiry date, issuing authority, portrait image and signature, in dc+sd-jwt, jwt_vc_json or mso_mdoc (doctype org.iso.18013.5.1.passport). Use this skill when you build border, travel, hotel check-in or strong identity onboarding on an EUDI Wallet, and you need the exact credential type and claim paths from the iGrant.io verifiable data registry.'
 license: Apache-2.0
 metadata:
+  categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, passport, travel document, org.iso.18013.5.1.passport, nationality, personalNumber, identity proofing, check-in, dc+sd-jwt, jwt_vc_json, mso_mdoc, OpenID4VP, presentation definition, EUDIW, eIDAS2
   version: 2026.09.01

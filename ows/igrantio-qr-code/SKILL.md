@@ -3,6 +3,7 @@ name: igrantio-qr-code
 description: 'Wallet QR code panel for EUDI Wallet (EUDIW) and European Business Wallet (EUBW) flows on the iGrant.io Organisation Wallet Suite, at the exact look of the iGrant.io demonstrators and the OWS passwordless-login page: a 240 px credential-offer or presentation-request QR at error-correction level H in a bordered, rounded 12 px frame, the logo on a white disc in the centre, the small refresh pill that mints a new exchange, the bordered white "Open in EUDI Wallet" button at QR width, a transaction-code box, the wallet hint, and the initialising / refreshing / scanned / error states. Use whenever an issuer or verifier frontend renders a wallet QR.'
 license: Apache-2.0
 metadata:
+  categories: [education, frontend]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, QR code, credential offer, OpenID4VCI, OpenID4VP, deep link, open in wallet, logo disc, refresh, transaction code, EUDI Wallet
   version: 2026.09.01

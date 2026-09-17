@@ -3,6 +3,7 @@ name: igrantio-dcql-query-photo-id
 description: 'DCQL query template for the Photo ID credential (doctype and vct eu.europa.ec.eudi.photoid.1) from the iGrant.io verifiable data registry. Holds the full claim list for three formats: dc+sd-jwt, jwt_vc_json and mso_mdoc. Use this skill when you build an OpenID4VP presentation definition that asks an EUDI Wallet for a Photo ID, when you need the exact claim path of a travel document group (dtc), an ISO 23220 attribute (iso23220), or a photoid attribute, or when you check that your query matches the registry.'
 license: Apache-2.0
 metadata:
+  categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, Photo ID, photoid, eu.europa.ec.eudi.photoid.1, ISO 23220, DTC, digital travel credential, presentation definition, OpenID4VP, mso_mdoc, SD-JWT VC, jwt_vc_json, EUDIW, eIDAS2
   version: 2026.09.01

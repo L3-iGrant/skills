@@ -3,6 +3,7 @@ name: igrantio-credential-schema-authenticator
 description: 'Claim path pointer schema for the iGrant.io Authenticator credential (credential type io.igrant.authenticator) from the iGrant.io verifiable data registry. It holds one claim, email_address, and the registry publishes it in all three formats: dc+sd-jwt, jwt_vc_json and mso_mdoc. Use this skill when you create an authenticator credential definition on the iGrant.io OpenID4VC API, when you build passwordless sign-in with a wallet, or when you need the exact claim path for each of the three credential formats.'
 license: Apache-2.0
 metadata:
+  categories: [credential-schema]
   provider: iGrant.io
   keywords: authenticator, io.igrant.authenticator, passwordless login, email_address, SD-JWT VC, dc+sd-jwt, jwt_vc_json, mso_mdoc, claim path pointer, credential definition, EUDIW, selective disclosure
   version: 2026.09.01

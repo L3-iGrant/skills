@@ -3,6 +3,7 @@ name: igrantio-dcql-query-age-verification
 description: 'DCQL query template for the EU Age Verification attestation (doctype eu.europa.ec.av.1, mso_mdoc). It asks a wallet for the age threshold flags age_over_14, age_over_16, age_over_18, age_over_21 and age_over_65, and discloses no birth date and no name. Use this skill when you build an age gate for adult content, alcohol, gambling, or any service with a legal age limit, and you need the exact doctype, namespace and claim paths from the iGrant.io verifiable data registry.'
 license: Apache-2.0
 metadata:
+  categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, age verification, age_over_18, eu.europa.ec.av.1, mso_mdoc, age gate, data minimisation, OpenID4VP, presentation definition, EUDIW, eIDAS2
   version: 2026.09.01

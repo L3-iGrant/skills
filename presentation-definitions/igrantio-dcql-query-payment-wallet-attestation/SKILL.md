@@ -3,6 +3,7 @@ name: igrantio-dcql-query-payment-wallet-attestation
 description: 'DCQL query template for the Payment Wallet Attestation, titled Payment Authenticator (v2), credential type PaymentWalletAttestation in dc+sd-jwt. It asks a wallet for the funding source: alias identifier, currency, issuer identification number, last four digits of the PAN, card scheme, type and icon. Use this skill when you build strong customer authentication for a payment with an EUDI Wallet, and you need the exact vct, claim paths and the transaction data rule from the iGrant.io verifiable data registry.'
 license: Apache-2.0
 metadata:
+  categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, Payment Wallet Attestation, PaymentWalletAttestation, Payment Authenticator, funding source, panLastFour, SCA, PSD2, transaction data, dc+sd-jwt, OpenID4VP, presentation definition, EUDIW, eIDAS2
   version: 2026.09.01

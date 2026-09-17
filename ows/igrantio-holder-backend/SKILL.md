@@ -3,6 +3,7 @@ name: igrantio-holder-backend
 description: Build the backend for an EUDI Wallet / European Business Wallet HOLDER (the wallet side) against the iGrant.io Organisation Wallet Suite (OWS). A tenant-aware Node/TypeScript (Express) service that hides the organisation's API key behind a proxy scoped to holder endpoints - receive credential offers (OpenID4VCI wallet side, incl. transaction code, front-channel authorization code, and deferred issuance), manage held credentials, receive and answer verifier presentation requests (OpenID4VP + DCQL wallet side), holder configuration, wallet-unit status - and relays the holder notifications SSE stream. Use when an application must act as the wallet, receiving, holding, and presenting verifiable credentials.
 license: Apache-2.0
 metadata:
+  categories: [backend]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, holder, wallet, OpenID4VCI, OpenID4VP, DCQL, receive credential, present credential, notifications, wallet unit
   version: 2026.09.01

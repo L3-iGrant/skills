@@ -3,6 +3,7 @@ name: igrantio-api-team-management
 description: 'Team Management group of the iGrant.io OID4VC API: create, read, delete, and list the admins of an organisation, and enable or disable passwordless login with EUDI Wallet for one admin. This is the API behind the Manage Team page of the dashboard. Covers the admin record fields (roleName, pendingInvitation, authentication.oidcPasswordless), the search filter on the list, and the split between the v2 onboard endpoints and the v3 passwordless-login endpoint. Use when you add or remove admins of an organisation, or when you turn wallet-based login on or off for an admin.'
 license: Apache-2.0
 metadata:
+  categories: [ows-api]
   provider: iGrant.io
   keywords: team management, manage team, organisation admin, admin invitation, pendingInvitation, roleName, passwordless login, EUDI Wallet, oidcPasswordless, RBAC, eIDAS2
   version: 2026.09.01

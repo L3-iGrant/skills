@@ -3,6 +3,7 @@ name: igrantio-api-webhooks
 description: 'The Webhook group of the iGrant.io OID4VC API: create, read, update, delete and list webhooks, discover the subscribable event types and payload content types, ping a payload URL, and read recent deliveries. Covers the delivery envelope (deliveryID, webhookID, timestamp, type, data), the X-IGrant-Signature HMAC-SHA256 scheme, and the flat response shapes of ping and single-delivery read. Use when you register or debug an OWS webhook receiver, verify a signature, or check why an event did not arrive.'
 license: Apache-2.0
 metadata:
+  categories: [ows-api]
   provider: iGrant.io
   keywords: webhook, webhook delivery, HMAC, X-IGrant-Signature, event types, payload URL, OID4VC, EUDIW, eIDAS2, callback
   version: 2026.09.01

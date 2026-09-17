@@ -3,6 +3,7 @@ name: igrantio-dcql-query-pid-v2
 description: 'DCQL query template for the Person Identification Data (PID) credential of EU ARF 2.8.0 (vct urn:eudi:pid:1, mDoc doctype eu.europa.ec.eudi.pid.1) from the iGrant.io verifiable data registry. Holds the claim list for dc+sd-jwt and mso_mdoc, with the name, birth name, place of birth, address parts, document number, issuing data, nationalities, portrait and trust anchor. Use this skill when you build an OpenID4VP presentation definition against the ARF 2.8.0 PID rule book, or when you need the exact claim path of a PID attribute.'
 license: Apache-2.0
 metadata:
+  categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, PID, Person Identification Data, EU ARF 2.8.0, urn:eudi:pid:1, eu.europa.ec.eudi.pid.1, place_of_birth, nationalities, personal_administrative_number, presentation definition, OpenID4VP, mso_mdoc, SD-JWT VC, EUDIW, eIDAS2
   version: 2026.09.01

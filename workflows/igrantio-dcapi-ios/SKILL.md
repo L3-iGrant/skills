@@ -3,6 +3,7 @@ name: igrantio-dcapi-ios
 description: 'Same-device and cross-device credential verification on iOS/iPadOS via the W3C Digital Credentials API using ISO 18013-7 Annex C request/response with ISO/IEC 18013-5 mdoc/mDL credentials on the iGrant.io Organisation Wallet Suite. On iOS the DC API runs over Annex C only and the request must be signed (expectedOrigins required). Presentation definition, verification request v3 with requestByReference, wallet invocation from the browser, then verify vpTokenResponse and trust-list status. For EUDI Wallet (EUDIW) relying parties under eIDAS 2.0.'
 license: Apache-2.0
 metadata:
+  categories: [dcapi]
   provider: iGrant.io
   keywords: Digital Credentials API, DC API, iOS, Safari, ISO 18013-7, mdoc, mDL, OpenID4VP, EUDIW, eIDAS2, verification
   version: 2026.09.01

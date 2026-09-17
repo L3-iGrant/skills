@@ -3,6 +3,7 @@ name: igrantio-api-holder
 description: 'Holder group of the iGrant.io OpenID4VC API: take a credential offer into the organisation wallet (receive, user PIN, deferred, authorization-code exchange), list, read, accept, configure auto-present, re-issue and delete held credentials, read credential issuer metadata and wallet unit status, make a credential offer, and answer an OpenID4VP request with the V3 receive, filter and send operations, plus the wallet notification list and the Server-Sent Events stream. Use this skill when your organisation acts as the holder wallet, or whenever you need the exact holder path, correlation id, or enum value.'
 license: Apache-2.0
 metadata:
+  categories: [ows-api]
   provider: iGrant.io
   keywords: OpenID4VCI, OpenID4VP, holder wallet, organisation wallet, credential offer, deferred credential, tx_code, auto present, DCQL selection, claim sets, notifications, SSE, Wallet Unit Attestation, EUDIW, EUBW
   version: 2026.09.01

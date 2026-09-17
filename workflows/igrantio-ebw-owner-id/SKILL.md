@@ -3,6 +3,7 @@ name: igrantio-ebw-owner-id
 description: 'Issue a European Business Wallet Owner ID (Legal Person Identification Data, LPID) to an organisation wallet using OpenID4VCI deferred issuance on the iGrant.io Organisation Wallet Suite, per European Wallet Consortium (EWC) RFC005. SD-JWT credential; the schema identifier stays LPID for backwards compatibility. Use when an application must issue the EUBW owner identity credential to a business wallet under eIDAS 2.0.'
 license: Apache-2.0
 metadata:
+  categories: [recipe]
   provider: iGrant.io
   keywords: EUBW, European Business Wallet, EBWOID, LPID, EWC RFC005, OpenID4VCI, SD-JWT, eIDAS2, EUDIW
   version: 2026.09.01

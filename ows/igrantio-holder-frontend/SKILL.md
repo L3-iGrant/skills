@@ -3,6 +3,7 @@ name: igrantio-holder-frontend
 description: Build the browser UI for an EUDI Wallet / European Business Wallet HOLDER portal against the iGrant.io Organisation Wallet Suite - the customer-facing wallet frontend. Receive credential offers (OpenID4VCI - transaction code, front-channel authorization, deferred), show received/archived credentials with per-format claim rendering, blur-by-default personal data, and trust-list badges, answer verifier presentation requests through the full DCQL selection wizard (credential-set OPTION groups, claim-set disclosure profiles, multiple-instance pick, transaction-data consent), and drive everything from the live notifications inbox. Composes igrantio-frontend-client and igrantio-holder-notifications; talks to igrantio-holder-backend.
 license: Apache-2.0
 metadata:
+  categories: [frontend]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, holder, wallet portal, OpenID4VCI, OpenID4VP, DCQL, claim sets, credential sets, trust list, notifications, Next.js, TypeScript, Better Auth, passwordless
   version: 2026.09.01

@@ -3,6 +3,7 @@ name: igrantio-credential-schema-mobile-driving-license
 description: 'Claim path pointer schema for the ISO/IEC 18013-5 Mobile Driving Licence (mDL, doctype org.iso.18013.5.1.mDL) from the iGrant.io verifiable data registry. It holds the 25 mdoc claims of the org.iso.18013.5.1 namespace, from family_name and birth_date to driving_privileges, portrait, age_over_18 and issuing_authority. Use this skill when you create an mDL credential definition on the iGrant.io OpenID4VC API, or when you need the exact claim paths, namespace and doctype of a mobile driving licence.'
 license: Apache-2.0
 metadata:
+  categories: [credential-schema]
   provider: iGrant.io
   keywords: mDL, mobile driving licence, mobile driving license, ISO 18013-5, org.iso.18013.5.1, mso_mdoc, mdoc, driving privileges, claim path pointer, credential definition, EUDIW, selective disclosure
   version: 2026.09.01

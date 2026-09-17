@@ -3,6 +3,7 @@ name: igrantio-credential-schema-passport
 description: 'Claim path pointer schema for the Passport credential (credential type Passport, mdoc doctype org.iso.18013.5.1.passport) from the iGrant.io verifiable data registry. It holds the travel document claims: serialNumber, firstName, lastName, birthDate, gender, nationality, personalNumber, expiryDate, issuerAuthority, image and signature. The registry publishes it in all three formats: dc+sd-jwt, jwt_vc_json and mso_mdoc. Use this skill when you create a passport credential definition on the iGrant.io OpenID4VC API, or when you need the exact claim path for each of the three credential formats.'
 license: Apache-2.0
 metadata:
+  categories: [credential-schema]
   provider: iGrant.io
   keywords: passport, travel document, ePassport, org.iso.18013.5.1.passport, nationality, personalNumber, issuerAuthority, SD-JWT VC, dc+sd-jwt, jwt_vc_json, mso_mdoc, claim path pointer, credential definition, EUDIW, selective disclosure
   version: 2026.09.01

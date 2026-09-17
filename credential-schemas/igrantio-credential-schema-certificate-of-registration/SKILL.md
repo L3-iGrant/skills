@@ -3,6 +3,7 @@ name: igrantio-credential-schema-certificate-of-registration
 description: 'Claim path pointer schema for the Certificate Of Registration credential (credential type CertificateOfRegistration, mdoc doctype org.iso.18013.5.1.cor) from the iGrant.io verifiable data registry. It holds 13 claims that attest a company registration: name, orgNumber, legalForm, legalStatus, activity, registrationDate and the registeredAddress object with its six parts. The registry publishes it in all three formats: dc+sd-jwt, jwt_vc_json and mso_mdoc. Use this skill when you create a company registration credential definition on the iGrant.io OpenID4VC API or build a European Business Wallet (EUBW) integration.'
 license: Apache-2.0
 metadata:
+  categories: [credential-schema]
   provider: iGrant.io
   keywords: certificate of registration, company registration, business register, CertificateOfRegistration, org.iso.18013.5.1.cor, orgNumber, registeredAddress, EUBW, European Business Wallet, SD-JWT VC, dc+sd-jwt, jwt_vc_json, mso_mdoc, claim path pointer, credential definition
   version: 2026.09.01

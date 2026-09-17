@@ -3,6 +3,7 @@ name: igrantio-api-user-management
 description: 'User Management group of the iGrant.io OID4VC API: the account of the signed-in admin. Read and update the profile, read and update the avatar image, reset the password, read the authentication configuration, and manage the passwordless-login methods - link a PID credential from an EUDI Wallet or an iGrant.io Authenticator credential, monitor both with SSE streams, and remove them. This is the API behind the Manage User page of the dashboard. Use when you build a profile or account-settings flow, or when you wire up passwordless login for the signed-in admin.'
 license: Apache-2.0
 metadata:
+  categories: [ows-api]
   provider: iGrant.io
   keywords: user management, manage user, admin profile, avatar image, reset password, authentication configuration, passwordless login, PID, Person Identification Data, iGrant.io Authenticator, credential offer, SSE, EUDI Wallet, eIDAS2
   version: 2026.09.01

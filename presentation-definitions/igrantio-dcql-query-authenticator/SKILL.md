@@ -3,6 +3,7 @@ name: igrantio-dcql-query-authenticator
 description: 'DCQL query template for the iGrant.io Authenticator credential (credential type io.igrant.authenticator). It asks a wallet for one claim, email_address, in dc+sd-jwt, jwt_vc_json or mso_mdoc. Use this skill when you build passwordless login with an EUDI Wallet, so a returning user proves the email address that identifies the account, and you need the exact credential type and claim paths from the iGrant.io verifiable data registry.'
 license: Apache-2.0
 metadata:
+  categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, authenticator, passwordless login, email_address, io.igrant.authenticator, dc+sd-jwt, jwt_vc_json, mso_mdoc, OpenID4VP, presentation definition, EUDIW, eIDAS2
   version: 2026.09.01

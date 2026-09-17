@@ -3,6 +3,7 @@ name: igrantio-api-sandboxes
 description: 'Sandboxes group of the iGrant.io OID4VC API: create, read, update, delete, and list sandbox organisations - separate test wallets inside your organisation, each with its own credential definitions, presentation definitions, webhooks, and keys - plus name, logo image, and cover image updates. This skill is the canonical home for the sandbox call style: how the X-SandboxOrgId header works, why it works only with a bearer token, how X-SubwalletId falls back, and how to bind an API key to a sandbox organisation. Read it before you send any OID4VC request against a sandbox.'
 license: Apache-2.0
 metadata:
+  categories: [education, ows-api]
   provider: iGrant.io
   keywords: sandbox organisation, sandbox org, X-SandboxOrgId, X-SubwalletId, subwallet, test wallet, multi-wallet, OpenID4VCI, OpenID4VP, EUDIW, EUBW, eIDAS2, API key binding
   version: 2026.09.01

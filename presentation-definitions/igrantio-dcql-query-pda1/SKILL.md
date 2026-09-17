@@ -3,6 +3,7 @@ name: igrantio-dcql-query-pda1
 description: 'DCQL query template for the Portable Document A1 (PDA1), the EU social security attestation that says which member state legislation applies to a posted or multi-state worker. It asks a wallet for the six sections of the form, in dc+sd-jwt, jwt_vc_json or mso_mdoc (doctype org.iso.18013.5.1.pda1). Use this skill when you build labour inspection, posted worker checks or cross-border payroll on an EUDI Wallet, and you need the exact credential type and claim paths from the iGrant.io verifiable data registry.'
 license: Apache-2.0
 metadata:
+  categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, PDA1, Portable Document A1, PortableDocumentA1, org.iso.18013.5.1.pda1, social security, posted worker, labour inspection, EESSI, dc+sd-jwt, jwt_vc_json, mso_mdoc, OpenID4VP, presentation definition, EUDIW, eIDAS2
   version: 2026.09.01

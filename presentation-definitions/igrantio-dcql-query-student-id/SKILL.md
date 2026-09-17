@@ -3,6 +3,7 @@ name: igrantio-dcql-query-student-id
 description: 'DCQL query template for the Student ID credential from the iGrant.io verifiable data registry. Holds the claim list for three formats: dc+sd-jwt (vct VerifiableStudentID), jwt_vc_json (type VerifiableStudentIDJWT) and mso_mdoc (doctype eu.europa.ec.eudi.studentid.1). Carries the SCHAC and eduPerson attributes, for example schacHomeOrganization, eduPersonPrincipalName, eduPersonAffiliation and eduPersonScopedAffiliation. Use this skill when you build an OpenID4VP presentation definition that proves student status for a discount, a campus service or a library account.'
 license: Apache-2.0
 metadata:
+  categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, Student ID, VerifiableStudentID, eu.europa.ec.eudi.studentid.1, eduPerson, SCHAC, schacHomeOrganization, eduPersonScopedAffiliation, student status, presentation definition, OpenID4VP, mso_mdoc, SD-JWT VC, jwt_vc_json, EUDIW
   version: 2026.09.01

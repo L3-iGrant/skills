@@ -3,6 +3,7 @@ name: igrantio-credential-schema-qesac
 description: 'Claim path pointer schema for the QESAC credential. The registry defines the credential in the dc+sd-jwt format with one mandatory claim, credentialId. Use this skill when you build a QESAC credential definition for the iGrant.io OpenID4VC API, or when you need the exact QESAC claim path.'
 license: Apache-2.0
 metadata:
+  categories: [credential-schema]
   provider: iGrant.io
   keywords: QESAC, credential schema, claim path pointer, SD-JWT VC, dc+sd-jwt, credentialId, EUDIW, verifiable data registry
   version: 2026.09.01

@@ -3,6 +3,7 @@ name: igrantio-dcql-student-pass
 description: 'DCQL pattern: mandatory plus optional credential groups in one OpenID4VP verification on the iGrant.io Organisation Wallet Suite - a student transport pass requiring PID (mso_mdoc) plus Student ID or Enrolment Letter, with an OPTIONAL (required: false) residency group (Utility Bill or Rental Agreement) unlocking an extra discount. Shows required: false credential_sets for EUDI Wallet (EUDIW) verifiers under eIDAS 2.0.'
 license: Apache-2.0
 metadata:
+  categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, credential_sets, optional credentials, required false, student ID, transport pass, PID, OpenID4VP, EUDIW, eIDAS2
   version: 2026.09.01

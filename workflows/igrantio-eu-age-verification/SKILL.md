@@ -3,6 +3,7 @@ name: igrantio-eu-age-verification
 description: 'EU Age Verification on the iGrant.io Organisation Wallet Suite: issue an age verification attestation as an ISO/IEC 18013-5 mdoc (doctype eu.europa.ec.av.1, boolean age_over_NN claims) via OpenID4VCI InTime, then verify a selectively disclosed age_over_18 proof via OpenID4VP + DCQL - no birthdate or identity revealed. Implements the EU Age Verification solution profile for EUDI Wallet (EUDIW) under eIDAS 2.0. Use for age-restricted content, products, or services.'
 license: Apache-2.0
 metadata:
+  categories: [recipe]
   provider: iGrant.io
   keywords: EU age verification, age_over_18, mso_mdoc, eu.europa.ec.av.1, EUDIW, eIDAS2, OpenID4VCI, OpenID4VP, DCQL, selective disclosure
   version: 2026.09.01

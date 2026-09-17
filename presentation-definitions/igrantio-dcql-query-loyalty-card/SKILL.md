@@ -3,6 +3,7 @@ name: igrantio-dcql-query-loyalty-card
 description: 'DCQL query template for the Loyalty Card credential. It asks a wallet for the customer details, the card identifier and status, the point, mile and wallet balances, the issuing organisation, and the credential dates, in dc+sd-jwt, jwt_vc_json or mso_mdoc (doctype eu.europa.ec.eudi.loyaltycard). Use this skill when you let a member show a loyalty card from an EUDI Wallet at checkout or at a service desk, and you need the exact credential type and claim paths from the iGrant.io verifiable data registry.'
 license: Apache-2.0
 metadata:
+  categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, loyalty card, membership, eu.europa.ec.eudi.loyaltycard, LoyaltyCard, points, miles, retail, dc+sd-jwt, jwt_vc_json, mso_mdoc, OpenID4VP, presentation definition, EUDIW, eIDAS2
   version: 2026.09.01

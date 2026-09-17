@@ -3,6 +3,7 @@ name: igrantio-dcql-trusted-authority
 description: 'DCQL pattern: accept a credential only when its issuer is anchored in a specific trust list, using the trusted_authorities field (etsi_tl trust list, EBSI, or OpenID Federation trust anchor) in an OpenID4VP verification on the iGrant.io Organisation Wallet Suite. Example: a University Degree SD-JWT accepted only from EU/EWC Trust List issuers. For EUDI Wallet (EUDIW) and European Business Wallet (EUBW) verifiers under eIDAS 2.0.'
 license: Apache-2.0
 metadata:
+  categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, trusted_authorities, etsi_tl, trust list, EBSI, OpenID Federation, OpenID4VP, EUDIW, EUBW, eIDAS2
   version: 2026.09.01

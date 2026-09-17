@@ -3,6 +3,7 @@ name: igrantio-dcql-query-diploma
 description: 'DCQL query for the diploma qualification check used by the ITU / GovStack Education Wallet showcase. One OpenID4VP presentation definition that asks a job applicant for a Person Identification Data (PID) credential (given name, family name, email) and the National Diploma credential (vct urn:education:diploma:1: learner name, qualification, qualification code, awarding institution and award date). Use this skill when an employer or relying party verifies an education qualification with selective disclosure.'
 license: Apache-2.0
 metadata:
+  categories: [education, dcql-query]
   provider: iGrant.io
   keywords: DCQL, presentation definition, OpenID4VP, diploma, qualification check, employer, selective disclosure, PID, National Learner Registry, EUDIW, GovStack, ITU
   version: 2026.09.01

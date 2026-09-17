@@ -3,6 +3,7 @@ name: igrantio-dcql-query-sca-payment-account
 description: 'DCQL query template for the Payment Account Credential (TS12) from the iGrant.io verifiable data registry. The dc+sd-jwt query asks for iban, bic and currency, and the vct is the payment_account VCT metadata URL of the issuer. Use this skill when you build a Strong Customer Authentication (SCA) flow under ETSI TS 119 462 (TS12): the presentation definition must set a transactionDataDefinitionType, and the send request must carry the matching transactionData.'
 license: Apache-2.0
 metadata:
+  categories: [education, dcql-query]
   provider: iGrant.io
   keywords: DCQL, SCA, Strong Customer Authentication, TS12, ETSI TS 119 462, payment account, IBAN, BIC, currency, PSD2, transaction data, presentation definition, OpenID4VP, SD-JWT VC, EUDIW, eIDAS2
   version: 2026.09.01

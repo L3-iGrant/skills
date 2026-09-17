@@ -3,6 +3,7 @@ name: igrantio-credential-schema-e-receipt
 description: 'Claim path pointer schema for the eReceipt credential (credential type VerifiablevReceiptSDJWT, namespace eu.europa.ec.eudi.verifiablereceipt) from the iGrant.io verifiable data registry. It holds 33 nested claims of a digital purchase receipt: seller address and party name, purchase_receipt lines and items, monetary_total, tax_total and tax_subtotal, payment and card account data, and delivery date and time. Use this skill when you create an eReceipt credential definition on the iGrant.io OpenID4VC API, or when you need the exact nested claim paths of a verifiable purchase receipt.'
 license: Apache-2.0
 metadata:
+  categories: [credential-schema]
   provider: iGrant.io
   keywords: eReceipt, verifiable receipt, digital receipt, purchase_receipt, UBL, VerifiablevReceiptSDJWT, eu.europa.ec.eudi.verifiablereceipt, SD-JWT VC, dc+sd-jwt, claim path pointer, credential definition, EUDIW, selective disclosure
   version: 2026.09.01

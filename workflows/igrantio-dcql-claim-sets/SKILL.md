@@ -3,6 +3,7 @@ name: igrantio-dcql-claim-sets
 description: 'DCQL pattern: claim_sets with fallback for selective disclosure - prefer a minimal boolean claim (is_over_21) and fall back to birth_date only when the preferred claim is unavailable, in an OpenID4VP verification of a PID SD-JWT on the iGrant.io Organisation Wallet Suite. Data-minimised age verification for EUDI Wallet (EUDIW) under eIDAS 2.0 and GDPR.'
 license: Apache-2.0
 metadata:
+  categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, claim_sets, selective disclosure, age verification, is_over_21, PID, OpenID4VP, EUDIW, eIDAS2, GDPR
   version: 2026.09.01

@@ -3,6 +3,7 @@ name: igrantio-schema-discovery
 description: 'How to find a credential schema or a DCQL query for the iGrant.io Organisation Wallet Suite. Start with the iGrant.io verifiable data registry (claim path pointer schemas and DCQL query templates). If the credential type you need is not there, check the WE BUILD attestation rulebooks catalog for a rulebook that defines it, and build the claim path pointer document from the rulebook. Use this skill when no igrantio-credential-schema-* or igrantio-dcql-query-* skill matches the credential you must issue or verify.'
 license: Apache-2.0
 metadata:
+  categories: [credential-schema]
   provider: iGrant.io
   keywords: credential schema, claim path pointer, DCQL query, schema discovery, verifiable data registry, WE BUILD, attestation rulebook, EUDIW, eIDAS2
   version: 2026.09.01

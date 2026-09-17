@@ -3,6 +3,7 @@ name: igrantio-dcql-query-software-statement
 description: 'DCQL query template for the Software Statement credential (credential type SoftwareStatement) from the iGrant.io verifiable data registry. The dc+sd-jwt query asks for one claim, client_uri, which names the client that the statement describes. Use this skill when a relying party or a wallet must check the registration of a client application before it trusts it, for example in an open banking or a dynamic client registration flow.'
 license: Apache-2.0
 metadata:
+  categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, Software Statement, SoftwareStatement, client_uri, dynamic client registration, open banking, relying party registration, presentation definition, OpenID4VP, SD-JWT VC, EUDIW, eIDAS2
   version: 2026.09.01

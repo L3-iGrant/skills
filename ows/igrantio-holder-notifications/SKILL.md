@@ -3,6 +3,7 @@ name: igrantio-holder-notifications
 description: 'Composable building block: the iGrant.io OWS holder notifications inbox - the wallet-side channel that tells a HOLDER a credential offer, transaction code, front-channel authorization, deferred credential, or presentation request needs action. REST endpoints to list and delete notifications, a live Server-Sent Events stream (auth via the authorization query parameter because EventSource cannot send headers), a backend relay that injects the key, and a dependency-free browser client with reconnect/backoff and a notification-to-next-action decision table. Composed by igrantio-holder-backend.'
 license: Apache-2.0
 metadata:
+  categories: [backend]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, holder, wallet, notifications, Server-Sent Events, SSE, OpenID4VCI, OpenID4VP
   version: 2026.09.01

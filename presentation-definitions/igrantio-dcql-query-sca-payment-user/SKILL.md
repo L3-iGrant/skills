@@ -3,6 +3,7 @@ name: igrantio-dcql-query-sca-payment-user
 description: 'DCQL query template for the Payment User Credential (TS12) from the iGrant.io verifiable data registry. The dc+sd-jwt query holds an empty claims array, so it asks for the whole credential of the payment service user, and the vct is the payment_service_user VCT metadata URL of the issuer. Use this skill when you build a Strong Customer Authentication (SCA) flow under ETSI TS 119 462 (TS12) and the holder must prove who authorises the payment: the presentation definition must set a transactionDataDefinitionType, and the send request must carry the matching transactionData.'
 license: Apache-2.0
 metadata:
+  categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, SCA, Strong Customer Authentication, TS12, ETSI TS 119 462, payment service user, PSU, PSD2, whole credential, empty claims, transaction data, presentation definition, OpenID4VP, SD-JWT VC, EUDIW, eIDAS2
   version: 2026.09.01

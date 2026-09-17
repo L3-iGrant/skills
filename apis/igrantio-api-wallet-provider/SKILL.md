@@ -3,6 +3,7 @@ name: igrantio-api-wallet-provider
 description: 'Wallet Provider group of the iGrant.io OID4VC API: deploy the organisation wallet, turn on the wallet provider capability, register and manage wallet units (the records behind a Wallet Unit Attestation, WUA), list organisation wallet units with their LPID and WUA status, and read wallet provider performance statistics. Use when you act as an EUDI Wallet (EUDIW) or European Business Wallet (EUBW) wallet provider under eIDAS 2.0, or when you must read or change the OID4VC deployment of an organisation.'
 license: Apache-2.0
 metadata:
+  categories: [ows-api]
   provider: iGrant.io
   keywords: wallet provider, wallet unit, Wallet Unit Attestation, WUA, LPID, assertionToken, client assertion, EUDIW, EUBW, eIDAS2, OpenID4VCI, OpenID4VP, wallet deployment, performance statistics
   version: 2026.09.01

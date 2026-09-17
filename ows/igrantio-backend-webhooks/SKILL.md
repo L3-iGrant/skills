@@ -3,6 +3,7 @@ name: igrantio-backend-webhooks
 description: 'Composable building block: register, receive, and verify iGrant.io OWS digital-wallet webhooks for OpenID4VCI issuance and OpenID4VP verification events. Idempotently create a webhook via config-create-webhook (skip if one already targets the payloadUrl), verify the X-iGrant-Signature HMAC-SHA256, map each topic to its exchange id (CredentialExchangeId / presentationExchangeId), and store the event. Use to add OWS webhook handling to any Node/TypeScript backend.'
 license: Apache-2.0
 metadata:
+  categories: [education, backend]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, OpenID4VCI, OpenID4VP, webhooks, HMAC, digital identity wallet
   version: 2026.09.01

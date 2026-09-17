@@ -3,6 +3,7 @@ name: igrantio-credential-schema-boarding-pass
 description: 'Claim path pointer schema for the Boarding Pass credential (credential type VerifiableFerryBoardingPassCredentialSDJWT, namespace eu.europa.ec.eudi.boardingpass) from the iGrant.io verifiable data registry. It holds the 14 flat travel claims of a ferry or airline boarding pass: departure and arrival date, time and port, passenger name, seat number and type, ticket number, ticket QR and vessel description. Use this skill when you create a boarding pass credential definition on the iGrant.io OpenID4VC API, or when you need the exact claim paths of a travel ticket credential.'
 license: Apache-2.0
 metadata:
+  categories: [credential-schema]
   provider: iGrant.io
   keywords: boarding pass, ferry ticket, travel credential, VerifiableFerryBoardingPassCredentialSDJWT, eu.europa.ec.eudi.boardingpass, SD-JWT VC, dc+sd-jwt, claim path pointer, credential definition, EUDIW, selective disclosure
   version: 2026.09.01

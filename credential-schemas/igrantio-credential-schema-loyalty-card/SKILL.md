@@ -3,6 +3,7 @@ name: igrantio-credential-schema-loyalty-card
 description: 'Claim path pointer schema for the Loyalty Card credential (credential type LoyaltyCard, mdoc doctype eu.europa.ec.eudi.loyaltycard) from the iGrant.io verifiable data registry. It holds 25 nested claims in five groups: credential, customer, loyalty_card, organization and portfolio, with the card identifier and status, the customer contact data, and the available points, miles and wallet balance. The registry publishes it in all three formats: dc+sd-jwt, jwt_vc_json and mso_mdoc. Use this skill when you create a loyalty card credential definition on the iGrant.io OpenID4VC API.'
 license: Apache-2.0
 metadata:
+  categories: [credential-schema]
   provider: iGrant.io
   keywords: loyalty card, membership card, LoyaltyCard, eu.europa.ec.eudi.loyaltycard, loyalty points, available_miles, customer, portfolio, SD-JWT VC, dc+sd-jwt, jwt_vc_json, mso_mdoc, claim path pointer, credential definition, EUDIW, selective disclosure
   version: 2026.09.01

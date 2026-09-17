@@ -3,6 +3,7 @@ name: igrantio-issuer-frontend
 description: Build the browser UI for an OpenID4VCI credential ISSUER against the iGrant.io Organisation Wallet Suite. Request in-time or deferred issuance through your tenant backend proxy, render the credential-offer QR (or same-device deep link) for an EUDI Wallet (EUDIW) or European Business Wallet (EUBW), and reflect live status over SSE (offer scanned → credential accepted). Composes igrantio-frontend-client; talks to igrantio-issuer-backend.
 license: Apache-2.0
 metadata:
+  categories: [frontend]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VCI, credential offer, QR code, verifiable credentials
   version: 2026.09.01

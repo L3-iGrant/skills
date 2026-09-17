@@ -3,6 +3,7 @@ name: igrantio-dcql-credential-sets
 description: 'DCQL pattern: credential_sets with alternatives - accept any one of several identity credentials (PID, Passport, or Photo ID, all dc+sd-jwt with cryptographic holder binding) in a single OpenID4VP verification on the iGrant.io Organisation Wallet Suite. Proof of identity for EUDI Wallet (EUDIW) relying parties under eIDAS 2.0 when multiple credential types are acceptable.'
 license: Apache-2.0
 metadata:
+  categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, credential_sets, alternatives, proof of identity, PID, Passport, Photo ID, OpenID4VP, EUDIW, eIDAS2
   version: 2026.09.01

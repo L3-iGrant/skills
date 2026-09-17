@@ -3,6 +3,7 @@ name: igrantio-credential-schema-age-verification
 description: 'Claim path pointer schema for the EUDI Age Verification attestation (doctype eu.europa.ec.av.1) from the iGrant.io verifiable data registry. It holds the five age-over booleans - age_over_14, age_over_16, age_over_18, age_over_21 and age_over_65 - as selectively disclosable mdoc claims. Use this skill when you create an age verification credential definition on the iGrant.io OpenID4VC API, or when you need the exact claim paths, namespace and doctype for a proof-of-age credential.'
 license: Apache-2.0
 metadata:
+  categories: [credential-schema]
   provider: iGrant.io
   keywords: age verification, proof of age, age_over_18, eu.europa.ec.av.1, mso_mdoc, mdoc, claim path pointer, credential definition, EUDIW, selective disclosure
   version: 2026.09.01

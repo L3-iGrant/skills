@@ -3,6 +3,7 @@ name: igrantio-dcql-query-lpid
 description: 'DCQL query template for Legal Person Identification Data (LPID), the identity attestation of a company or other legal person. It asks a wallet for two claims, identifier and legalName, in dc+sd-jwt, jwt_vc_json or mso_mdoc (doctype org.iso.18013.5.1.lpid). Use this skill when a European Business Wallet must prove which legal entity acts, and you need the exact credential type and claim paths from the iGrant.io verifiable data registry.'
 license: Apache-2.0
 metadata:
+  categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, LPID, Legal Person Identification Data, LegalPersonIdentificationData, org.iso.18013.5.1.lpid, legalName, company identity, dc+sd-jwt, jwt_vc_json, mso_mdoc, OpenID4VP, presentation definition, EUBW, eIDAS2
   version: 2026.09.01

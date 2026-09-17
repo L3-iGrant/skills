@@ -3,6 +3,7 @@ name: igrantio-credential-schema-software-statement
 description: 'Claim path pointer schema for the Software Statement credential, which attests a registered client application. The registry defines it in the dc+sd-jwt format with one mandatory claim, client_uri. Use this skill when you build a software statement credential definition for the iGrant.io OpenID4VC API.'
 license: Apache-2.0
 metadata:
+  categories: [credential-schema]
   provider: iGrant.io
   keywords: software statement, client registration, client_uri, OAuth client, credential schema, claim path pointer, SD-JWT VC, dc+sd-jwt, EUDIW, verifiable data registry
   version: 2026.09.01

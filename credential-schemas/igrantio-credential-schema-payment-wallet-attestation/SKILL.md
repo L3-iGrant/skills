@@ -3,6 +3,7 @@ name: igrantio-credential-schema-payment-wallet-attestation
 description: 'Claim path pointer schema for the Payment Wallet Attestation, titled Payment Authenticator (v2), from the iGrant.io verifiable data registry. It holds the eight fundingSource claims of a tokenised payment instrument: aliasId, currency, icon, iin, panLastFour, parLastFour, scheme and type. Use this skill when you create a payment wallet attestation credential definition on the iGrant.io OpenID4VC API, when you build a Strong Customer Authentication or payment flow, or when you validate transaction data that carries a paymentWalletAttestation.'
 license: Apache-2.0
 metadata:
+  categories: [credential-schema]
   provider: iGrant.io
   keywords: payment wallet attestation, Payment Authenticator, fundingSource, PSD2, strong customer authentication, transaction data, SD-JWT VC, dc+sd-jwt, claim path pointer, credential definition, EUDIW, selective disclosure
   version: 2026.09.01

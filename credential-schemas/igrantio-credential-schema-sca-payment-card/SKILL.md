@@ -3,6 +3,7 @@ name: igrantio-credential-schema-sca-payment-card
 description: 'Claim path pointer schema for the Payment Card Credential (TS12), an SCA payment credential of the EUDI Wallet. The registry defines it in the dc+sd-jwt format with three mandatory and selectively disclosable claims: pan_last_four, scheme and scheme_logo. Use this skill when you build a payment card credential definition for the iGrant.io OpenID4VC API.'
 license: Apache-2.0
 metadata:
+  categories: [credential-schema]
   provider: iGrant.io
   keywords: payment card, PAN, card scheme, SCA, TS12, strong customer authentication, payment credential, PSD2, credential schema, claim path pointer, SD-JWT VC, dc+sd-jwt, EUDIW, verifiable data registry
   version: 2026.09.01

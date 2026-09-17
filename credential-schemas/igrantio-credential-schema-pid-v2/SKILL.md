@@ -3,6 +3,7 @@ name: igrantio-credential-schema-pid-v2
 description: 'Claim path pointer schema for the Person Identification Data (PID) credential of EU ARF 2.8.0, the current core identity attestation of the EUDI Wallet. Holds the registry documents for the dc+sd-jwt and mso_mdoc formats, with names, place of birth, nationalities, document number, issuing authority, portrait, resident address and trust anchor, and it marks which claims are mandatory. Use this skill when you build an ARF 2.8.0 PID credential definition for the iGrant.io OpenID4VC API.'
 license: Apache-2.0
 metadata:
+  categories: [credential-schema]
   provider: iGrant.io
   keywords: PID, Person Identification Data, ARF 2.8.0, eIDAS2, urn:eudi:pid:1, place of birth, nationalities, trust anchor, credential schema, claim path pointer, SD-JWT VC, mso_mdoc, EUDIW, verifiable data registry
   version: 2026.09.01

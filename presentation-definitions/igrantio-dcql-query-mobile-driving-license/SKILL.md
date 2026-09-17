@@ -3,6 +3,7 @@ name: igrantio-dcql-query-mobile-driving-license
 description: 'DCQL query template for the ISO 18013-5 Mobile Driving Licence (mDL), doctype org.iso.18013.5.1.mDL in mso_mdoc. It asks a wallet for the 25 mandatory and optional data elements of the org.iso.18013.5.1 namespace, from family_name and driving_privileges to portrait, age_over_18 and un_distinguishing_sign. Use this skill when you build car rental, roadside checks, vehicle hire or an age gate on an mDL, and you need the exact doctype, namespace and claim paths from the iGrant.io verifiable data registry.'
 license: Apache-2.0
 metadata:
+  categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, mDL, mobile driving licence, ISO 18013-5, org.iso.18013.5.1.mDL, driving_privileges, age_over_18, portrait, mso_mdoc, OpenID4VP, presentation definition, EUDIW, eIDAS2
   version: 2026.09.01

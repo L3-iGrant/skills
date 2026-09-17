@@ -3,6 +3,7 @@ name: igrantio-api-key-management
 description: 'The Key Management group of the iGrant.io OID4VC API: configure and read the secure vaults (iGrant.io, Hashicorp, QTSP, DB-backed) that hold the signing keys, list the keys as JWKs with their DIDs, create and delete ECDSA P-256 keys, generate a CSR, upload an X.509 certificate chain to fill x5c, and select a Qualified Trust Service Provider signing credential over the CSC API. Use when you set up or rotate the keys that sign OID4VCI credentials and OpenID4VP responses.'
 license: Apache-2.0
 metadata:
+  categories: [education, ows-api]
   provider: iGrant.io
   keywords: key management, secure vault, JWK, ES256, P-256, CSR, X.509, x5c, certificate chain, QTSP, CSC API, Hashicorp Vault, remote qualified electronic signature, eIDAS2
   version: 2026.09.01

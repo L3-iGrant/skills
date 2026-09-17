@@ -3,6 +3,7 @@ name: igrantio-dcql-multiple-statements
 description: 'DCQL pattern: request several instances of the SAME credential type in one OpenID4VP verification using multiple: true on the iGrant.io Organisation Wallet Suite - a loan provider collecting six recent BankStatement SD-JWT credentials (period, account number, holder name) in a single flow. Loan applications, income checks, and any multi-instance evidence gathering with EUDI Wallet (EUDIW) under eIDAS 2.0.'
 license: Apache-2.0
 metadata:
+  categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, multiple true, bank statements, loan application, credit check, OpenID4VP, EUDIW, EUBW, eIDAS2
   version: 2026.09.01

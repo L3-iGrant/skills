@@ -3,6 +3,7 @@ name: igrantio-business-wallet-portal
 description: Umbrella recipe for building a CUSTOM European Business Wallet (EBW) portal on the iGrant.io Organisation Wallet Suite - the path most customers take. Orchestrates the holder skills end to end - deploy the tenant backend (igrantio-holder-backend), scaffold or hand-build the portal UI (igrantio-holder-frontend), run everything on the live notifications inbox (igrantio-holder-notifications), and look up exact endpoints in igrantio-api-holder - with the page-by-page build order (base configuration, received credentials, shared credentials, share wizard, notifications), EBW onboarding to a valid wallet unit, and DCQL test requests. Use when an organisation wants its own business wallet portal with only holder functions.
 license: Apache-2.0
 metadata:
+  categories: [recipe]
   provider: iGrant.io
   keywords: EUBW, EBW, European Business Wallet, EUDIW, eIDAS2, holder, wallet portal, custom portal, OpenID4VCI, OpenID4VP, DCQL, notifications, Next.js, TypeScript, Better Auth, passwordless
   version: 2026.09.01

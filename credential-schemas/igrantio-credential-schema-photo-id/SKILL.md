@@ -3,6 +3,7 @@ name: igrantio-credential-schema-photo-id
 description: 'Claim path pointer schema for the Photo ID credential, the ISO/IEC 23220 photo identity document of the EUDI Wallet. Holds the registry documents for the dc+sd-jwt, jwt_vc_json and mso_mdoc formats, with the iso23220 core person claims, the photoid extra identity claims, and the dtc digital travel credential data groups. Use this skill when you build a Photo ID credential definition for the iGrant.io OpenID4VC API, or when you need the exact Photo ID claim path.'
 license: Apache-2.0
 metadata:
+  categories: [credential-schema]
   provider: iGrant.io
   keywords: Photo ID, photoid, ISO 23220, digital travel credential, DTC, portrait, credential schema, claim path pointer, SD-JWT VC, mso_mdoc, jwt_vc_json, EUDIW, verifiable data registry
   version: 2026.09.01

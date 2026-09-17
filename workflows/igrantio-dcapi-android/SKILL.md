@@ -3,6 +3,7 @@ name: igrantio-dcapi-android
 description: 'Same-device and cross-device credential verification on Android via the W3C Digital Credentials API (browser invokes the wallet, no QR scan needed on same device) using OpenID4VP on the iGrant.io Organisation Wallet Suite. Presentation definition with responseMode dc_api (or signed with expectedOrigins), verification request v3 with requestByReference, navigator.credentials.get invocation from Chrome 141+, then verify vpTokenResponse and trust-list status. For EUDI Wallet (EUDIW) and European Business Wallet (EUBW) relying parties under eIDAS 2.0.'
 license: Apache-2.0
 metadata:
+  categories: [dcapi]
   provider: iGrant.io
   keywords: Digital Credentials API, DC API, Android, Chrome, OpenID4VP, EUDIW, EUBW, eIDAS2, same-device, verification
   version: 2026.09.01

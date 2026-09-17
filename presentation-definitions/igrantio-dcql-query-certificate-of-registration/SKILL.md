@@ -3,6 +3,7 @@ name: igrantio-dcql-query-certificate-of-registration
 description: 'DCQL query template for the Certificate Of Registration credential, the company registration extract of a legal entity. It asks a wallet for the registered name, legal form, activity, registration date, legal status, organisation number and the registered address, in dc+sd-jwt, jwt_vc_json or mso_mdoc (doctype org.iso.18013.5.1.cor). Use this skill when you onboard a business with a European Business Wallet and you need the exact credential type and claim paths from the iGrant.io verifiable data registry.'
 license: Apache-2.0
 metadata:
+  categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, Certificate of Registration, company registration, legal entity, org.iso.18013.5.1.cor, registeredAddress, orgNumber, KYB, dc+sd-jwt, jwt_vc_json, mso_mdoc, OpenID4VP, presentation definition, EUBW, eIDAS2
   version: 2026.09.01

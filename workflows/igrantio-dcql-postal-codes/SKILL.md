@@ -3,6 +3,7 @@ name: igrantio-dcql-postal-codes
 description: 'DCQL pattern: claim VALUE matching - accept a credential only when a claim equals one of an allowed list, using the values array on a claim query in OpenID4VP on the iGrant.io Organisation Wallet Suite. Example: a delivery service accepts a PID/address credential (dc+sd-jwt) only for postal codes inside its delivery zones. Geographic or attribute-gated eligibility checks with EUDI Wallet (EUDIW) under eIDAS 2.0.'
 license: Apache-2.0
 metadata:
+  categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, values constraint, claim value matching, postal code, delivery zones, address credential, OpenID4VP, EUDIW, eIDAS2
   version: 2026.09.01

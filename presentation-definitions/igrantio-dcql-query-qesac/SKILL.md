@@ -3,6 +3,7 @@ name: igrantio-dcql-query-qesac
 description: 'DCQL query template for the QESAC credential (Qualified Electronic Signature Authorisation Credential, credential type QESAC) from the iGrant.io verifiable data registry. The dc+sd-jwt query asks for one claim, credentialId, which names the signing credential that the holder authorises. Use this skill when you build a remote signing flow: the presentation definition must set transactionDataDefinitionType to qes_data, and the send request must carry the matching transactionData with the document hashes.'
 license: Apache-2.0
 metadata:
+  categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, QESAC, qualified electronic signature, remote signing, QES, qes_data, transaction data, credentialId, presentation definition, OpenID4VP, SD-JWT VC, EUDIW, eIDAS2
   version: 2026.09.01
