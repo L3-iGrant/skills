@@ -1,12 +1,12 @@
 ---
 name: igrantio-dcql-claim-sets
-description: 'DCQL pattern: claim_sets with fallback for selective disclosure - prefer a minimal boolean claim (is_over_21) and fall back to birth_date only when the preferred claim is unavailable, in an OpenID4VP verification of a PID SD-JWT on the iGrant.io Organisation Wallet Suite. Data-minimised age verification for EUDI Wallet (EUDIW) under eIDAS 2.0 and GDPR.'
+description: 'DCQL pattern: claim_sets with fallback for selective disclosure - prefer the exact age claim (age_over_16) of the EU age verification attestation and fall back to the mandatory age_over_18 only when the preferred claim is unavailable, in an OpenID4VP verification of a PID SD-JWT on the iGrant.io Organisation Wallet Suite. Data-minimised age verification for EUDI Wallet (EUDIW) under eIDAS 2.0 and GDPR.'
 license: Apache-2.0
 metadata:
   categories: [dcql-query]
   provider: iGrant.io
-  keywords: DCQL, claim_sets, selective disclosure, age verification, is_over_21, PID, OpenID4VP, EUDIW, eIDAS2, GDPR
-  version: 2026.09.01
+  keywords: DCQL, claim_sets, selective disclosure, age verification, age_over_16, age_over_18, eu.europa.ec.av.1, OpenID4VP, EUDIW, eIDAS2, GDPR
+  version: 2026.10.13
   source-doc: https://docs.igrant.io/docs/dcql-2-4-2-claim-set-age-verification/
   requires-skills: igrantio-ows-overview, igrantio-verifier-backend
 ---
@@ -14,9 +14,15 @@ metadata:
 # DCQL: claim sets (preferred claim with fallback)
 
 ## Scenario
-A verifier needs an age check. It prefers the minimal boolean `is_over_21`;
-if the wallet's PID lacks it, the query falls back to `birth_date`.
+A service for people aged 16 and over needs an age check. It asks for the EU
+age verification attestation (an mdoc with doctype `eu.europa.ec.av.1`),
+prefers the exact `age_over_16` claim, and falls back to the mandatory
+`age_over_18` claim when the attestation does not carry `age_over_16`.
 `claim_sets` are ordered - the wallet satisfies the first set it can.
+
+A Person Identification Data (PID) credential carries no age claims (PID
+Rulebook v1.7). An age check against a PID asks for `birthdate` and compares
+it on the verifier side.
 
 ## Prerequisites
 - An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
@@ -55,33 +61,33 @@ Record the answers before you write code.
 {
   "credentials": [
     {
-      "id": "pid",
-      "format": "dc+sd-jwt",
+      "id": "age_verification",
+      "format": "mso_mdoc",
       "meta": {
-        "vct_values": [
-          "eu.europa.ec.eudi:pid.1"
-        ]
+        "doctype_value": "eu.europa.ec.av.1"
       },
       "claims": [
         {
-          "id": "over_21",
+          "id": "over_16",
           "path": [
-            "is_over_21"
+            "eu.europa.ec.av.1",
+            "age_over_16"
           ]
         },
         {
-          "id": "birthdate",
+          "id": "over_18",
           "path": [
-            "birth_date"
+            "eu.europa.ec.av.1",
+            "age_over_18"
           ]
         }
       ],
       "claim_sets": [
         [
-          "over_21"
+          "over_16"
         ],
         [
-          "birthdate"
+          "over_18"
         ]
       ]
     }
@@ -94,15 +100,17 @@ Record the answers before you write code.
    `presentationDefinitionId` (`igrantio-ows-overview` api-reference §3).
 2. Send the verification request (v3), render QR / DC API, await
    `presentation_acked` with `verified === true` (api-reference §2).
-3. Read the disclosed claim from `presentation[0]` - handle BOTH shapes:
-   the boolean, or a birthdate you must compare yourself.
+3. Read the disclosed claim from `presentation[0]` - handle BOTH claims:
+   `age_over_16`, or the fallback `age_over_18` (a true value proves over 16
+   too; a false value proves nothing about 16 and 17 year olds).
 
 ## Adjust for your deployment
-- Change the threshold claim (`is_over_18`, `is_over_65`) and `path` to
-  match your PID profile; `vct_values` to your PID VCT.
-- Order `claim_sets` most-minimal first - that is the point of the pattern.
-- If regulators forbid receiving birthdate, drop the fallback set and
-  handle "no match" in UX instead.
+- Change the threshold claims (`age_over_14`, `age_over_21`, `age_over_65`)
+  to match your service; `age_over_18` is the one claim every attestation
+  carries (`igrantio-dcql-query-age-verification`).
+- Order `claim_sets` most-precise first - that is the point of the pattern.
+- To check the age against a PID instead, ask for `birthdate`
+  (`igrantio-dcql-query-pid-v2`) and compare it yourself.
 
 ## Register your certificate in the trust list
 Wallets show your organisation as verified only when your certificate is in

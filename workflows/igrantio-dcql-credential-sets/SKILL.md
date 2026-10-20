@@ -69,7 +69,7 @@ Record the answers before you write code.
       "id": "PID",
       "meta": {
         "vct_values": [
-          "urn:eu.europa.ec.eudi:pid:1"
+          "urn:eudi:pid:1"
         ]
       },
       "require_cryptographic_holder_binding": true

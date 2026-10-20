@@ -1,31 +1,29 @@
 ---
 name: igrantio-credential-schema-pid-v2
-description: 'Claim path pointer schema for the Person Identification Data (PID) credential of EU ARF 2.8.0, the current core identity attestation of the EUDI Wallet. Holds the registry documents for the dc+sd-jwt and mso_mdoc formats, with names, place of birth, nationalities, document number, issuing authority, portrait, resident address and trust anchor, and it marks which claims are mandatory. Use this skill when you build an ARF 2.8.0 PID credential definition for the iGrant.io OpenID4VC API.'
+description: 'Claim path pointer schema for the Person Identification Data (PID) credential of the EU PID Rulebook v1.7 (ARF Annex 3.01), the core identity attestation of the EUDI Wallet. Holds the registry documents for the dc+sd-jwt and mso_mdoc formats, with names, place of birth, nationalities, document number, issuing authority, portrait, resident address and trust anchor, and it marks which claims are mandatory. Use this skill when you build a PID credential definition for the iGrant.io OpenID4VC API.'
 license: Apache-2.0
 metadata:
   categories: [credential-schema]
   provider: iGrant.io
-  keywords: PID, Person Identification Data, ARF 2.8.0, eIDAS2, urn:eudi:pid:1, place of birth, nationalities, trust anchor, credential schema, claim path pointer, SD-JWT VC, mso_mdoc, EUDIW, verifiable data registry
-  version: 2026.09.01
+  keywords: PID, Person Identification Data, PID Rulebook v1.7, ARF Annex 3.01, eIDAS2, urn:eudi:pid:1, place of birth, nationalities, trust anchor, credential schema, claim path pointer, SD-JWT VC, mso_mdoc, EUDIW, verifiable data registry
+  version: 2026.10.13
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/credentialSchemas/claimPathPointer/pidV2
   schema-version: 2026.4.1
   credential-formats: dc+sd-jwt, mso_mdoc
   requires-skills: igrantio-api-issuer
 ---
 
-# Person Identification Data (PID) (EU ARF 2.8.0) - credential schema
+# Person Identification Data (PID Rulebook v1.7) - credential schema
 
 ## When to use
 Use this skill when you issue or verify a **Person Identification Data (PID)**
-credential that follows **EU ARF 2.8.0**. This is the current PID shape. It adds
-document data, place of birth, nationalities, portrait and trust anchor to the
-first PID shape.
+credential that follows the **EU PID Rulebook v1.7** (ARF Annex 3.01). It
+holds the name, the birth data, the place of birth, the nationalities, the
+portrait, the document data, the address and the trust anchor.
 
 The registry gives two credential types, one per format: `urn:eudi:pid:1` for
 SD-JWT VC (`dc+sd-jwt`), and `eu.europa.ec.eudi.pid.1` for mdoc (`mso_mdoc`).
 The `jwt_vc_json` format is not part of this template.
-
-For the first PID shape, read `igrantio-credential-schema-pid`.
 
 The registry keeps this schema under
 `credentialSchemas/claimPathPointer/pidV2`. Version **2026.4.1** is the latest
@@ -54,8 +52,8 @@ Record the answers before you write code.
    request it from [support@igrant.io](mailto:support@igrant.io) before you
    continue.
 3. **Format** - which of the formats the registry publishes for this schema:
-   `dc+sd-jwt`, `jwt_vc_json` or `mso_mdoc`? _Recommend `dc+sd-jwt` unless the
-   rule book requires mdoc._
+   `dc+sd-jwt` or `mso_mdoc`? _Recommend `dc+sd-jwt` unless the use case
+   requires mdoc. The template has no `jwt_vc_json` form._
 4. **Claims** - all claims of the schema, or a subset? _Mandatory claims
    stay._
 5. **Issuance mode** - `InTime` (claims known now) or `Deferred` (claims
@@ -75,20 +73,38 @@ This schema marks only a part of the claims as mandatory. Read the `mandatory`
 field of each pointer before you plan your data source.
 
 **Mandatory claims**: `given_name`, `family_name`, `birthdate` (`birth_date` in
-`mso_mdoc`), `place_of_birth` with `country`, `locality` and `region`,
-`nationalities` (`nationality` in `mso_mdoc`), `issuing_authority`,
-`issuing_country`, and the expiry date (`date_of_expiry` in `dc+sd-jwt`,
-`expiry_date` in `mso_mdoc`).
+`mso_mdoc`), `place_of_birth`, `nationalities` (`nationality` in `mso_mdoc`),
+the portrait (`picture` in `dc+sd-jwt`, `portrait` in `mso_mdoc`),
+`issuing_authority` and `issuing_country`. The expiry date is carried in the
+credential metadata; the `date_of_expiry` and `expiry_date` claims are
+optional.
+
+Rules of the rulebook that the issuer applies to the values:
+
+- `place_of_birth` is an object with at least one of `country`, `region` and
+  `locality`. The three members are optional on their own.
+- The portrait is a JPEG. In `dc+sd-jwt` it is a data URL
+  (`data:image/jpeg;base64,...`); in `mso_mdoc` it is the image bytes
+  (base64 in the request). The claim is mandatory, but the person can opt
+  out (PID_03): send an empty string, and the credential carries an empty
+  value.
+- `sex` is a number from ISO/IEC 5218: 0 (not known), 1 (male), 2 (female),
+  3 to 5 and 6 (other), 9 (not applicable).
+- `birthdate` is a full date (`YYYY-MM-DD`). Country codes are ISO 3166-1
+  alpha-2, `issuing_jurisdiction` is an ISO 3166-2 code of the issuing
+  country, and `phone_number` is `+` followed by digits.
+- The PID carries **no age claims**. An age check uses `birthdate`, or the
+  EU age verification attestation (`igrantio-credential-schema-age-verification`).
 
 **Optional claims**:
 
 - Birth names: `birth_given_name` and `birth_family_name` in `dc+sd-jwt`;
   `given_name_birth` and `family_name_birth` in `mso_mdoc`.
 - Document data: `document_number`, `issuing_jurisdiction`, the issuance date
-  (`date_of_issuance` or `issuance_date`), `personal_administrative_number`,
+  (`date_of_issuance` or `issuance_date`), the expiry date (`date_of_expiry`
+  or `expiry_date`), `personal_administrative_number`,
   `attestation_legal_category` and `trust_anchor`.
-- Person data: `sex`, and the picture (`picture` in `dc+sd-jwt`, `portrait` in
-  `mso_mdoc`).
+- Person data: `sex`.
 - Contact: `email` and `phone_number` in `dc+sd-jwt`; `email_address` and
   `mobile_phone_number` in `mso_mdoc`.
 - Address: `dc+sd-jwt` nests it under `address`, with `formatted`, `country`,
@@ -108,7 +124,7 @@ a change.
 
 | Fact | Value |
 | --- | --- |
-| Title | Person Identification Data (PID) (EU ARF 2.8.0) |
+| Title | Person Identification Data (PID Rulebook v1.7) |
 | Format | `dc+sd-jwt` |
 | `credentialType` | `urn:eudi:pid:1` |
 | `vct` to send | `urn:eudi:pid:1` |
@@ -181,7 +197,7 @@ a change.
     },
     {
       "path": ["date_of_expiry"],
-      "mandatory": true,
+      "mandatory": false,
       "limitDisclosure": true
     },
     {
@@ -241,7 +257,7 @@ a change.
     },
     {
       "path": ["picture"],
-      "mandatory": false,
+      "mandatory": true,
       "limitDisclosure": true
     },
     {
@@ -251,17 +267,17 @@ a change.
     },
     {
       "path": ["place_of_birth", "country"],
-      "mandatory": true,
+      "mandatory": false,
       "limitDisclosure": true
     },
     {
       "path": ["place_of_birth", "locality"],
-      "mandatory": true,
+      "mandatory": false,
       "limitDisclosure": true
     },
     {
       "path": ["place_of_birth", "region"],
-      "mandatory": true,
+      "mandatory": false,
       "limitDisclosure": true
     },
     {
@@ -282,7 +298,7 @@ a change.
 
 | Fact | Value |
 | --- | --- |
-| Title | Person Identification Data (PID) (EU ARF 2.8.0) |
+| Title | Person Identification Data (PID Rulebook v1.7) |
 | Format | `mso_mdoc` |
 | `credentialType` | `eu.europa.ec.eudi.pid.1` |
 | `doctype` to send | `eu.europa.ec.eudi.pid.1` |
@@ -318,7 +334,7 @@ doctype.
     },
     {
       "path": ["eu.europa.ec.eudi.pid.1", "expiry_date"],
-      "mandatory": true,
+      "mandatory": false,
       "limitDisclosure": true
     },
     {
@@ -367,7 +383,7 @@ doctype.
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi.pid.1", "nationality", null],
+      "path": ["eu.europa.ec.eudi.pid.1", "nationality"],
       "mandatory": true,
       "limitDisclosure": true
     },
@@ -382,23 +398,8 @@ doctype.
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi.pid.1", "place_of_birth", "country"],
-      "mandatory": true,
-      "limitDisclosure": true
-    },
-    {
-      "path": ["eu.europa.ec.eudi.pid.1", "place_of_birth", "locality"],
-      "mandatory": true,
-      "limitDisclosure": true
-    },
-    {
-      "path": ["eu.europa.ec.eudi.pid.1", "place_of_birth", "region"],
-      "mandatory": true,
-      "limitDisclosure": true
-    },
-    {
       "path": ["eu.europa.ec.eudi.pid.1", "portrait"],
-      "mandatory": false,
+      "mandatory": true,
       "limitDisclosure": true
     },
     {
@@ -413,11 +414,6 @@ doctype.
     },
     {
       "path": ["eu.europa.ec.eudi.pid.1", "resident_country"],
-      "mandatory": false,
-      "limitDisclosure": true
-    },
-    {
-      "path": ["eu.europa.ec.eudi.pid.1", "resident_house_number"],
       "mandatory": false,
       "limitDisclosure": true
     },
@@ -484,7 +480,7 @@ the format fields that the table above gives.
 
 ```json
 {
-  "label": "Issue PID ARF 2.8.0",
+  "label": "Issue Person Identification Data",
   "version": "version_01",
   "credentialDefinitions": [
     {
@@ -516,7 +512,7 @@ the format fields that the table above gives.
 ```
 
 The label `PID Issuance` is reserved for the platform. Pick another label, for
-example `Issue PID ARF 2.8.0`.
+example `Issue Person Identification Data`.
 
 The two formats use different credential type values, so an entry for
 `dc+sd-jwt` sends `vct: urn:eudi:pid:1`, and an entry for `mso_mdoc` sends
@@ -554,7 +550,6 @@ corrected.
   doctype and the format flags.
 
 ## Cross-references
-- `igrantio-credential-schema-pid` - the first PID shape.
 - `igrantio-api-issuer` - the create credential definition and issue credential
   operations.
 - `igrantio-api-verifier` - the DCQL query that asks a holder for a PID

@@ -1,23 +1,23 @@
 ---
 name: igrantio-dcql-query-pid-v2
-description: 'DCQL query template for the Person Identification Data (PID) credential of EU ARF 2.8.0 (vct urn:eudi:pid:1, mDoc doctype eu.europa.ec.eudi.pid.1) from the iGrant.io verifiable data registry. Holds the claim list for dc+sd-jwt and mso_mdoc, with the name, birth name, place of birth, address parts, document number, issuing data, nationalities, portrait and trust anchor. Use this skill when you build an OpenID4VP presentation definition against the ARF 2.8.0 PID rule book, or when you need the exact claim path of a PID attribute.'
+description: 'DCQL query template for the Person Identification Data (PID) credential of the EU PID Rulebook v1.7 (vct urn:eudi:pid:1, mDoc doctype eu.europa.ec.eudi.pid.1) from the iGrant.io verifiable data registry. Holds the claim list for dc+sd-jwt and mso_mdoc, with the name, birth name, place of birth, address parts, document number, issuing data, nationalities, portrait and trust anchor. Use this skill when you build an OpenID4VP presentation definition that asks for a PID, or when you need the exact claim path of a PID attribute.'
 license: Apache-2.0
 metadata:
   categories: [dcql-query]
   provider: iGrant.io
-  keywords: DCQL, PID, Person Identification Data, EU ARF 2.8.0, urn:eudi:pid:1, eu.europa.ec.eudi.pid.1, place_of_birth, nationalities, personal_administrative_number, presentation definition, OpenID4VP, mso_mdoc, SD-JWT VC, EUDIW, eIDAS2
-  version: 2026.09.01
+  keywords: DCQL, PID, Person Identification Data, PID Rulebook v1.7, ARF Annex 3.01, urn:eudi:pid:1, eu.europa.ec.eudi.pid.1, place_of_birth, nationalities, personal_administrative_number, presentation definition, OpenID4VP, mso_mdoc, SD-JWT VC, EUDIW, eIDAS2
+  version: 2026.10.13
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/presentationDefinitions/dcqlQuery/pidV2
   registry-version: 2026.4.1
   requires-skills: igrantio-api-verifier
 ---
 
-# DCQL query: PID (EU ARF 2.8.0)
+# DCQL query: PID (PID Rulebook v1.7)
 
 ## When to use
-Use this skill when you ask a wallet for **identity data under EU ARF 2.8.0**.
-This is the second PID rule book. It carries more attributes than the earlier
-PID, and it uses a shorter vct, `urn:eudi:pid:1`.
+Use this skill when you ask a wallet for **identity data from a PID that
+follows the EU PID Rulebook v1.7** (ARF Annex 3.01). The vct is
+`urn:eudi:pid:1`.
 
 The credential holds:
 
@@ -32,10 +32,17 @@ The credential holds:
   `phone_number`.
 - Two policy claims: `attestation_legal_category` and `trust_anchor`.
 
-This version holds **no age-over claims**. The earlier PID template holds
-`is_over_18`, `is_over_21` and `is_over_65`. If you need a plain age check
-without a birth date, read `igrantio-dcql-query-pid`, or ask for a dedicated
-age verification attestation.
+The PID holds **no age claims**. For an age check, ask for `birthdate`, or ask
+for the EU age verification attestation instead
+(`igrantio-dcql-query-age-verification`).
+
+The portrait (`picture`, `portrait` in mdoc) is mandatory in the PID, but a
+person can opt out of it: the value is then empty. Do not treat an empty
+portrait as a missing claim.
+
+A PID never signs transaction data (PID Rulebook v1.7, section 5). Do not set
+`transactionDataDefinitionType` on a presentation definition that asks for a
+PID, in any format. The verifier refuses the combination.
 
 Ask only for the claims that your use case needs.
 
@@ -78,8 +85,8 @@ Record the answers before you write code.
 
 | Fact | Value |
 | --- | --- |
-| Title | Person Identification Data (PID) (EU ARF 2.8.0) |
-| Purpose | Person Identification Data (PID) (EU ARF 2.8.0) |
+| Title | Person Identification Data (PID Rulebook v1.7) |
+| Purpose | Person Identification Data (PID Rulebook v1.7) |
 | Registry version | 2026.4.1 |
 | Formats | `dc+sd-jwt`, `mso_mdoc` |
 | `dc+sd-jwt` vct | `urn:eudi:pid:1` |
@@ -160,7 +167,6 @@ The registry file is `2026.4.1/mso_mdoc.schema.v1.json`. This is the form for
     { "path": ["eu.europa.ec.eudi.pid.1", "resident_address"] },
     { "path": ["eu.europa.ec.eudi.pid.1", "resident_city"] },
     { "path": ["eu.europa.ec.eudi.pid.1", "resident_country"] },
-    { "path": ["eu.europa.ec.eudi.pid.1", "resident_house_number"] },
     { "path": ["eu.europa.ec.eudi.pid.1", "resident_postal_code"] },
     { "path": ["eu.europa.ec.eudi.pid.1", "resident_state"] },
     { "path": ["eu.europa.ec.eudi.pid.1", "resident_street"] },
@@ -252,14 +258,6 @@ to `version_01`.
   ]
 }
 ```
-
-The mDoc doctype is the same for this template and for the earlier PID
-template. Only the claim list tells the two apart. Check the claim names
-against the table above when the wallet returns nothing.
-
-To accept both PID versions in one request, put two entries in
-`credentials`, one for each vct, and join them with a `credential_sets`
-option that lists the two identifiers.
 
 **Step 2.** Send the request with the V3 send operation,
 `POST /v3/config/digital-wallet/openid/sdjwt/verification/send`. Send the
