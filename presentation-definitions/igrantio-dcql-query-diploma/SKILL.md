@@ -55,7 +55,7 @@ Two credential queries, one PID and one diploma, in a single request.
     {
       "id": "pid",
       "format": "dc+sd-jwt",
-      "meta": { "vct_values": ["urn:eu.europa.ec.eudi:pid:1"] },
+      "meta": { "vct_values": ["urn:eudi:pid:1"] },
       "claims": [
         { "path": ["given_name"] },
         { "path": ["family_name"] },
@@ -98,7 +98,7 @@ it at request time with the V3 verification `send` operation
       {
         "id": "pid",
         "format": "dc+sd-jwt",
-        "meta": { "vct_values": ["urn:eu.europa.ec.eudi:pid:1"] },
+        "meta": { "vct_values": ["urn:eudi:pid:1"] },
         "claims": [
           { "path": ["given_name"] },
           { "path": ["family_name"] },
@@ -140,7 +140,7 @@ operations.
 ## Cross-references
 - `igrantio-credential-schema-diploma` - the diploma credential definition this
   query reads.
-- `igrantio-dcql-query-pid` - the PID query on its own (the learner sign-in).
+- `igrantio-dcql-query-pid-v2` - the PID query on its own (the learner sign-in).
 - `igrantio-api-verifier` - create presentation definition, send, and read
   history.
 - `igrantio-ows-overview` - architecture and glossary.

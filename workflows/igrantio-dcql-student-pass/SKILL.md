@@ -60,11 +60,11 @@ Record the answers before you write code.
       "id": "pid",
       "format": "mso_mdoc",
       "meta": {
-        "doctype_value": "urn:eu.europa.ec.eudi:pid:1"
+        "doctype_value": "eu.europa.ec.eudi.pid.1"
       },
       "claims": [
-        { "id": "full_name", "path": ["full_name"] },
-        { "id": "dob", "path": ["date_of_birth"] }
+        { "id": "full_name", "path": ["eu.europa.ec.eudi.pid.1", "given_name"] },
+        { "id": "dob", "path": ["eu.europa.ec.eudi.pid.1", "birth_date"] }
       ],
       "claim_sets": [["full_name"], ["dob"]]
     },

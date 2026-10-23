@@ -176,7 +176,7 @@ mandatory in an entry.
 | --- | --- | --- |
 | `credentialFormat` | `jwt_vc_json`, `dc+sd-jwt`, `mso_mdoc` | Selects which of `type`, `vct` and `doctype` you must send. |
 | `type` | array of strings | Only for `jwt_vc_json`; forbidden for the other formats. `WalletUnitAttestation` is not allowed. |
-| `vct` | string | Only for `dc+sd-jwt`, for example `urn:eu.europa.ec.eudi:pid:1`. |
+| `vct` | string | Only for `dc+sd-jwt`, for example `urn:eudi:pid:1`. |
 | `doctype` | string | Only for `mso_mdoc`, for example `org.iso.18013.5.1.lpid`. |
 | `validationPath` | `$.vc`, `$` | `$.vc` for `jwt_vc_json`; `$` for `dc+sd-jwt` and `mso_mdoc`. |
 | `claims` | object | Claim path pointers for `dc+sd-jwt` and `mso_mdoc`. |
@@ -213,13 +213,13 @@ element. For `jwt_vc_json`, the first element is `credentialSubject`.
 
 ```json
 {
-  "label": "Issue Portable Document A1",
+  "label": "Issue Person Identification Data",
   "version": "version_01",
   "trustAnchor": "did:key",
   "credentialDefinitions": [
     {
       "credentialFormat": "dc+sd-jwt",
-      "vct": "urn:eu.europa.ec.eudi:pid:1",
+      "vct": "urn:eudi:pid:1",
       "validationPath": "$",
       "supportRevocation": true,
       "revocationMethod": "status_list",
