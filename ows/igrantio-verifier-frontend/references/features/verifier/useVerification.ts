@@ -68,11 +68,15 @@ export function useVerification({ proxyBaseUrl, webhookBaseUrl }: VerificationCo
       setResult(null);
       try {
         const { verificationHistory } = await client.verification.sendRequest(payload);
-        if (!verificationHistory?.presentationExchangeId || !verificationHistory.vpTokenQrCode) {
+        // A Digital Credentials API request has a dcApiRequest and an empty vpTokenQrCode.
+        if (
+          !verificationHistory?.presentationExchangeId ||
+          (!verificationHistory.vpTokenQrCode && !verificationHistory.dcApiRequest)
+        ) {
           throw new Error("Verification response missing presentationExchangeId/vpTokenQrCode");
         }
         setPresentationExchangeId(verificationHistory.presentationExchangeId);
-        setQrUri(verificationHistory.vpTokenQrCode);
+        setQrUri(verificationHistory.vpTokenQrCode || null);
         setStatus("waiting");
         open(verificationHistory.presentationExchangeId, webhookBaseUrl, handleEvent);
         return verificationHistory;

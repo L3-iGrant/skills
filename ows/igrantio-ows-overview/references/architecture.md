@@ -33,7 +33,7 @@
 ## Components and responsibilities
 
 ### Tenant backend (this collection's backend skills)
-1. **Proxy** (`igrantio-backend-proxy`): expose `GET|POST|PUT /ows/{tenant}/*`,
+1. **Proxy** (`igrantio-backend-proxy`): expose `GET|POST|PUT|DELETE /ows/{tenant}/*`,
    allow-list the OWS paths below, look up the tenant's API key, replace the
    `Authorization` header with `ApiKey <key>`, forward, stream the response back.
 2. **Webhook register** (`igrantio-backend-webhooks`): once per org, idempotently
@@ -52,17 +52,22 @@
 - `igrantio-issuer-frontend` / `igrantio-verifier-frontend`: the two UI flows.
 
 ## Path allow-list (proxy)
-Only forward paths beginning with one of:
+Each role forwards only its own paths. Issuer (path prefixes):
 ```
 v2/config/digital-wallet/openid/sdjwt/credential/issue
 v2/config/digital-wallet/openid/sdjwt/credential/history
-v2/config/digital-wallet/openid/sdjwt/verification/send
-v2/config/digital-wallet/openid/sdjwt/verification/history
+```
+Verifier (path prefixes, and the v2 record for delete and the Digital
+Credentials API receive):
+```
 v3/config/digital-wallet/openid/sdjwt/verification/send
 v3/config/digital-wallet/openid/sdjwt/verification/history
+v2/config/digital-wallet/openid/sdjwt/verification/history/{id}
+v2/config/digital-wallet/openid/sdjwt/verification/history/{id}/receive
 ```
-Reject everything else with 404. This keeps a leaked/hostile browser from using the
-tenant key for arbitrary OWS calls. Methods: GET, POST, PUT (+ OPTIONS for CORS).
+Reject everything else with 404, and every path with a `.` or `..` segment.
+This keeps a leaked/hostile browser from using the tenant key for arbitrary
+OWS calls. Methods: GET, POST, PUT, DELETE (+ OPTIONS for CORS).
 
 ## API-key management (per tenant)
 The proxy resolves `{tenant}` → API key through a **TenantStore** so a single backend
@@ -74,7 +79,8 @@ Keys live only server-side. The browser sends **no** key; the proxy injects it.
 Rotate by updating the store; no frontend change.
 
 ## Webhook signature (HMAC)
-- Header: `X-iGrant-Signature: t=<unix-ts>,sig=<hex>`.
+- Header: `X-iGrant-Signature: t=<time>,sig=<hex>`; `t` is the UTC delivery
+  time in ISO 8601.
 - `sig = HMAC_SHA256(secretKey, "<t>.<raw request body>")`, hex-encoded.
 - Compare in constant time. `secretKey` == the value passed to config-create-webhook
   == the backend's `WEBHOOK_SECRET_KEY`. A mismatch means every webhook 401s.

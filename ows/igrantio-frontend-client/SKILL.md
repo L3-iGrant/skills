@@ -6,7 +6,7 @@ metadata:
   categories: [frontend, education]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VCI, OpenID4VP, React hooks, SSE, browser client
-  version: 2026.09.01
+  version: 2026.10.01
   api: https://docs.igrant.io/docs/developer-apis
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0, DCQL, SD-JWT-VC
   auth: none in the browser - the tenant backend injects the OWS API key
@@ -17,9 +17,9 @@ metadata:
 
 ## When to use
 The shared frontend building block for any OWS integration. `igrantio-issuer-frontend`
-and `igrantio-verifier-frontend` both build on it. It replaces the internal
-`@igrant/usecase-sdk` / `igrant-api-lib` with self-contained, framework-agnostic
-code you own. Read `igrantio-ows-overview` for the endpoint/response contract.
+and `igrantio-verifier-frontend` both build on it. It is self-contained,
+framework-agnostic code you own, with no iGrant.io SDK. Read
+`igrantio-ows-overview` for the endpoint/response contract.
 
 ## Prerequisites
 - An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
@@ -51,11 +51,14 @@ Framework-agnostic core (only `fetch` + `EventSource`):
 - **`createOwsClient({ baseUrl, apiKey? })`** - typed methods:
   - `issuance.issueInTime`, `issuance.startDeferred`, `issuance.completeDeferred`,
     `issuance.readHistory`, `issuance.deleteHistory`
-  - `verification.sendRequest`, `verification.readHistory`, `verification.deleteHistory`
+  - `verification.sendRequest`, `verification.readHistory`, `verification.deleteHistory`,
+    `verification.receiveDcApiResponse` (posts a same-device Digital Credentials
+    API answer back)
   - `baseUrl` = your backend proxy (`https://host/ows/<tenant>`); leave `apiKey` empty (the backend injects it).
 - **`openSseSession({ webhookBaseUrl, exchangeId, onMessage })`** - EventSource
   session with consume-and-delete and reconnect; returns `{ close }`.
-- **`types.ts`** - request/response + SSE event types.
+- **`types.ts`** - request/response + SSE event types. The request types are
+  exact: OWS answers `400` for a body member that it does not know.
 
 React layer (peer deps: `react`, and `qrcode` for `QrCode`):
 - **`useSSE()`** → `{ open, close }`

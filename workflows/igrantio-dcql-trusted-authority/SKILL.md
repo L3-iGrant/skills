@@ -1,12 +1,12 @@
 ---
 name: igrantio-dcql-trusted-authority
-description: 'DCQL pattern: accept a credential only when its issuer is anchored in a specific trust list, using the trusted_authorities field (etsi_tl trust list, EBSI, or OpenID Federation trust anchor) in an OpenID4VP verification on the iGrant.io Organisation Wallet Suite. Example: a University Degree SD-JWT accepted only from EU/EWC Trust List issuers. For EUDI Wallet (EUDIW) and European Business Wallet (EUBW) verifiers under eIDAS 2.0.'
+description: 'DCQL pattern: accept a credential only when its issuer is anchored in a specific trust list or certificate authority, using the trusted_authorities field (etsi_tl trust list URL or aki AuthorityKeyIdentifier) in an OpenID4VP verification on the iGrant.io Organisation Wallet Suite. Example: a University Degree SD-JWT accepted only from issuers on an ETSI trust list. For EUDI Wallet (EUDIW) and European Business Wallet (EUBW) verifiers under eIDAS 2.0.'
 license: Apache-2.0
 metadata:
   categories: [dcql-query]
   provider: iGrant.io
-  keywords: DCQL, trusted_authorities, etsi_tl, trust list, EBSI, OpenID Federation, OpenID4VP, EUDIW, EUBW, eIDAS2
-  version: 2026.09.01
+  keywords: DCQL, trusted_authorities, etsi_tl, aki, trust list, X.509, OpenID4VP, EUDIW, EUBW, eIDAS2
+  version: 2026.10.01
   source-doc: https://docs.igrant.io/docs/dcql-basic-credential-query-with-trusted-authority/
   requires-skills: igrantio-ows-overview, igrantio-verifier-backend
 ---
@@ -15,9 +15,9 @@ metadata:
 
 ## Scenario
 A verifier requests a University Degree credential, accepting it only if
-issued by an authority on the EU/EWC Trust List (or EBSI / an OpenID
-Federation trust anchor). Credentials from issuers outside the trust
-anchor (e.g. a plain `did:key` issuer) are rejected.
+issued by an authority on a named ETSI trust list. The issuer must sign with
+an X.509 certificate chain (`x5c`): a credential without one, or from an
+issuer outside the list, does not satisfy the query.
 
 ## Prerequisites
 - An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
@@ -61,7 +61,7 @@ Record the answers before you write code.
       "multiple": false,
       "meta": {
         "vct_values": [
-          "https://credentials.example.com/identity_credential"
+          "UniversityDegree"
         ]
       },
       "trusted_authorities": [
@@ -78,21 +78,29 @@ Record the answers before you write code.
 ```
 
 ## Run it on OWS
-1. Store the query as a presentation definition (`igrantio-ows-overview`
-   api-reference §3), keep the `presentationDefinitionId`.
+1. Store the query in `dcqlQuery` of a presentation definition (`POST
+   /v2/config/digital-wallet/openid/sdjwt/presentation-definition`, with
+   `label`, `version: "version_01"` and `cryptographicKeyFormat: "x509"`);
+   keep the `presentationDefinitionId` (`igrantio-ows-overview`
+   api-reference §3).
 2. Send the verification request (v3) with `requestByReference: true`
    (api-reference §2.1); render the QR or use the DC API
    (`igrantio-dcapi-android` / `igrantio-dcapi-ios`).
-3. On `presentation_acked`, require `verified === true` and check
-   `isVerifiedWithTrustList` / `trustServiceProvider` in the history.
+3. On `presentation_acked`, require `verified === true` (a credential that
+   does not satisfy `trusted_authorities` gives `verified: false`), and read
+   `issuerTrustServiceProvider.isVerified` and `trustServiceProvider` of
+   the credential in `presentationValidity`.
 
 ## Adjust for your deployment
-- `trusted_authorities[].values`: point at YOUR trust list URL (the live
-  EU Trust List rather than the EWC pilot list) - the example URL above is
-  the EWC pilot list.
-- `type`: `etsi_tl` for ETSI trust lists; other anchor types (EBSI, OpenID
-  Federation) per the OpenID4VP spec as supported by OWS.
-- `vct_values`: your credential's VCT; `format` if not SD-JWT.
+- `trusted_authorities[].values`: the URL of the trust list your issuers
+  are on (an ETSI TS 119 612 trusted list or a TS 119 602 list of trusted
+  entities). The example URL is the EWC pilot list.
+- `type`: the verifier supports `etsi_tl` (trust list URLs) and `aki`
+  (base64url AuthorityKeyIdentifier values of a CA; the chain must also be
+  trusted by the trust sources of the verifier). Other types are never
+  satisfied.
+- `vct_values`: your credential's VCT (`UniversityDegree` is an example);
+  `format` if not SD-JWT.
 
 ## Register your certificate in the trust list
 Wallets show your organisation as verified only when your certificate is in

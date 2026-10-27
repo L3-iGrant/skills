@@ -6,7 +6,7 @@ metadata:
   categories: [backend]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, holder, wallet, OpenID4VCI, OpenID4VP, DCQL, receive credential, present credential, notifications, wallet unit
-  version: 2026.09.01
+  version: 2026.10.01
   api: https://docs.igrant.io/docs/developer-apis
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0, DCQL, SD-JWT-VC, W3C-VC-2.0, mso_mdoc
   auth: OWS API key (Authorization "ApiKey <key>") injected by the proxy; browser sends no key
@@ -60,8 +60,9 @@ Record the answers before you write code.
   rules keep the issuer's `credential/issue|history` and the verifier's
   `verification/send|history` out (least privilege).
 - **Relay** `GET ${PROXY_PREFIX}/{tenant}/v2/config/digital-wallet/openid/notifications/sse`
-  streams OWS holder notifications, injecting the auth as the `authorization`
-  query parameter (EventSource cannot send headers).
+  streams OWS holder notifications. It sends the key in the `Authorization`
+  header (EventSource cannot send headers) and passes `Last-Event-ID` on as
+  `lastEventId`, so a reconnect replays the missed frames.
 - **No webhooks**: holder events arrive on the notifications stream.
 
 ## Reference implementation
@@ -90,13 +91,15 @@ references/
 ## Holder contract (what the frontend drives through this backend)
 
 ### Receive a credential (OpenID4VCI)
-1. `POST …/sdjwt/credential/receive` with
-   `{ credentialOffer, autoPresent, kid, trustAnchor }` → `credential`
-   (object **or array**; each record's `id` keys the follow-ups).
+1. `POST …/sdjwt/credential/receive` with `{ credentialOffer, autoPresent }`
+   → `credential` (object **or array**; each record's `id` keys the
+   follow-ups). The wallet uses the organisation default key. The body is
+   strict: an unknown field answers 400.
 2. Branch on the record (§1.1 of the API reference):
    **transaction code** → `PUT …/credential/{id}/user-pin`;
    **front-channel** → open `authorizationRequest`, then
-   `POST …/credential/exchange-code` with `{ code, state }`;
+   `POST …/credential/exchange-code` with `{ code, state, iss? }` from the
+   redirect;
    **deferred** → `PUT …/credential/{id}/receive-deferred` until
    `credential_acked`.
 3. Review: `PUT …/credential/{id}/accept`, or `DELETE …/credential/{id}` to
@@ -107,11 +110,13 @@ references/
    checks the IETF Token Status List.
 
 ### Present credentials (OpenID4VP + DCQL)
-1. `POST …/sdjwt/verification/receive` (v3) with `{ vpTokenQrCode, … }` →
-   `presentation.presentationId`, `presentation.dcqlQuery`,
-   `presentation.transactionDataDecoded` (show before consent).
-2. `POST …/sdjwt/verification/{id}/filter` (v2, empty body) →
-   `inputDescriptors[].matchedCredentials`.
+1. `POST …/sdjwt/verification/receive` (v3) with
+   `{ vpTokenQrCode, autoPresent }` → `presentation.presentationId`,
+   `presentation.dcqlQuery`, `presentation.transactionDataDecoded` (show
+   before consent).
+2. `POST …/sdjwt/verification/{presentationId}/filter` (v2, empty body) →
+   `credentials[].matchedCredentials` (DCQL) or
+   `inputDescriptors[].matchedCredentials` (Presentation Exchange).
 3. `POST …/sdjwt/verification/{presentationId}/send` (v3) with
    `{ credentials: [{ id, credentialId | credentialIds, claimIds? }] }`
    (`inputDescriptors` for legacy PEX) → open
@@ -132,8 +137,10 @@ status vocabularies: [`references/holder-api-reference.md`](./references/holder-
 - **Key storage**: replace `EnvTenantStore` with a DB/secret-manager `TenantStore`.
 - **Path scope**: `HOLDER_PERMITTED_PATHS` in `server.ts` is the allow-list
   (strings match as prefixes, RegExps against the whole path).
-- **SSE auth**: if your OWS deployment authenticates SSE with user tokens,
-  return `Bearer <jwt>` from the relay's `getAuthorization`.
+- **Sandbox**: the v2 holder routes (credential receive and actions, the
+  credential list, filter, presentation delete) answer 400 for an API key
+  that is bound to a sandbox organisation. Use a key of the main
+  organisation for the holder role.
 
 ## Validation / done criteria
 - `npm run typecheck` passes.

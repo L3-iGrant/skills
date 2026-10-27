@@ -1,12 +1,12 @@
 ---
 name: igrantio-dcql-query-sca-payment-card
-description: 'DCQL query template for the Payment Card Credential (TS12) from the iGrant.io verifiable data registry. The dc+sd-jwt query asks for pan_last_four, scheme and scheme_logo, and the vct is the card VCT metadata URL of the issuer. Use this skill when you build a Strong Customer Authentication (SCA) flow under ETSI TS 119 462 (TS12) and the holder must confirm which card pays: the presentation definition must set a transactionDataDefinitionType, and the send request must carry the matching transactionData.'
+description: 'DCQL query template for the Payment Card Credential (TS12) from the iGrant.io verifiable data registry. The dc+sd-jwt query asks for pan_last_four, scheme and scheme_logo, and the vct is the card VCT metadata URL of the issuer. Use this skill when you build a Strong Customer Authentication (SCA) flow under the EUDI Wallet technical specification TS12 and the holder must confirm which card pays: the presentation definition must set a transactionDataDefinitionType, and the send request must carry the matching transactionData.'
 license: Apache-2.0
 metadata:
   categories: [dcql-query, education]
   provider: iGrant.io
-  keywords: DCQL, SCA, Strong Customer Authentication, TS12, ETSI TS 119 462, payment card, pan_last_four, card scheme, PSD2, transaction data, presentation definition, OpenID4VP, SD-JWT VC, EUDIW, eIDAS2
-  version: 2026.09.01
+  keywords: DCQL, SCA, Strong Customer Authentication, TS12, payment card, pan_last_four, card scheme, PSD2, transaction data, presentation definition, OpenID4VP, SD-JWT VC, EUDIW, eIDAS2
+  version: 2026.10.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/presentationDefinitions/dcqlQuery/scaPaymentCard
   registry-version: 2025.7.1
   requires-skills: igrantio-api-verifier
@@ -55,8 +55,8 @@ Record the answers before you write code.
 2. **API key** - do you have the OWS API key for that environment? If not,
    request it from [support@igrant.io](mailto:support@igrant.io) before you
    continue.
-3. **Format** - `dc+sd-jwt`, `jwt_vc_json` or `mso_mdoc`? _Match the format
-   the issuer used._
+3. **Format** - the registry publishes this template in `dc+sd-jwt` only, so
+   use `dc+sd-jwt`.
 4. **Claims** - which claims does the use case need? _Ask for the minimum._
 5. **Channel** - cross-device QR, same-device Digital Credentials API, or
    both? _Recommend QR first; `igrantio-dcapi-android` and
@@ -85,11 +85,15 @@ Record the answers before you write code.
 The registry gives no `mso_mdoc` file and no `jwt_vc_json` file for this
 template. The Payment Card Credential is an SD-JWT VC only.
 
-**`{baseUrl}` is a placeholder.** The vct is not a fixed string. It is the
-VCT metadata URL of the issuer. Replace `{baseUrl}` with the base URL of the
-service that issues the credential, for example
-`https://demo-api.igrant.io/service/vct-metadata/card`. Do not send the
-literal text `{baseUrl}` in a query.
+**`{baseUrl}` is a placeholder.** Replace it with the OpenID4VC service URL of
+the issuer. For a credential that an iGrant.io organisation issues, that is
+`https://oid4vc.igrant.io` on demo and `https://staging-oid4vc.igrant.io` on
+staging, so the demo vct is
+`https://oid4vc.igrant.io/service/vct-metadata/card`.
+The templates operation
+`GET /v2/config/digital-wallet/openid/sdjwt/presentation-definition/templates`
+returns the value with `{baseUrl}` already replaced. Do not send the literal
+text `{baseUrl}` in a query.
 
 The metadata flag `isScaCredential: true` tells the platform that this
 template belongs to an SCA flow, and that the request needs transaction data.
@@ -146,7 +150,8 @@ entry in `dcqlQuery.credentials` with the `dc+sd-jwt` format and the
   "version": "version_01",
   "responseType": "vp_token",
   "responseMode": "direct_post",
-  "transactionDataDefinitionType": "payment_data",
+  "cryptographicKeyFormat": "x509",
+  "transactionDataDefinitionType": "payment",
   "dcqlQuery": {
     "credentials": [
       {
@@ -154,7 +159,7 @@ entry in `dcqlQuery.credentials` with the `dc+sd-jwt` format and the
         "format": "dc+sd-jwt",
         "meta": {
           "vct_values": [
-            "https://demo-api.igrant.io/service/vct-metadata/card"
+            "https://oid4vc.igrant.io/service/vct-metadata/card"
           ]
         },
         "claims": [
@@ -168,22 +173,26 @@ entry in `dcqlQuery.credentials` with the `dc+sd-jwt` format and the
 }
 ```
 
-`dc+sd-jwt` takes `vct_values` or `type_values` in `meta`. It refuses
-`doctype_value`, because that key belongs to `mso_mdoc`.
+`cryptographicKeyFormat: "x509"` signs the request with the default key of the
+organisation and its X.509 certificate chain, and `clientIdScheme` then
+defaults to `x509_hash`. Name another key with `cryptographicKeyIdentifier`.
+
+`dc+sd-jwt` takes only `vct_values` in `meta`. It refuses `type_values`
+(W3C formats) and `doctype_value` (`mso_mdoc`).
 
 To accept the cards of one scheme only, add a `values` array to the `scheme`
 claim. The wallet then answers only with a card of a listed scheme.
 
 **Pick the transaction data type that matches your action.** The field is
-mandatory when the DCQL query asks for an SCA attestation. The API offers
-`payment_data`, `payment`, `login_risk_transaction`,
-`login_risk_transaction_non_ts12`, `account_access`, `emandate`,
-`data_agreement_record`, `data_disclosure_agreement_record` and `qes_data`.
-A card payment uses a payment type. A login step uses a login risk type.
-Read the JSON Schema of each type with
-`GET /v2/config/digital-wallet/openid/sdjwt/transaction-data-definitions`
-and take the one that fits, because the schema decides which fields the
-request must carry.
+mandatory when the DCQL query asks for an SCA attestation. A TS12 type
+(`payment`, `login_risk_transaction`, `account_access` or `emandate`) must be
+one that the VCT metadata of the credential lists in `transaction_data_types`.
+For this credential the platform metadata lists `payment` (a card payment)
+and `emandate` (a mandate for later card payments).
+`payment_data` belongs to the Payment Wallet Attestation and `qes_data` to the
+QESAC, so the API refuses them here. Read the JSON Schema of each type with
+`GET /v2/config/digital-wallet/openid/sdjwt/transaction-data-definitions`,
+because the schema decides which fields the request must carry.
 
 **Step 2.** Send the request with the V3 send operation,
 `POST /v3/config/digital-wallet/openid/sdjwt/verification/send`. Send the

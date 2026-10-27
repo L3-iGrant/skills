@@ -6,9 +6,9 @@ metadata:
   categories: [consent, education]
   provider: iGrant.io
   keywords: consent management, GDPR, data agreement, eIDAS2, EUDIW, user onboarding, personal data
-  version: 2026.09.01
+  version: 2026.10.01
   api: https://docs.igrant.io/docs/category/consent-management-admin-api/individual
-  auth: Organisation API key (Authorization "ApiKey <key>") - server-side only, never the browser
+  auth: Organisation API key (Authorization "ApiKey <YOUR_API_KEY>"), server-side only, never the browser
   requires-skills: igrantio-consent-records
 ---
 
@@ -57,22 +57,33 @@ Persist `individualId` in YOUR database keyed by your `userId`. The reference us
 `externalId = your userId` so the individual is also recoverable from OWS if the
 local mapping is ever lost.
 
-## API (Consent BB admin, base `/v2`, `Authorization: ApiKey <key>`)
+## API (Consent BB admin, base `/v2`, `Authorization: ApiKey <YOUR_API_KEY>`)
 | Method | Path | Purpose |
 | --- | --- | --- |
 | POST | `/v2/config/individual` | Create individual → returns `individual.id` |
 | GET | `/v2/config/individual/{id}` | Read individual |
 | PUT | `/v2/config/individual/{id}` | Update individual |
-| GET | `/v2/config/individuals?limit=&offset=&externalIndividualId=` | List (find by your userId) |
+| GET | `/v2/config/individuals?limit=&offset=&search=&externalIndividualId=` | List (find by your userId) |
 
-Individual fields: `name`, `email`, `phone` (required), `externalId`,
-`externalIdType`, `identityProviderId`, `iamId`, `mapperId`, `deviceType`, …
+Body of create and update: `{"individual": {...}}`, with `name`, `email`,
+`phone`, `externalId`, `externalIdType`, `identityProviderId`, `mapperId`,
+`deviceType` (`android` or `ios`), and `pushNotificationToken`. No field is
+mandatory, and an unknown field gives HTTP 400. The answer is
+`{"individual": {...}}` with `id` and `iamId` added.
+
+Rules to code against:
+- An `externalId` or a `mapperId` that another individual has gives HTTP 409.
+- With an `email`, the service also makes a login account for the individual;
+  an email that already has one gives HTTP 400.
+- Update changes only the fields that you send with a value.
+- With `externalIndividualId`, the list holds that one individual. An unknown
+  external ID gives an error (HTTP 500), not an empty list.
 
 ## Reference
 [`./references`](./references):
 - `src/consentClient.ts` - dependency-free Consent BB client (`individuals.*` + `consentRecords.*`).
 - `src/mappingStore.ts` - `IndividualMappingStore` (userId ↔ individualId); in-memory + DB-swappable.
-- `src/onboarding.ts` - **`ensureIndividual(client, store, userId, profile)`**: idempotent (local mapping → lookup by externalId → create).
+- `src/onboarding.ts` - **`ensureIndividual(client, store, userId, profile)`**: idempotent (local mapping → create → on HTTP 409, lookup by externalId).
 - `src/server.ts` - example onboarding endpoints (`POST /individuals/onboard`, `GET /individuals/me`).
 
 ## Steps

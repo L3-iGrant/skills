@@ -21,7 +21,7 @@ Allow-listed OWS paths (proxy): `…/sdjwt/credential/receive|exchange-code`,
 `configure`, `request`, `revocation-status`), `…/sdjwt/credentials`,
 `…/sdjwt/verification/receive|{id}|{id}/send`
 (v3) and `{id}/filter` + delete (v2), `…/sdjwt/verifications`, notifications
-REST, `…/holder/global-configuration(s)`, `…/wallet-unit/status`. The issuer's
+REST, `…/holder/global-configuration`, `…/wallet-unit/status`. The issuer's
 `credential/issue|history` and the verifier's `verification/send|history` are
 excluded (least privilege).
 

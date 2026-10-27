@@ -6,10 +6,10 @@ metadata:
   categories: [ows-api, education]
   provider: iGrant.io
   keywords: OpenID4VP, DCQL, presentation definition, verification, relying party, transaction data, Digital Credentials API, dc_api, direct_post.jwt, mso_mdoc, SD-JWT VC, ISO 18013-7, EUDIW, EUBW, eIDAS2
-  version: 2026.09.01
+  version: 2026.10.01
   source-doc: https://docs.igrant.io/docs/developer-apis/
   protocols: OpenID4VP-1.0, DCQL, SD-JWT-VC, mso_mdoc, ISO-18013-7-Annex-C, W3C-Digital-Credentials-API
-  auth: Organisation Wallet Suite API key (Authorization "ApiKey <key>") or a bearer access token
+  auth: Organisation Wallet Suite API key (Authorization "ApiKey <YOUR_API_KEY>")
   requires-skills: igrantio-ows-overview
 ---
 
@@ -17,7 +17,7 @@ metadata:
 
 ## When to use
 Use this skill when your organisation asks a holder for credentials. It covers
-the 18 operations of the **Verifier** group: the verifier global configuration,
+the 15 operations of the **Verifier** group: the verifier global configuration,
 presentation definitions, transaction data templates, the V3 verification
 request, the verification history, the Digital Credentials API response, and
 revalidation.
@@ -55,8 +55,7 @@ Record the answers before you write code.
    request it from [support@igrant.io](mailto:support@igrant.io) before you
    continue.
 3. **Organisation** - the main wallet, or a sandbox organisation? _A sandbox
-   needs the `X-SandboxOrgId` header and a bearer token; see
-   `igrantio-api-sandboxes`._
+   needs an API key that is bound to it; see `igrantio-api-sandboxes`._
 4. **Operation** - create a presentation definition, send a request, read the
    history, or receive a DC API response?
 5. **Response mode** - cross-device QR (`direct_post`) or same-device Digital
@@ -71,9 +70,9 @@ Record the answers before you write code.
 
 ## Protocol scope
 - The verifier implements **OpenID4VP 1.0**. Set `version` to `version_01`
-  on the presentation definition. `iso18013_7_annex_c` selects
-  the ISO 18013-7 Annex C profile for mDoc credentials over the Digital
-  Credentials API.
+  on the presentation definition; `version` is mandatory and has no default.
+  `iso18013_7_annex_c` selects the ISO 18013-7 Annex C profile for mDoc
+  credentials over the Digital Credentials API.
 - **DCQL is the only way to give the credential requirements.** Presentation
   Exchange is not a supported surface. A DCQL query cannot be sent inline with
   the verification request: store it in a presentation definition and reference
@@ -88,7 +87,7 @@ Send the API key in the `Authorization` header with the `ApiKey` prefix and a
 space:
 
 ```
-Authorization: ApiKey <your-api-key>
+Authorization: ApiKey <YOUR_API_KEY>
 ```
 
 Demo base URL: `https://demo-api.igrant.io`. Staging base URL:
@@ -114,55 +113,61 @@ The API key stays on your server. The browser never holds it.
 | Method | Path | Purpose | Documentation |
 | --- | --- | --- | --- |
 | `POST` | `/v3/config/digital-wallet/openid/sdjwt/verification/send` | Send an OpenID4VP Authorization Request from a stored presentation definition. | [Send verification request](https://docs.igrant.io/docs/openid4vc-api/config-create-digital-wallet-open-id-verification-request-v-3/) |
-| `GET` | `/v3/config/digital-wallet/openid/sdjwt/verification/history` | List the verification history. Filter with `status`, `presentationDefinitionId`, `individualId`, `mapperId`, `holderDid`, `responseCode`, `requestPending`, `verificationFailed`, `expired`, `search`, `sortOrder`, `offset` and `limit`. | [List verification history](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-verification-history-v-3/) |
+| `GET` | `/v3/config/digital-wallet/openid/sdjwt/verification/history` | List the verification history. Filter with `status` (comma-separated), `presentationDefinitionId`, `individualId`, `mapperId`, `holderDid`, `responseCode`, `presentationReceived`, `requestPending`, `verificationFailed`, `search`, `sortOrder`, `offset` and `limit`. | [List verification history](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-verification-history-v-3/) |
 | `GET` | `/v3/config/digital-wallet/openid/sdjwt/verification/history/{presentationExchangeId}` | Read one verification exchange record. | [Read verification history](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-verification-history-v-3/) |
 | `POST` | `/v2/config/digital-wallet/openid/sdjwt/verification/history/{presentationExchangeId}/receive` | Take a Digital Credentials API response from the browser. | [Receive DC API verification response](https://docs.igrant.io/docs/openid4vc-api/config-receive-digital-wallet-open-id-dc-api-response/) |
 | `POST` | `/v2/config/digital-wallet/openid/sdjwt/verification/history/{presentationExchangeId}/revalidate` | Check the signatures, the revocation status, and the trust chain again. | [Revalidate verification](https://docs.igrant.io/docs/openid4vc-api/config-revalidate-digital-wallet-open-id-verification/) |
 | `DELETE` | `/v2/config/digital-wallet/openid/sdjwt/verification/history/{presentationExchangeId}` | Delete one verification exchange record. | [Delete verification history](https://docs.igrant.io/docs/openid4vc-api/config-delete-digital-wallet-open-id-verification-history/) |
 
 ### Verifier global configuration
+An organisation has one verifier global configuration. The wallet makes it with
+the default values when it deploys the organisation wallet, so there is no
+create, list or delete operation and the path has no identifier.
 
 | Method | Path | Purpose | Documentation |
 | --- | --- | --- | --- |
-| `POST` | `/v2/config/digital-wallet/openid/verifier/global-configuration` | Create the verifier global configuration. | [Create verifier global configuration](https://docs.igrant.io/docs/openid4vc-api/config-create-digital-wallet-open-id-verifier-global-configuration/) |
-| `GET` | `/v2/config/digital-wallet/openid/verifier/global-configuration/{globalConfigurationId}` | Read the verifier global configuration. | [Read verifier global configuration](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-verifier-global-configuration/) |
-| `PUT` | `/v2/config/digital-wallet/openid/verifier/global-configuration/{globalConfigurationId}` | Update the verifier global configuration. | [Update verifier global configuration](https://docs.igrant.io/docs/openid4vc-api/config-update-digital-wallet-open-id-verifier-global-configuration/) |
-| `DELETE` | `/v2/config/digital-wallet/openid/verifier/global-configuration/{globalConfigurationId}` | Delete the verifier global configuration. | [Delete verifier global configuration](https://docs.igrant.io/docs/openid4vc-api/config-delete-digital-wallet-open-id-verifier-global-configuration/) |
-| `GET` | `/v2/config/digital-wallet/openid/verifier/global-configurations` | List the verifier global configuration. | [List verifier global configuration](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-verifier-global-configuration/) |
+| `GET` | `/v2/config/digital-wallet/openid/verifier/global-configuration` | Read the verifier global configuration. | [Read verifier global configuration](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-verifier-global-configuration/) |
+| `PUT` | `/v2/config/digital-wallet/openid/verifier/global-configuration` | Update the verifier global configuration. | [Update verifier global configuration](https://docs.igrant.io/docs/openid4vc-api/config-update-digital-wallet-open-id-verifier-global-configuration/) |
 
-`supportCredentialEncryption` is mandatory on the verifier global
-configuration. Set it to `true` before you use a `direct_post.jwt` or
-`dc_api.jwt` response mode. `presentationRequestExpiresIn` is the request
-lifetime in seconds, with a smallest value and a default of 3600.
+Both operations answer `{"globalConfiguration": {...}}`.
+`supportCredentialEncryption` is `false` by default. Set it to `true` before
+you use the `direct_post.jwt` response mode. `presentationRequestExpiresIn` is
+the request lifetime in seconds, with a smallest value and a default of 3600.
+The update operation is partial: a field that you leave out keeps its stored
+value.
 
 ## Key fields
 
 ### Create presentation definition
 `POST /v2/config/digital-wallet/openid/sdjwt/presentation-definition`
 
-`label` is mandatory: 3 to 100 characters. The labels that extensions reserve
-are refused, for example `Age Verification`, `Document Signing` and
-`Know-Your-Customer (KYC)`.
+The answer is HTTP 200 with `{"presentationDefinition": {...}}`; read the
+identifier from `presentationDefinitionId`.
 
-`dcqlQuery` is mandatory when `responseType` is `vp_token` or
-`device_response`. Do not send it when `responseType` is `id_token`.
+`label` is mandatory: 3 to 100 characters. The labels that extensions reserve
+are refused (the check ignores case), for example `Age Verification`,
+`Document Signing`, `Know-Your-Customer (KYC)` and `PID Credential Issuance`.
+
+`version` and `dcqlQuery` are mandatory.
 
 Transport fields:
 
 | Field | Values | Note |
 | --- | --- | --- |
-| `version` | `version_01`, `iso18013_7_annex_c` | `version_01` is OpenID4VP 1.0. `iso18013_7_annex_c` needs `trustAnchor` set to `x509` and `expectedOrigins`. |
-| `responseType` | `vp_token`, `id_token`, `device_response` | Default `vp_token`. `device_response` is only for `iso18013_7_annex_c`. |
+| `version` | `version_01`, `iso18013_7_annex_c` | Mandatory. `version_01` is OpenID4VP 1.0. See "ISO 18013-7 Annex C" below for the rules of the other value. |
+| `responseType` | `vp_token`, `device_response` | Default `vp_token`. `version_01` takes `vp_token` only; `iso18013_7_annex_c` takes `device_response` only. |
 | `responseMode` | `direct_post`, `direct_post.jwt`, `dc_api`, `dc_api.jwt` | Default `direct_post`. The `.jwt` variants return an encrypted JWE. |
-| `clientIdScheme` | `redirect_uri`, `did`, `verifier_attestation`, `x509_san_dns`, `x509_hash` | Default `redirect_uri`. Send `null` for `iso18013_7_annex_c`. With the DC API response modes, `redirect_uri` is only a logical identifier. |
-| `trustAnchor` | `did:key`, `x509` | Default `did:key`. |
-| `kid` | string | The verifier key. The organisation key is used when you send no value. The key must be valid when `dcApiRequestType` is `signed`. |
+| `clientIdScheme` | `redirect_uri`, `did`, `verifier_attestation`, `x509_san_dns`, `x509_hash` | When you leave it out on `version_01`, the server takes `x509_hash` for an `x509` key and `did` for a `did:key` key. `did` needs a `did:key` key. `x509_san_dns` and `x509_hash` need an `x509` key; `x509_san_dns` also needs a DNS name in the subject alternative names of the leaf certificate. `redirect_uri` gives an unsigned request outside the DC API: then send no `cryptographicKeyFormat` and no `cryptographicKeyIdentifier`. With the DC API response modes, `redirect_uri` is only a logical identifier. Leave it out for `iso18013_7_annex_c`. |
+| `cryptographicKeyFormat` | `x509`, `did:key` | The format of the signing key. When you leave it out, the server takes the format that `clientIdScheme` needs, else `x509` when the key has a certificate chain and `did:key` when it has none. `x509` needs a key with a certificate chain. |
+| `cryptographicKeyIdentifier` | string | The signing key of the verifier. The default key of the organisation is used when you send no value. |
 | `dcApiRequestType` | `signed`, `unsigned` | Only with `dc_api` or `dc_api.jwt`. A missing value means `unsigned` for `dc_api` and `signed` for `dc_api.jwt`. Use `signed` for live use. |
-| `expectedOrigins` | array of strings | Mandatory when the effective `dcApiRequestType` is `signed`, and for `iso18013_7_annex_c`. The wallet ignores it for an unsigned request. |
-| `encryptedResponseEncValuesSupported` | `A128CBC-HS256`, `A128GCM`, `A256GCM` | Mandatory for `direct_post.jwt`, and the verifier global configuration must permit encryption. An empty stored value falls back to all three. `dc_api.jwt` ignores this field and always uses `A256GCM`. |
-| `directPostRedirectUri` | string | Only for `direct_post`. The server refuses it for `direct_post.jwt`, and it has no meaning for the DC API modes. |
-| `scope` | string | For a scope-based presentation request. |
-| `transactionDataDefinitionType` | `payment_data`, `payment`, `login_risk_transaction`, `login_risk_transaction_non_ts12`, `account_access`, `emandate`, `data_agreement_record`, `data_disclosure_agreement_record`, `qes_data` | Selects the JSON Schema that validates the `transactionData` of the verification request. Mandatory when the DCQL query asks for a Payment Wallet Attestation, a QESAC credential, or an SCA attestation. |
+| `expectedOrigins` | array of strings | Mandatory when the effective `dcApiRequestType` is `signed`. The server refuses it for an unsigned request and outside the DC API modes. `iso18013_7_annex_c` needs exactly one origin. |
+| `encryptedResponseEncValuesSupported` | `A128CBC-HS256`, `A128GCM`, `A256GCM` | Mandatory for `direct_post.jwt`, and `supportCredentialEncryption` must be `true` in the verifier global configuration. `dc_api.jwt` ignores this field. |
+| `directPostRedirectUri` | absolute URI | For `direct_post` and `direct_post.jwt`: the URI that the wallet opens after the presentation. It has no meaning for the DC API modes. |
+| `scope` | string | For a scope-based presentation request. One presentation definition per scope in the organisation. |
+| `excludeVerifierDisplayMetadata` | boolean | Default `false`. `true` leaves the display metadata of the verifier (name, logo, description) out of the request. |
+| `transactionDataDefinitionType` | `payment_data`, `payment`, `login_risk_transaction`, `login_risk_transaction_non_ts12`, `account_access`, `emandate`, `data_agreement_record`, `data_disclosure_agreement_record`, `qes_data` | Selects the JSON Schema that validates the `transactionData` of the verification request. Mandatory when the DCQL query asks for a Payment Wallet Attestation, a QESAC credential, or an SCA attestation; the query can hold only one of each. |
+| `transactionDataCredentialIds` | array of strings | The credential query identifiers that the transaction data binds to. Each value must be an `id` in `dcqlQuery.credentials`. |
 
 ### The DCQL query
 `dcqlQuery` holds a mandatory `credentials` array with at least one entry, and an
@@ -171,44 +176,53 @@ optional top-level `credential_sets` array.
 Each entry of `dcqlQuery.credentials[]` needs `id` and `format`:
 
 - `id` - the identifier that `credential_sets` and the presentation response use.
-  Use letters, digits, spaces, `_` and `-`. The server does not apply this check
-  to the `iso18013_7_annex_c` version.
+  Use letters, digits, `_` and `-`, with no spaces, and make it unique in the
+  query. The server does not apply the character check to the
+  `iso18013_7_annex_c` version.
 - `format` - `dc+sd-jwt`, `vc+sd-jwt`, `vp+sd-jwt`, `jwt_vc_json`, `jwt_vc` or
   `mso_mdoc`.
-- `meta` - the format gates the keys. The server refuses a key that the format
-  does not allow:
+- `meta` - mandatory. The format sets the key that `meta` must hold, and the
+  server refuses any other key:
 
-  | `format` | Allowed `meta` keys |
+  | `format` | `meta` key |
   | --- | --- |
-  | `mso_mdoc` | `doctype_value` only |
-  | `dc+sd-jwt` | `vct_values` or `type_values` |
-  | `jwt_vc_json` | `type_values` only; `vct_values` is refused |
-  | `vc+sd-jwt`, `vp+sd-jwt`, `jwt_vc` | none - leave `meta` out |
+  | `mso_mdoc` | `doctype_value` |
+  | `dc+sd-jwt` | `vct_values` |
+  | `jwt_vc_json` | `type_values` |
+  | `vc+sd-jwt`, `vp+sd-jwt`, `jwt_vc` | none: send `"meta": {}` |
 
   `vct_values` is an array of accepted `vct` strings. `type_values` is an array
   of type sets: the credential must hold every type of at least one set.
   `doctype_value` is a single `docType` string, for example
   `org.iso.18013.5.1.mDL`.
 - `claims` - the claims that you ask for. Leave it out to ask for the whole
-  credential. Each item holds `id` (needed when you use `claim_sets`), `path`,
-  and an optional `values` array that limits the accepted values. For
-  `mso_mdoc`, `path` holds two elements: the namespace and the data element, for
-  example `["org.iso.18013.5.1", "family_name"]`. For `jwt_vc_json`, `path`
-  starts with `credentialSubject`.
+  credential; when you send it, it must not be empty. Each item holds `id`
+  (needed when you use `claim_sets`), `path`, and an optional `values` array
+  (strings, integers or booleans) that limits the accepted values. For
+  `mso_mdoc`, `path` holds exactly two strings: the namespace and the data
+  element, for example `["org.iso.18013.5.1", "family_name"]`. For the other
+  formats, a `path` element is a string, a non-negative integer, or `null`. For
+  `jwt_vc_json`, `path` starts with a member of the credential, so a subject
+  claim starts with `credentialSubject`.
 - `claim_sets` - alternative sets of claim `id` values. The wallet satisfies the
   first set that it can. Send it only together with a non-empty `claims` array.
-- `require_cryptographic_holder_binding` - `true` when the credential must prove
-  that the holder owns it.
-- `multiple` - `true` when the wallet can return more than one credential for
-  this query.
-- `trusted_authorities` - the issuers that you trust for this query. Each entry
-  holds `type` (for example `etsi_tl` for an ETSI trusted list, or `aki` for an
-  authority key identifier) and `values`.
+- `require_cryptographic_holder_binding` - boolean; `true` when the credential
+  must prove that the holder owns it.
+- `multiple` - boolean; `true` when the wallet can return more than one
+  credential for this query.
+- `trusted_authorities` - the issuers that you trust for this query: a non-empty
+  array. Each entry holds `type` (for example `etsi_tl` for an ETSI trusted
+  list, or `aki` for an authority key identifier) and a non-empty `values`
+  array of strings.
 
 Each entry of `credential_sets[]` holds a mandatory `options` array with at least
 one combination. Each combination is an array of credential query identifiers.
-`required` says whether the wallet must satisfy one of the options, and `purpose`
-gives the reason. `purpose` accepts a string, a number, or an object.
+`required` (boolean) says whether the wallet must satisfy one of the options,
+and `purpose` gives the reason. `purpose` accepts a string, a number, or an
+object.
+
+The example signs the request with an X.509 key; the key must have a
+certificate chain (see `igrantio-api-key-management`).
 
 ```json
 {
@@ -216,6 +230,9 @@ gives the reason. `purpose` accepts a string, a number, or an object.
   "version": "version_01",
   "responseType": "vp_token",
   "responseMode": "direct_post",
+  "clientIdScheme": "x509_hash",
+  "cryptographicKeyFormat": "x509",
+  "cryptographicKeyIdentifier": "<KEY_ID_WITH_CERTIFICATE_CHAIN>",
   "dcqlQuery": {
     "credentials": [
       {
@@ -231,13 +248,30 @@ gives the reason. `purpose` accepts a string, a number, or an object.
 }
 ```
 
+### ISO 18013-7 Annex C
+A presentation definition with `version` `iso18013_7_annex_c` needs
+`responseType` `device_response`, `cryptographicKeyFormat` `x509`, no
+`clientIdScheme`, no `transactionDataDefinitionType`, and exactly one entry in
+`expectedOrigins`. Every credential query uses `mso_mdoc` with
+`meta.doctype_value`, a non-empty `claims` array, and
+`require_cryptographic_holder_binding` set to `true`. `claim_sets` and
+`credential_sets` are refused.
+
+### Update and delete a presentation definition
+The update is partial: a field that you leave out keeps its stored value, and
+the server checks each rule that the change touches against the result. The
+answer is HTTP 200 with `{"presentationDefinition": {...}}`. The delete answers
+HTTP 204. The server refuses to update or delete a presentation definition that
+an extension uses, and to delete one that the system manages.
+
 ### Send a verification request
 `POST /v3/config/digital-wallet/openid/sdjwt/verification/send`
 
 `presentationDefinitionId` is the only mandatory field. The server reads the DCQL
 query, the response mode, the transaction data template, and the DC API settings
 from that record. A value shorter than three characters is ignored, and the
-server then answers with HTTP 400, because no requirements are left.
+server then answers with HTTP 400, because no requirements are left. An unknown
+identifier also gives HTTP 400. A successful send answers HTTP 200.
 
 | Field | Note |
 | --- | --- |
@@ -252,8 +286,8 @@ server then answers with HTTP 400, because no requirements are left.
 The response holds `verificationHistory`. Fields to read:
 
 - `presentationExchangeId` - the correlation id. `id` holds the same value.
-- `vpTokenQrCode` - the `openid4vp://` URI. Render it as a QR code or open it as
-  a deep link.
+- `vpTokenQrCode` - the `openid4vp://` URI (or your `urlPrefix`). Render it as a
+  QR code or open it as a deep link. It is empty for the DC API response modes.
 - `status` - `request_sent`, `request_received`, `presentation_pending` or
   `presentation_acked`.
 - `verified` - the boolean result.
@@ -261,16 +295,18 @@ The response holds `verificationHistory`. Fields to read:
 - `vpTokenResponse` - an array. A non-empty value means that the holder answered.
 - `presentationValidity` - the per-credential validity results.
 - `responseMode`, which on a record can also hold `iar-post` or `iar-post.jwt`,
-  and `responseType` (`vp_token`, `id_token`, `device_response`).
+  and `responseType` (`vp_token` or `device_response`).
 - `dcApiProtocol` - `openid4vp-v1-unsigned`, `openid4vp-v1-signed` or
   `org-iso-mdoc`, and `dcApiRequest`, which holds the ready-made
   `chrome.digital` and `safari.digital` request objects.
-- `requestExpired`, `requestExpiryTime`, `nonce`, `requiresEncryption`,
-  `idToken`, `idTokenDecoded`, `transactionData`, `transactionDataBase64`,
-  `files` (each with `credentialId`, `signedFile`, `unsignedFile`, `error`,
+- `nonce`, `requiresEncryption`, `transactionData`, `transactionDataBase64`,
+  `cryptographicKeyFormat`, `cryptographicKeyIdentifier`, and `files` (each
+  with `credentialId`, `signedFile`, `unsignedFile`, `error`,
   `errorDescription`).
 
-The read verification history operation returns the same record shape.
+The read verification history operation returns the same record shape. The
+record has no expiry flag: the request lifetime is `presentationRequestExpiresIn`
+of the verifier global configuration, counted from `createdAt`.
 
 ### Receive a Digital Credentials API response
 `POST /v2/config/digital-wallet/openid/sdjwt/verification/history/{presentationExchangeId}/receive`
@@ -286,6 +322,15 @@ The body takes one of two shapes:
   the Verifiable Presentation of the wallet. The encoding of each presentation
   follows the credential format.
 
+For `iso18013_7_annex_c`, send `{ "response": "<string>" }` with the base64url
+encoded response of the wallet.
+
+The server answers HTTP 404 when it has no such exchange, and HTTP 400 when the
+response does not decrypt or does not match the DCQL query. A successful
+answer holds the updated record in a different shape from the verification
+history; read the exchange with the V3 read operation to get the documented
+record.
+
 ### Revalidate a verification
 `POST /v2/config/digital-wallet/openid/sdjwt/verification/history/{presentationExchangeId}/revalidate`
 has no request body; the server discards one if you send it. It checks the
@@ -295,33 +340,34 @@ record. Every other property stays the same.
 
 The path is `/v2`, but the response holds the **V3** record shape:
 `vpTokenResponse` and `presentation` are arrays, and the V3-only properties are
-present. This is the only V2 verification operation that answers with the V3
-shape. The server does not compute `requestExpired` here; read the record with
-the V3 read operation to get a current value.
+present.
+
+### Delete a verification record
+`DELETE /v2/config/digital-wallet/openid/sdjwt/verification/history/{presentationExchangeId}`
+answers HTTP 200 with an empty body.
 
 ## Sandbox call style
-Every Verifier operation except the list presentation definition templates
-operation carries the optional `X-SandboxOrgId` header.
+To run the Verifier operations in a sandbox organisation, call the API with an
+API key that is bound to that sandbox organisation. The service takes the
+sandbox organisation from the key and runs the call against the wallet of that
+sandbox organisation. You send no extra header. A key that is not bound to a
+sandbox organisation works on the main wallet.
 
-- With a **bearer access token**, send `X-SandboxOrgId: <sandboxOrgId>`. The
-  service then runs the call against the wallet of that sandbox organisation and
-  not against the main wallet. Leave the header out to use the main wallet.
-- With an **API key**, the header does nothing. The service takes the sandbox
-  organisation from the key. Bind the key first with
-  `PUT /v2/config/admin/apikey/{apiKeyId}/sandbox-org`.
-- `X-SubwalletId` is the deprecated name of the header. The service still accepts
-  it, and `X-SandboxOrgId` wins when you send both.
-- The sandbox organisation must exist, must belong to your organisation, and must
-  be deployed. Any other identifier fails with HTTP 400.
+To get such a key, select the sandbox organisation in the iGrant.io dashboard,
+then create the API key under **Account > Developer APIs** (**Create API Key**).
+The key is bound to that sandbox organisation, and every call with it runs
+there.
 
-Read `igrantio-api-sandboxes` for the sandbox organisation lifecycle.
+Read `igrantio-api-sandboxes` for the sandbox organisation lifecycle and the full
+call style.
 
 ## Cross-references
 - `igrantio-ows-overview` - architecture, glossary, and the shared contracts.
 - `igrantio-api-holder` - the wallet that answers the Authorization Request.
 - `igrantio-api-issuer` - the issuance side of the same organisation.
-- `igrantio-api-key-management` - the verifier key that `kid` names, and the
-  X.509 material for `x509_san_dns`, `x509_hash` and `iso18013_7_annex_c`.
+- `igrantio-api-key-management` - the verifier key that
+  `cryptographicKeyIdentifier` names, and the X.509 certificate chain for
+  `x509_san_dns`, `x509_hash` and `iso18013_7_annex_c`.
 - `igrantio-api-trust-anchor` - the trusted lists behind `trusted_authorities`.
 - `igrantio-api-webhooks` - the presentation events that tell you when the
   holder answered.

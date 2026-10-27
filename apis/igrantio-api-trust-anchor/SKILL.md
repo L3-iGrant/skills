@@ -1,32 +1,32 @@
 ---
 name: igrantio-api-trust-anchor
-description: 'The Trust Anchor group of the iGrant.io OID4VC API: manage the ETSI trust lists (trust authorities) that the service uses to validate issuers and verifiers in OID4VCI and OpenID4VP flows. Create, read, update, enable or disable, delete and list trust authorities, and work with the two built-in trust lists that every organisation gets. Use when you decide which issuers a verifier accepts, or which verifiers a wallet trusts.'
+description: 'The Trust Anchor group of the iGrant.io OID4VC API: manage the trust authorities that the service uses, in addition to the NXD Foundation trust lists, to validate issuers and verifiers in OID4VCI and OpenID4VP flows. A trust authority is an ETSI TS 119 612 trusted list (XML), an ETSI TS 119 602 list of trusted entities (JSON), or inline X.509 CA certificates. Create, read, update, enable or disable, delete and list trust authorities. Use when you decide which issuers a verifier accepts, or which verifiers a wallet trusts.'
 license: Apache-2.0
 metadata:
   categories: [ows-api, education]
   provider: iGrant.io
-  keywords: trust anchor, trust authority, trust list, ETSI_TL, ETSI TS 119 612, issuer validation, verifier validation, OpenID4VP, OID4VCI, EUDIW, eIDAS2
-  version: 2026.09.01
+  keywords: trust anchor, trust authority, trust list, ETSI_TL, ETSI_TL_JSON, X509_CA, ETSI TS 119 612, ETSI TS 119 602, LoTE, X.509 CA, issuer validation, verifier validation, OpenID4VP, OID4VCI, EUDIW, eIDAS2
+  version: 2026.10.01
   source-doc: https://docs.igrant.io/docs/developer-apis/
-  protocols: OpenID4VCI-1.0, OpenID4VP-1.0, ETSI TS 119 612 trust lists
-  auth: OWS API key (Authorization "ApiKey <key>") or bearer access token
+  protocols: OpenID4VCI-1.0, OpenID4VP-1.0, ETSI TS 119 612 trust lists, ETSI TS 119 602 lists of trusted entities
+  auth: OWS API key (Authorization "ApiKey <YOUR_API_KEY>")
 ---
 
 # iGrant.io OID4VC API - Trust Anchor group
 
 ## When to use
 Use this skill when you:
-- add an **ETSI trust list** to the organisation so that the service validates
-  the issuers and verifiers it meets in a flow;
-- read, update, enable, disable or delete a trust authority;
-- must know why the list starts with 2 records that you did not create.
+- add a **trust list** or a **CA certificate** to the organisation so that the
+  service validates the issuers and verifiers it meets in a flow;
+- read, update, enable, disable or delete a trust authority.
 
 Base URL for demo: `https://demo-api.igrant.io`.
-Auth header: `Authorization: ApiKey <key>` (note the trailing space in the
-prefix). A bearer access token also works.
+Auth header: `Authorization: ApiKey <YOUR_API_KEY>` (note the space after
+`ApiKey`).
 
-A trust authority points to a trust list. The service uses the trust lists to
-validate issuers and verifiers in OID4VCI and OpenID4VP flows.
+The service always checks the NXD Foundation trust lists (see
+`igrantio-trustlist-entries`); that source needs no trust authority. The
+enabled trust authorities of the organisation are checked in addition.
 
 ## Prerequisites
 - An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
@@ -50,10 +50,9 @@ Record the answers before you write code.
    request it from [support@igrant.io](mailto:support@igrant.io) before you
    continue.
 3. **Organisation** - the main wallet, or a sandbox organisation? _A sandbox
-   needs the `X-SandboxOrgId` header and a bearer token; see
-   `igrantio-api-sandboxes`._
-4. **Trust lists** - which trust list URLs must the organisation accept beyond
-   the 2 built-in ones?
+   needs an API key that is bound to it; see `igrantio-api-sandboxes`._
+4. **Trust sources** - which trust lists or CA certificates must the
+   organisation accept in addition to the NXD Foundation trust lists?
 5. **Role** - restrict issuers (as a verifier) or verifiers (as a wallet)?
 
 ## Endpoint reference
@@ -61,13 +60,11 @@ Record the answers before you write code.
 | Method | Path | Purpose | Docs |
 | --- | --- | --- | --- |
 | POST | `/v2/config/digital-wallet/openid/trust-authority` | Create a trust authority | [config-create-digital-wallet-open-id-trust-authority](https://docs.igrant.io/docs/openid4vc-api/config-create-digital-wallet-open-id-trust-authority/) |
-| GET | `/v2/config/digital-wallet/openid/trust-authorities` | List trust authorities, with the 2 built-in trust lists first | [config-list-digital-wallet-open-id-trust-authority](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-trust-authority/) |
+| GET | `/v2/config/digital-wallet/openid/trust-authorities` | List the trust authorities of the organisation | [config-list-digital-wallet-open-id-trust-authority](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-trust-authority/) |
 | GET | `/v2/config/digital-wallet/openid/trust-authority/{trustAuthorityId}` | Read 1 trust authority | [config-read-digital-wallet-open-id-trust-authority](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-trust-authority/) |
-| PUT | `/v2/config/digital-wallet/openid/trust-authority/{trustAuthorityId}` | Update a trust authority (send all 3 fields) | [config-update-digital-wallet-open-id-trust-authority](https://docs.igrant.io/docs/openid4vc-api/config-update-digital-wallet-open-id-trust-authority/) |
+| PUT | `/v2/config/digital-wallet/openid/trust-authority/{trustAuthorityId}` | Update a trust authority (partial) | [config-update-digital-wallet-open-id-trust-authority](https://docs.igrant.io/docs/openid4vc-api/config-update-digital-wallet-open-id-trust-authority/) |
 | PUT | `/v2/config/digital-wallet/openid/trust-authority/{trustAuthorityId}/disable` | Enable or disable a trust authority | [config-toggle-digital-wallet-open-id-trust-authority](https://docs.igrant.io/docs/openid4vc-api/config-toggle-digital-wallet-open-id-trust-authority/) |
 | DELETE | `/v2/config/digital-wallet/openid/trust-authority/{trustAuthorityId}` | Delete a trust authority | [config-delete-digital-wallet-open-id-trust-authority](https://docs.igrant.io/docs/openid4vc-api/config-delete-digital-wallet-open-id-trust-authority/) |
-
-The list operation takes the `offset` and `limit` query parameters.
 
 ## Key fields
 
@@ -76,54 +73,62 @@ The list operation takes the `offset` and `limit` query parameters.
 {
   "type": "ETSI_TL",
   "value": "https://raw.githubusercontent.com/EWC-consortium/ewc-trust-list/refs/heads/main/EWC-TL.xml",
-  "name": "EU Trust List"
+  "name": "EWC Trust List"
 }
 ```
 
-- `type` has one allowed value: **`ETSI_TL`**.
-- `value` is the URL of the trust list.
-- On create, `type` and `value` are required and `name` is optional. On update,
-  **all 3 fields are required**; the service forwards each field and rejects an
-  empty one.
-- Create answers with **`201`**. The stored object adds `id` (a UUID),
-  `disabled` (boolean), `createdAt` and `updatedAt` (numbers, Unix seconds),
-  wrapped as `{ "trustAuthority": { … } }`. Read and update answer with the
-  same wrapped object and `200`.
+`type` takes three values (the service changes the value to upper case):
+
+| `type` | `value` |
+| --- | --- |
+| `ETSI_TL` | The HTTP or HTTPS URL of an ETSI TS 119 612 trusted list (XML). At most 2048 characters. |
+| `ETSI_TL_JSON` | The HTTP or HTTPS URL of an ETSI TS 119 602 list of trusted entities (JSON). At most 2048 characters. |
+| `X509_CA` | PEM text with 1 to 10 CA certificates (basicConstraints `cA=TRUE`, not expired) and, optionally, up to 10 CRLs that these CAs signed. At most 65536 characters. A private key is refused. The service stores the PEM text in a normalised form. |
+
+An `X509_CA` trust authority trusts a presented certificate chain when its
+leaf is one of the CA certificates, or when it validates to one of them
+(RFC 5280). Its CRLs are the only revocation source, and the service fetches
+nothing.
+
+- On create, `type` and `value` are required and `name` is optional (at most
+  255 characters). Create answers with **`201`**.
+- The update is **partial**: send only the fields to change. The service
+  checks the new `value` against the type after the update. Read and update
+  answer with `200`.
+- Every answer wraps one record as `{ "trustAuthority": { … } }`. The stored
+  object adds `id` (a UUID), `disabled` (boolean), `createdAt` and `updatedAt`
+  (numbers, Unix seconds). `name` is an empty string when none was given.
 - The toggle operation takes `{ "disabled": true }` - give the **wanted end
-  state**, not a flip - and answers with the full updated object. A disabled
-  trust authority is not used for credential or verifier trust validation.
+  state** as a JSON boolean, not a flip - and answers with the full updated
+  object. A disabled trust authority is not used for credential or verifier
+  trust validation.
 - Delete answers with `200` and **no response body**. After the delete the
-  service no longer uses that trust list to validate issuers and verifiers.
+  service no longer uses that trust authority to validate issuers and
+  verifiers.
+- Read, update, toggle and delete answer `404` when the organisation has no
+  trust authority with that identifier, and `400` when the identifier is not a
+  UUID.
 
-### The 2 built-in trust lists
-`GET …/trust-authorities` starts with 2 built-in trust lists that the service
-returns for every organisation. They have the IDs **`0`** and **`1`**, and
-`disabled`, `createdAt` and `updatedAt` always hold `false`, `0` and `0` for
-them. The trust authorities that the organisation created come after them.
-`pagination.totalItems` counts the 2 built-in records, and they fill the first
-page.
-
-The read, update, toggle and delete operations need a **UUID** in the path, so
-none of them touches the 2 built-in trust lists.
-
-The largest `limit` is **100**. A larger value gives HTTP 400.
+### List
+The list holds only the trust authorities that the organisation created.
+Query parameters: `offset`, `limit` (at most **100**; a larger value gives
+HTTP 400), `type`, and `name_contains` and `value_contains` (parts of the name
+or the value, case-insensitive).
 
 The list answers with a `trustAuthority` **array** (singular field name, plural
 content) plus `pagination`.
 
 ## Sandbox call style
-**Every operation in this group** takes the optional `X-SandboxOrgId` header.
-With that header the service runs the operation against the wallet of the named
-sandbox organisation and not against the main wallet of the organisation.
+To run **every operation in this group** in a sandbox organisation, call the
+API with an API key that is bound to that sandbox organisation. The service
+takes the sandbox organisation from the key and runs the operation against the
+wallet of that sandbox organisation, and not against the main wallet of the
+organisation. You send no extra header.
 
-**The service reads `X-SandboxOrgId` only when you authenticate with a bearer
-access token.** With API-key auth the service takes the sandbox organisation
-from the key and ignores the header. To run an API-key call in a sandbox
-organisation, bind the key with
-`PUT /v2/config/admin/apikey/{apiKeyId}/sandbox-org` instead.
-
-`X-SubwalletId` is the deprecated name of the header. The service still accepts
-it, but `X-SandboxOrgId` wins if you send both.
+To get such a key, select the sandbox organisation in the iGrant.io dashboard,
+then create the API key under **Account > Developer APIs** (**Create API Key**).
+The key is bound to that sandbox organisation, and every call with it runs
+there.
 
 See `igrantio-api-sandboxes` for creating and deploying a sandbox organisation.
 
@@ -139,4 +144,6 @@ updates before you build. Report the drift so the skill can be corrected.
   a verifier accepts only trust-list-anchored issuers.
 - `igrantio-api-key-management` - the signing keys and certificate chains that
   the organisation signs with.
-- `igrantio-api-sandboxes` - sandbox organisations and the API-key binding.
+- `igrantio-api-sandboxes` - sandbox organisations and their API keys.
+- `igrantio-trustlist-entries` - register an issuer or verifier certificate in
+  the NXD Foundation trust lists.

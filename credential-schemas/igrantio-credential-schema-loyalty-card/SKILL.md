@@ -6,7 +6,7 @@ metadata:
   categories: [credential-schema]
   provider: iGrant.io
   keywords: loyalty card, membership card, LoyaltyCard, eu.europa.ec.eudi.loyaltycard, loyalty points, available_miles, customer, portfolio, SD-JWT VC, dc+sd-jwt, jwt_vc_json, mso_mdoc, claim path pointer, credential definition, EUDIW, selective disclosure
-  version: 2026.09.01
+  version: 2026.10.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/credentialSchemas/claimPathPointer/loyaltyCard
   schema-version: 2025.7.1
   formats: dc+sd-jwt, jwt_vc_json, mso_mdoc
@@ -62,8 +62,9 @@ Record the answers before you write code.
    arrive later)?
 6. **Revocation** - status list on? _Recommend on for any credential with a
    lifetime._
-7. **Signing** - a DID key or an X.509 certificate (`x5c`)? _X.509 is needed
-   for mdoc and for the trust list._
+7. **Signing key** - which key signs the credentials? _Recommend a key with an
+   X.509 certificate chain (`cryptographicKeyFormat: "x509"`). The trust list
+   needs it, and `mso_mdoc` accepts only `x509`._
 8. **Trust list** - is your issuer certificate (the trust anchor) registered
    in the trust list? If not, contact
    [support@igrant.io](mailto:support@igrant.io) and follow
@@ -411,8 +412,7 @@ Record the answers before you write code.
 | Title | Loyalty Card |
 | Credential type | `LoyaltyCard` |
 | Doctype | `eu.europa.ec.eudi.loyaltycard` |
-| Namespace in the metadata | `eu.europa.ec.eudi.loyaltycard` |
-| Namespace in the claim paths | `eu.europa.ec.eudi` |
+| Namespace | `eu.europa.ec.eudi.loyaltycard` |
 | Format | `mso_mdoc` |
 | Supported version | `version_01` |
 
@@ -420,127 +420,127 @@ Record the answers before you write code.
 {
   "claims": [
     {
-      "path": ["eu.europa.ec.eudi", "credential", "expiry_date"],
+      "path": ["eu.europa.ec.eudi.loyaltycard", "credential", "expiry_date"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "credential", "issuance_date"],
+      "path": ["eu.europa.ec.eudi.loyaltycard", "credential", "issuance_date"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "credential", "issuer"],
+      "path": ["eu.europa.ec.eudi.loyaltycard", "credential", "issuer"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "credential", "type"],
+      "path": ["eu.europa.ec.eudi.loyaltycard", "credential", "type"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "customer", "address"],
+      "path": ["eu.europa.ec.eudi.loyaltycard", "customer", "address"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "customer", "birth_date"],
+      "path": ["eu.europa.ec.eudi.loyaltycard", "customer", "birth_date"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "customer", "city"],
+      "path": ["eu.europa.ec.eudi.loyaltycard", "customer", "city"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "customer", "email"],
+      "path": ["eu.europa.ec.eudi.loyaltycard", "customer", "email"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "customer", "first_name"],
+      "path": ["eu.europa.ec.eudi.loyaltycard", "customer", "first_name"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "customer", "last_name"],
+      "path": ["eu.europa.ec.eudi.loyaltycard", "customer", "last_name"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "customer", "mobile"],
+      "path": ["eu.europa.ec.eudi.loyaltycard", "customer", "mobile"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "customer", "nationality"],
+      "path": ["eu.europa.ec.eudi.loyaltycard", "customer", "nationality"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "customer", "phone"],
+      "path": ["eu.europa.ec.eudi.loyaltycard", "customer", "phone"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "customer", "zip_code"],
+      "path": ["eu.europa.ec.eudi.loyaltycard", "customer", "zip_code"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "loyalty_card", "id"],
+      "path": ["eu.europa.ec.eudi.loyaltycard", "loyalty_card", "id"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "loyalty_card", "issue_date"],
+      "path": ["eu.europa.ec.eudi.loyaltycard", "loyalty_card", "issue_date"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "loyalty_card", "status"],
+      "path": ["eu.europa.ec.eudi.loyaltycard", "loyalty_card", "status"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "loyalty_card", "type"],
+      "path": ["eu.europa.ec.eudi.loyaltycard", "loyalty_card", "type"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "organization", "country"],
+      "path": ["eu.europa.ec.eudi.loyaltycard", "organization", "country"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "organization", "id"],
+      "path": ["eu.europa.ec.eudi.loyaltycard", "organization", "id"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "organization", "name"],
+      "path": ["eu.europa.ec.eudi.loyaltycard", "organization", "name"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "portfolio", "available_miles"],
+      "path": ["eu.europa.ec.eudi.loyaltycard", "portfolio", "available_miles"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "portfolio", "available_points"],
+      "path": ["eu.europa.ec.eudi.loyaltycard", "portfolio", "available_points"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "portfolio", "available_wallet"],
+      "path": ["eu.europa.ec.eudi.loyaltycard", "portfolio", "available_wallet"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "portfolio", "last_updated"],
+      "path": ["eu.europa.ec.eudi.loyaltycard", "portfolio", "last_updated"],
       "mandatory": true,
       "limitDisclosure": true
     }
@@ -548,10 +548,10 @@ Record the answers before you write code.
 }
 ```
 
-The metadata namespace and the namespace in the claim paths are not the same
-value. The claim paths use `eu.europa.ec.eudi`, and the doctype is
-`eu.europa.ec.eudi.loyaltycard`. Send the paths as the schema document gives
-them, because the issuer builds the mdoc from the paths.
+The first element of every claim path is the namespace
+`eu.europa.ec.eudi.loyaltycard`, the same value as the doctype. Send the paths
+as the schema document gives them, because the issuer builds the mdoc from the
+paths.
 
 ## How to read the fields
 Each item of the `claims` array is one claim path pointer.
@@ -565,9 +565,9 @@ Each item of the `claims` array is one claim path pointer.
     elements.
   - `jwt_vc_json` starts every path with `credentialSubject`, so each path holds
     three elements.
-  - `mso_mdoc` starts every path with the mDoc namespace `eu.europa.ec.eudi`, so
-    each path holds three elements. Every path of the configuration must start
-    with the same namespace element.
+  - `mso_mdoc` starts every path with the mDoc namespace
+    `eu.europa.ec.eudi.loyaltycard`, so each path holds three elements. Every
+    path of the configuration must start with the same namespace element.
 - `mandatory` says if the claim must hold a value when you issue. The issuer
   reads a missing `mandatory` as `true`. Every claim of this schema is
   mandatory, so an issue request must fill all 25 claims. Remove the claims that
@@ -602,6 +602,9 @@ Put one entry in `credentialDefinitions[]` for each format that you publish, and
 copy the `claims` array of the matching schema document into that entry.
 
 - Set `version` to `version_01` at the top level of the request.
+- Set `cryptographicKeyFormat` to `x509` at the top level. The default key of
+  the organisation then signs, with its X.509 certificate chain. Name another
+  key with `cryptographicKeyIdentifier`.
 - For `dc+sd-jwt`: set `vct` to `LoyaltyCard`, put the array in `claims.claims`,
   and set `validationPath` to `$`. The registry also gives the namespace
   `eu.europa.ec.eudi.loyaltycard`. Some ecosystem profiles use that namespace as
@@ -615,6 +618,7 @@ copy the `claims` array of the matching schema document into that entry.
 {
   "label": "Issue Loyalty Card",
   "version": "version_01",
+  "cryptographicKeyFormat": "x509",
   "credentialDefinitions": [
     {
       "credentialFormat": "dc+sd-jwt",
@@ -647,7 +651,7 @@ schema. A member can leave the programme, so set `supportRevocation` to `true`.
 Set `supportCredentialReissuance` to `true` when you refresh the balance.
 
 When you issue, the top key of `claims` for the `mso_mdoc` entry is the
-namespace `eu.europa.ec.eudi`.
+namespace `eu.europa.ec.eudi.loyaltycard`.
 
 Read `igrantio-api-issuer` for the full operation reference: every request
 field, the display options, revocation, and the issue operation that fills these

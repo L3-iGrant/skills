@@ -6,7 +6,7 @@ metadata:
   categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, QESAC, qualified electronic signature, remote signing, QES, qes_data, transaction data, credentialId, presentation definition, OpenID4VP, SD-JWT VC, EUDIW, eIDAS2
-  version: 2026.09.01
+  version: 2026.10.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/presentationDefinitions/dcqlQuery/qesac
   registry-version: 2025.7.1
   requires-skills: igrantio-api-verifier
@@ -52,8 +52,8 @@ Record the answers before you write code.
 2. **API key** - do you have the OWS API key for that environment? If not,
    request it from [support@igrant.io](mailto:support@igrant.io) before you
    continue.
-3. **Format** - `dc+sd-jwt`, `jwt_vc_json` or `mso_mdoc`? _Match the format
-   the issuer used._
+3. **Format** - the registry publishes this template in `dc+sd-jwt` only, so
+   use `dc+sd-jwt`.
 4. **Claims** - which claims does the use case need? _Ask for the minimum._
 5. **Channel** - cross-device QR, same-device Digital Credentials API, or
    both? _Recommend QR first; `igrantio-dcapi-android` and
@@ -117,6 +117,7 @@ format and the `vct_values` meta.
 {
   "label": "Sign the loan contract",
   "version": "version_01",
+  "cryptographicKeyFormat": "x509",
   "responseType": "vp_token",
   "responseMode": "direct_post",
   "transactionDataDefinitionType": "qes_data",
@@ -135,8 +136,12 @@ format and the `vct_values` meta.
 }
 ```
 
-`dc+sd-jwt` takes `vct_values` or `type_values` in `meta`. It refuses
-`doctype_value`, because that key belongs to `mso_mdoc`.
+`cryptographicKeyFormat: "x509"` signs the request with the default key of the
+organisation and its X.509 certificate chain, and `clientIdScheme` then
+defaults to `x509_hash`. Name another key with `cryptographicKeyIdentifier`.
+
+`dc+sd-jwt` takes only `vct_values` in `meta`. It refuses `type_values`
+(W3C formats) and `doctype_value` (`mso_mdoc`).
 
 **Step 2.** Send the request with the V3 send operation,
 `POST /v3/config/digital-wallet/openid/sdjwt/verification/send`. Send the

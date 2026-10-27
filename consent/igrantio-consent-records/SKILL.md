@@ -6,9 +6,9 @@ metadata:
   categories: [consent, education]
   provider: iGrant.io
   keywords: consent management, GDPR, data agreement, eIDAS2, EUDIW, right to be forgotten, personal data
-  version: 2026.09.01
+  version: 2026.10.01
   api: https://docs.igrant.io/docs/category/consent-management-individual-api/consent-record
-  auth: Organisation API key (Authorization "ApiKey <key>") + X-ConsentBB-IndividualId - server-side only
+  auth: Organisation API key (Authorization "ApiKey <YOUR_API_KEY>") + X-ConsentBB-IndividualId, server-side only
   requires-skills: igrantio-individuals
 ---
 
@@ -54,22 +54,41 @@ Record the answers before you write code.
    requires self-service._
 
 ## API (Consent BB individual, base `/v2`)
-Auth on every call: `Authorization: ApiKey <key>` **and**
-`X-ConsentBB-IndividualId: <individualId>`.
+Auth on every call: `Authorization: ApiKey <YOUR_API_KEY>` **and**
+`X-ConsentBB-IndividualId: <individualId>`. The service takes the individual
+from this header (the `individualId` or the `externalId` of the individual),
+not from the path or the query. A call without it gives HTTP 400.
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| POST | `/v2/service/individual/record/data-agreement/{dataAgreementId}?revisionId=` | Record consent (first time) |
+| POST | `/v2/service/individual/record/data-agreement/{dataAgreementId}?revisionId=` | Record consent (first time); no body |
 | GET | `/v2/service/individual/record/data-agreement/{dataAgreementId}` | Read consent for a data agreement |
 | GET | `/v2/service/individual/record/consent-record?limit=&offset=` | List all the individual's records |
-| PUT | `/v2/service/individual/record/consent-record/{consentRecordId}?individualId=&dataAgreementId=&revisionId=` | Update (allow/withdraw) |
+| PUT | `/v2/service/individual/record/consent-record/{consentRecordId}` | Update (allow/withdraw) |
 | GET | `/v2/service/individual/record/consent-record/history?limit=&offset=` | Consent change history |
 | DELETE | `/v2/service/individual/record` | Delete all records (right to be forgotten) |
 
-Consent record fields: `id`, `dataAgreementId`, `individualId`, **`optIn`** (true=allow,
-false=withdraw), `state` (`unsigned`|`signed`), `sectorPreferences[]`. Updating a
-signed record invalidates its signature. (Signature/draft endpoints exist for PKI
-flows; the reference covers the core opt-in lifecycle.)
+Consent record fields: `id`, `dataAgreementId`, `dataAgreementRevisionId`,
+`dataAgreementRevisionHash`, `individualId`, **`optIn`** (true=allow,
+false=withdraw), `state` (`unsigned`|`signed`), `signatureId`,
+`sectorPreferences[]`. (Signature/draft endpoints exist for PKI flows; the
+reference covers the core opt-in lifecycle.)
+
+Rules to code against:
+- **Create** takes no body and always gives `optIn: true`. Without
+  `revisionId` it uses the latest revision of the data agreement. A second
+  create for the same data agreement gives HTTP 400. To record a first
+  withdraw, create, then update.
+- **Read** gives `{"consentRecord": null}` (HTTP 200) when there is no record.
+- **Update** body: `{"optIn": false}`, or `{"sectorPreference": {"sector":
+  "...", "optIn": false}}` for one sector. The record moves to the latest
+  revision of the data agreement and becomes `unsigned`, so an earlier
+  signature is no longer valid. Create and update give
+  `{"consentRecord": ..., "revision": ...}`.
+- **History** items: `id`, `consentRecordId`, `dataAgreementId`,
+  `individualId`, `log` (readable text), `timestamp`, and `sectorName` for a
+  sector change.
+- **Delete all** answers HTTP 200 with no body.
 
 ## Reference
 [`./references`](./references):

@@ -6,7 +6,7 @@ metadata:
   categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, multiple true, bank statements, loan application, credit check, OpenID4VP, EUDIW, EUBW, eIDAS2
-  version: 2026.09.01
+  version: 2026.10.01
   source-doc: https://docs.igrant.io/docs/dcql-2-4-6-loan-application-multiple-bank-statements/
   requires-skills: igrantio-ows-overview, igrantio-verifier-backend
 ---
@@ -77,10 +77,14 @@ Record the answers before you write code.
 ```
 
 ## Run it on OWS
-1. Store as a presentation definition; send the verification request (v3).
-2. On `presentation_acked` + `verified === true`, `vpTokenResponse` /
-   `presentation` carry SEVERAL entries for the one query id - iterate all
-   of them, do not read only `presentation[0]`.
+1. Store the query in `dcqlQuery` of a presentation definition (`POST
+   /v2/config/digital-wallet/openid/sdjwt/presentation-definition`, with
+   `label`, `version: "version_01"` and `cryptographicKeyFormat: "x509"`);
+   then send the verification request (v3).
+2. On `presentation_acked` + `verified === true`, `presentation` carries
+   SEVERAL entries for the one query id, and its `presentationValidity`
+   entry lists them under `credentials` - iterate all of them, do not read
+   only `presentation[0]`.
 3. Validate business rules server-side: count received, contiguous
    `period` values, same `account_number` across instances.
 

@@ -6,7 +6,7 @@ metadata:
   categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, credential_sets, alternatives, proof of identity, PID, Passport, Photo ID, OpenID4VP, EUDIW, eIDAS2
-  version: 2026.09.01
+  version: 2026.10.01
   source-doc: https://docs.igrant.io/docs/dcql-2-4-3-credential-set-proof-of-identity-alternatives/
   requires-skills: igrantio-ows-overview, igrantio-verifier-backend
 ---
@@ -76,7 +76,7 @@ Record the answers before you write code.
     },
     {
       "format": "dc+sd-jwt",
-      "id": "Photo ID",
+      "id": "Photo-ID",
       "meta": {
         "vct_values": [
           "eu.europa.ec.eudi.photoid.1"
@@ -95,7 +95,7 @@ Record the answers before you write code.
           "Passport"
         ],
         [
-          "Photo ID"
+          "Photo-ID"
         ]
       ],
       "required": true
@@ -105,16 +105,22 @@ Record the answers before you write code.
 ```
 
 ## Run it on OWS
-1. Store as a presentation definition; keep the `presentationDefinitionId`.
+1. Store the query in `dcqlQuery` of a presentation definition (`POST
+   /v2/config/digital-wallet/openid/sdjwt/presentation-definition`, with
+   `label`, `version: "version_01"` and `cryptographicKeyFormat: "x509"`);
+   keep the `presentationDefinitionId`.
 2. Send the verification request (v3); QR or DC API.
-3. On `presentation_acked` + `verified === true`, inspect
-   `presentationSubmission` to learn WHICH alternative was presented, then
-   read its claims from `presentation[0]`.
+3. On `presentation_acked` + `verified === true`, the keys of the
+   `presentationValidity` entries name the credential query (`PID`,
+   `Passport` or `Photo-ID`) that the wallet presented; read its claims
+   from `presentation[0]`.
 
 ## Adjust for your deployment
 - Order `options` by preference - wallets try them in order.
 - Set each `vct_values` to the VCTs your issuers actually use; add `claims`
   entries per credential if you need specific attributes disclosed.
+- A credential query `id` takes letters, digits, `_` and `-` only (no
+  spaces).
 - Keep `require_cryptographic_holder_binding: true` unless you have a
   reason not to; it prevents replay of copied credentials.
 

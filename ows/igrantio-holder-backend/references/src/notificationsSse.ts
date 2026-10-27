@@ -9,20 +9,20 @@ import { Router } from "express";
  *   GET /:tenant/v2/config/digital-wallet/openid/notifications/sse
  *
  * The relay resolves the tenant's authorization value, opens the upstream OWS
- * stream (OWS authenticates SSE via the `authorization` QUERY PARAMETER, for
- * the same EventSource reason), and pipes the bytes through untouched. Mount
- * it on the proxy prefix BEFORE the proxy router so the browser uses one base
- * URL for REST and SSE alike.
+ * stream with it in the `Authorization` header, and pipes the bytes through
+ * untouched. Mount it on the proxy prefix BEFORE the proxy router so the
+ * browser uses one base URL for REST and SSE alike.
  *
- * Forwarded query parameters: status (default "unread"), limit (default 10),
- * offset (default 0).
+ * Replay: the browser's `Last-Event-ID` header (sent by `EventSource` on its
+ * own reconnects) or `lastEventId` query parameter goes upstream as the
+ * `lastEventId` query parameter, so OWS sends the missed frames first. OWS
+ * takes no other query parameters on this path.
  */
 export interface NotificationsSseOptions {
   /** OWS base URL, e.g. https://demo-api.igrant.io */
   owsBaseUrl: string;
   /**
-   * Resolve the upstream authorization value for a tenant, e.g.
-   * `ApiKey <key>` (or `Bearer <jwt>` where user tokens are used).
+   * Resolve the upstream authorization value for a tenant: `ApiKey <key>`.
    * Return undefined for unknown tenants (the relay answers 404).
    */
   getAuthorization: (tenant: string) => Promise<string | undefined> | string | undefined;
@@ -40,13 +40,9 @@ export function notificationsSseRouter(opts: NotificationsSseOptions): Router {
       return;
     }
 
-    const qs = new URLSearchParams({
-      status: String(req.query.status ?? "unread"),
-      limit: String(req.query.limit ?? 10),
-      offset: String(req.query.offset ?? 0),
-      authorization,
-    });
-    const url = `${opts.owsBaseUrl}/v2/config/digital-wallet/openid/notifications/sse?${qs}`;
+    const lastEventId = String(req.header("last-event-id") ?? req.query.lastEventId ?? "");
+    const qs = /^\d+$/.test(lastEventId) ? `?${new URLSearchParams({ lastEventId })}` : "";
+    const url = `${opts.owsBaseUrl}/v2/config/digital-wallet/openid/notifications/sse${qs}`;
 
     const controller = new AbortController();
     const connectTimer = setTimeout(() => controller.abort(), opts.connectTimeoutMs ?? 15_000);
@@ -55,7 +51,7 @@ export function notificationsSseRouter(opts: NotificationsSseOptions): Router {
     let upstream: Response | undefined;
     try {
       upstream = await fetch(url, {
-        headers: { accept: "text/event-stream" },
+        headers: { accept: "text/event-stream", Authorization: authorization },
         signal: controller.signal,
       });
     } catch {

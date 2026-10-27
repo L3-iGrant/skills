@@ -1,15 +1,15 @@
 ---
 name: igrantio-api-sandboxes
-description: 'Sandboxes group of the iGrant.io OID4VC API: create, read, update, delete, and list sandbox organisations - separate test wallets inside your organisation, each with its own credential definitions, presentation definitions, webhooks, and keys - plus name, logo image, and cover image updates. This skill is the canonical home for the sandbox call style: how the X-SandboxOrgId header works, why it works only with a bearer token, how X-SubwalletId falls back, and how to bind an API key to a sandbox organisation. Read it before you send any OID4VC request against a sandbox.'
+description: 'Sandboxes group of the iGrant.io OID4VC API: create, read, update, delete, and list sandbox organisations - separate test wallets inside your organisation, each with its own credential definitions, presentation definitions, trust authorities, and webhooks, signing with the keys of the main wallet - plus name, logo image, and cover image updates. This skill is the canonical home for the sandbox call style: create the API key in the dashboard with the sandbox organisation selected, and every call with that key runs in that sandbox organisation. Read it before you send any OID4VC request against a sandbox.'
 license: Apache-2.0
 metadata:
   categories: [ows-api, education]
   provider: iGrant.io
-  keywords: sandbox organisation, sandbox org, X-SandboxOrgId, X-SubwalletId, subwallet, test wallet, multi-wallet, OpenID4VCI, OpenID4VP, EUDIW, EUBW, eIDAS2, API key binding
-  version: 2026.09.01
+  keywords: sandbox organisation, sandbox org, test wallet, multi-wallet, OpenID4VCI, OpenID4VP, EUDIW, EUBW, eIDAS2, sandbox-bound API key
+  version: 2026.10.02
   source-doc: https://docs.igrant.io/docs/developer-apis/
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0
-  auth: OWS API key (Authorization "ApiKey <key>") or a bearer access token - the key is held only by the tenant backend, never the browser
+  auth: OWS API key (Authorization "ApiKey <YOUR_API_KEY>"); a key that is bound to a sandbox organisation works in that sandbox organisation; the key is held only by the tenant backend, never the browser
 ---
 
 # iGrant.io OID4VC API - Sandboxes
@@ -22,12 +22,13 @@ Use this skill when the task is one of these:
 - Change the name, the logo image, or the cover image of a sandbox
   organisation.
 - Send **any** OID4VC request against a sandbox organisation, whatever the
-  group of that request. The call style below applies to about 180 endpoints.
+  group of that request.
 
 A sandbox organisation is a **separate wallet inside your organisation**. It
-has its own credential definitions, presentation definitions, webhooks, and
-keys. You can test an issuance flow or a verification flow without a change to
-the main wallet.
+has its own credential definitions, presentation definitions, trust
+authorities, and webhooks, and it signs with the keys of the main wallet. You
+can test an issuance flow or a verification flow without a change to the main
+wallet.
 
 **Before you start**, the main wallet of the organisation must be deployed. See
 `igrantio-api-wallet-provider` for the deploy operation.
@@ -53,9 +54,12 @@ Record the answers before you write code.
 2. **API key** - do you have the OWS API key for that environment? If not,
    request it from [support@igrant.io](mailto:support@igrant.io) before you
    continue.
-3. **Bearer token** - do you have an admin access token? _The sandbox header
-   works only with a bearer token, not with an API key._
-4. **Bind** - should an API key be bound to the sandbox for server-side use?
+3. **Sandbox API key** - do you have an API key that is bound to the sandbox
+   organisation? _A call runs in a sandbox organisation only with a key that
+   is bound to it. If not, select the sandbox organisation in the dashboard,
+   then create the key under Account > Developer APIs (Create API Key)._
+4. **Main wallet too** - do you also call the main wallet? _Then keep a second
+   key for the main wallet._
 
 ## Endpoint reference
 
@@ -72,103 +76,63 @@ Base URL for the demo environment: `https://demo-api.igrant.io`.
 | `PUT` | `/v2/config/sandbox-org/{sandboxOrgId}/coverimage` | Upload a new cover image (multipart form data). | [Update sandbox organisation cover image](https://docs.igrant.io/docs/openid4vc-api/config-update-digital-wallet-open-id-sandbox-org-cover/) |
 | `GET` | `/v2/config/sandbox-orgs` | List the sandbox organisations, with search, sort, and pages. | [List sandbox organisations](https://docs.igrant.io/docs/openid4vc-api/config-list-sandbox-orgs/) |
 
-Eight operations. Each one accepts an API key or a bearer access token.
+Eight operations. Each one accepts an API key.
 
 ## Sandbox call style
 
 This is the canonical description. Other iGrant.io API skills point here.
 
-### The header
-Send the identifier of the sandbox organisation in the `X-SandboxOrgId`
-request header:
+### Use an API key that is bound to the sandbox organisation
+To work in a sandbox organisation through the API, **call the API with an API
+key that is bound to the sandbox organisation**. The service takes the sandbox
+organisation from the key itself. The request needs no extra header. A key that
+is not bound to a sandbox organisation works on the main wallet.
 
-```
-X-SandboxOrgId: 6889e1a4c5b2f30001a3d710
-```
+To get such a key, select the sandbox organisation in the iGrant.io dashboard,
+then create the API key under **Account > Developer APIs** (**Create API Key**).
+The key is bound to that sandbox organisation, and every call with it runs
+there.
 
-The service then runs the operation against the wallet of that sandbox
-organisation, and not against the main wallet. Leave the header out to use the
-main wallet.
+To use the main wallet and a sandbox organisation from the same server, keep
+one key for each.
 
-### The header works only with a bearer access token
-The service reads `X-SandboxOrgId` **only when you authenticate with a bearer
-access token**, which is what the dashboard uses. **When you authenticate with
-an API key, the service takes the sandbox organisation from the key itself and
-ignores the header.** This is the most common error: an API-key client that
-sends the header sees no change, because its calls stay on the wallet that the
-key names.
-
-To run API-key calls in a sandbox organisation, bind the key to it. See "Bind
-an API key" below.
-
-### `X-SubwalletId` is the old name
-`X-SubwalletId` is the deprecated name of the same header. The service still
-accepts it. **If you send both headers, `X-SandboxOrgId` wins**, and
-`X-SubwalletId` is only the fallback. Use `X-SandboxOrgId` in new code.
-
-### Which operations honour it
-The header is effectively universal across the OID4VC configuration surface:
-credential definitions, presentation definitions, verifications,
-notifications, transaction data, trust authorities, files, scopes, key
-management, webhooks, and data agreements.
+### What belongs to the sandbox organisation
+A bound key works in its sandbox organisation across the OID4VC configuration
+surface: credential definitions, issuance history, presentation definitions,
+verifications, transaction data, trust authorities, files, scopes, global
+configurations, notifications, and webhooks.
 
 Exceptions:
 
-- The eight sandbox operations in the table above do **not** honour the
-  header: they always work on the sandbox collection of the whole
-  organisation. The wallet deploy and the deployment read
-  (`POST` and `GET /v2/config/digital-wallet/openid`) also do not accept it.
-- **The v2 holder credential operations reject a sandbox context** with the
+- **Keys** belong to the main wallet. A bound key reads and manages the key
+  stores and the keys of the main wallet (create, change, delete, CSR,
+  certificate chain, test CA), and the definitions of the sandbox organisation
+  sign with them. A change through a bound key changes the keys of the main
+  wallet and of all its sandbox organisations (see
+  `igrantio-api-key-management`).
+- **Data agreements, individuals, and consent records** belong to the
+  organisation. A bound key works on the same ones as a key of the main wallet.
+- The eight sandbox operations in the table above work on the sandbox
+  collection of the whole organisation, whatever the key. The wallet deploy,
+  the deployment read (`POST` and `GET /v2/config/digital-wallet/openid`), and
+  the performance statistics (`GET /v2/config/performance-statistics`) always
+  work on the main wallet.
+- A sandbox organisation **cannot be a wallet provider**. The wallet unit
+  operations give HTTP 400. See `igrantio-api-wallet-provider`.
+- **The v2 holder operations reject a sandbox context** with HTTP 400 and the
   error "Holder functionalities for sandbox organisation is disabled". This
   covers receive, receive-deferred, user PIN, exchange-code, accept,
-  auto-present, list, read, delete, reissuance, the credential offer, the
-  issuer metadata read, and the holder-side filter and verification delete.
-  The v3 presentation operations, the holder global configuration, and the
-  notifications do support the sandbox context. See `igrantio-api-holder`.
-
-### Errors
-The sandbox organisation must exist, must belong to your organisation, and must
-be **deployed**. Each of these makes the call fail with **HTTP 400**, not 401
-and not 404:
-
-- an unknown identifier;
-- an identifier of a sandbox organisation that is not deployed;
-- an identifier that belongs to a different organisation. The lookup is scoped
-  by organisation, so a foreign identifier reads as "not found". There is no
-  leak across tenants.
-
-A bad `X-SandboxOrgId` therefore turns an otherwise correct request into an
-HTTP 400 on every one of the endpoints that honour it.
-
-### Bind an API key
-`PUT /v2/config/admin/apikey/{apiKeyId}/sandbox-org` with the body
-`{"sandboxOrgId": "6889e1a4c5b2f30001a3d710"}` binds the key to that sandbox
-organisation. **An empty string, or no field at all, binds the key back to the
-main wallet.**
-
-Two points that break clients:
-
-1. **The service signs a new token.** The `apiKey` field of the answer holds a
-   new value. The token that you had before the call stops working. Store the
-   new value and replace the old one in every client.
-2. **The service moves the expiry forward.** It sets a new `expiryTimestamp` at
-   the moment of the call plus the current `expiryInDays`, so each binding call
-   extends the lifetime of the key.
-
-At **creation** time, use the `sandboxOrgId` field in the body of
-`POST /v2/config/admin/apikey`. That body field is the only way to bind a key
-at creation; the `X-SandboxOrgId` header has no effect on that operation.
-
-After the binding, every call with that key runs in the sandbox organisation.
-The key reads and writes the credential definitions, the presentation
-definitions, the webhooks, and the keys of that sandbox organisation.
-
-Full detail of the API key operations: `igrantio-api-api-keys`.
+  auto-present, request (re-issue), list, read, and delete of held
+  credentials, the issuer metadata read, and the v2 presentation operations
+  (filter, read, list, send, receive, delete). The revocation status read of
+  a held credential, the V3 presentation operations, the holder global
+  configuration, and the notifications support the sandbox context. See
+  `igrantio-api-holder`.
 
 ### After a delete
 When you delete a sandbox organisation, an API key that is bound to it no
-longer resolves a wallet. Bind that key to a different sandbox organisation, or
-back to the main wallet, with the same `PUT .../sandbox-org` operation.
+longer resolves a wallet. Create a new key in the dashboard for another sandbox
+organisation or for the main wallet, and replace the old key in every client.
 
 ## Key fields
 
@@ -176,32 +140,33 @@ back to the main wallet, with the same `PUT .../sandbox-org` operation.
 
 | Field | Type | Notes |
 | --- | --- | --- |
-| `id` | string | Identifier of the sandbox organisation. This is the value for `X-SandboxOrgId`. |
+| `id` | string | Identifier of the sandbox organisation. |
 | `name` | string | Display name. Mandatory at creation, and unique in the organisation. |
 | `description` | string | Free text. |
-| `openIdDeploymentId` | string | Identifier of the OpenID deployment. |
+| `openIdDeploymentId` | string | Identifier of the wallet of the sandbox organisation. |
 | `status` | integer | `0` not configured, `1` requested, `2` deployed. |
-| `ledgerId` | integer | Identifier of the ledger. |
-| `infrastructureProvider` | string | Name of the infrastructure provider. |
+| `ledgerId` | integer | Always `0`. |
+| `infrastructureProvider` | string | `iGrant.io`. |
 | `version` | string | Version of the configuration. |
-| `role` | string | Role in the ecosystem. **Always present**, and an empty string when there is no value. |
-| `trustAnchor` | string | Trust anchor identifier or DID. **Always present**, and an empty string when there is no value. |
-| `isWalletProvider` | boolean | `true` when this sandbox organisation acts as a wallet provider. |
-| `secureVault` | integer | Identifier of the primary secure vault. |
-| `secureVaults` | **array of integer**, nullable | Identifiers of the secure vaults. The field holds `null`, not `[]`, when there is none. It is **not** an object. |
+| `role` / `trustAnchor` | string | Always present, and an empty string for a sandbox organisation. |
+| `isWalletProvider` | boolean | `false`: only a main wallet can be a wallet provider. |
+| `secureVault` / `secureVaults` | integer / integer array or `null` | No data for a sandbox organisation (`0` and `null`): the keys belong to the main wallet. |
 | `logoImageId` | string | **Absent** from the answer when there is no logo image. |
 | `coverImageId` | string | **Absent** from the answer when there is no cover image. |
 | `logoImageUrl` / `coverImageUrl` | string | Public URLs of the images. Always present. |
-| `createdAt` / `updatedAt` | integer | Timestamps. |
-| `isMain` | boolean | `true` for the main organisation. |
+| `createdAt` / `updatedAt` | integer | Unix timestamps in seconds. |
+| `isMain` | boolean | `false` for a sandbox organisation. |
 
-Two field traps to code against: **`secureVaults` is an integer array and can
-be `null`**, so a client that reads it as an object or as a list breaks; and
 **`logoImageId` and `coverImageId` are absent, not empty**, when the sandbox
 organisation has no image, so read them with a presence test.
 
-`role` and `trustAnchor` go the other way: they are always in the answer, even
-as an empty string, so a presence test on them tells you nothing.
+### Requests and errors
+Every JSON body is strict: an unknown member gives HTTP 400 with
+`unknown field ...`. An error answer is
+`{"errorCode": <HTTP status>, "errorDescription": "..."}`. An unknown
+`sandboxOrgId` gives HTTP 404 on read, update, delete, and the image and name
+updates. These operations give HTTP 400 when the identifier names the main
+wallet.
 
 ### Create
 Body: `{"sandboxOrg": {"name": "...", "description": "..."}}`. Only `name` is
@@ -209,10 +174,13 @@ mandatory, and it must be unique in the organisation. The answer is **HTTP
 201** with `{"sandboxOrg": ...}`.
 
 The main wallet must be deployed first. The service deploys a new wallet for
-the sandbox organisation and copies the logo image and the cover image of the
-organisation to it. HTTP 400 comes back when the main wallet is not deployed,
-when `name` is missing, when the name is already taken, or when the wallet
-deployment failed.
+the sandbox organisation, which starts with the logo image and the cover image
+of the organisation. HTTP 400 comes back when the main wallet is not deployed,
+when `name` is missing, or when the name is already taken. When the wallet
+cannot be made, the answer carries the status of the wallet (or HTTP 502 or
+504), and no sandbox organisation stays. To work in the new sandbox
+organisation through the API, use an API key that is bound to it (see "Sandbox
+call style").
 
 ### Read
 The read answer is **not** the same shape as the other answers. It gives the
@@ -229,33 +197,32 @@ organisation to get them.
 ### Update
 Body: `{"sandboxOrg": {"name": "...", "description": "..."}}`. Both fields are
 optional. **An empty string means "keep the current value"**, so there is no
-way to clear the description through this API. The new name must be unique. The
-service gives HTTP 400 when the identifier is the main wallet. When the sandbox
-organisation is deployed, the service also sends the new values to its wallet.
+way to clear the description through this API. The new name must be unique
+(HTTP 400). The answer is HTTP 200 with `{"sandboxOrg": ...}`. When the
+sandbox organisation is deployed, the service also sends the new values to its
+wallet.
 
 ### Update the name only
 `PUT .../name` behaves differently from the general update. Body:
 `{"sandboxOrg": {"name": "Acme Test Issuer"}}`. Note the wrapper key
-`sandboxOrg` with a small first letter; the service ignores a body that uses
-another key, so a wrong wrapper looks like a missing name.
+`sandboxOrg` with a small first letter; another key gives HTTP 400
+`unknown field ...`.
 
 `name` is **mandatory** here, and an empty name is an error, not an instruction
 to keep the current name. The name must be unique in the organisation. The
-answer is HTTP 200 with `{"sandboxOrg": ...}`. HTTP 400 comes back when the
-identifier names the main wallet, when `name` is missing or empty, when another
-sandbox organisation has that name, or when the service could not send the
-change to the wallet. HTTP 404 comes back when the organisation has no sandbox
-organisation with that identifier.
+answer is HTTP 200 with `{"sandboxOrg": ...}`. HTTP 400 comes back when `name`
+is missing or empty, or when another sandbox organisation has that name.
 
 ### Delete
-HTTP 204 with no body. The service removes the wallet of the sandbox
-organisation and all the data in it. You cannot delete the main wallet: the
-service gives HTTP 400.
+HTTP 204 with no body. The service deletes the sandbox organisation, and then
+its wallet.
 
 ### Images
 `PUT .../logoimage` and `PUT .../coverimage` take **multipart form data**, and
 not JSON. The form field has the same name as the path segment: `logoimage`
-and `coverimage`. The file is mandatory.
+and `coverimage`. The file is mandatory: a PNG, JPEG, GIF, or WebP image of at
+most 5 MiB and 4096 x 4096 pixels. A larger file gives HTTP 413; a missing,
+unreadable, or other type of file gives HTTP 400.
 
 The service stores the image, sets the new image identifier and the new image
 URL, and sends the change to the wallet when the sandbox organisation is
@@ -264,40 +231,32 @@ deployed.
 **Both operations answer HTTP 200 with a body**: `{"sandboxOrg": {...}}`, the
 full sandbox organisation after the update. Read `logoImageId` and
 `logoImageUrl` (or `coverImageId` and `coverImageUrl`) from it, rather than
-reading the record again. Remember that `logoImageId` and `coverImageId` are
-absent when there is no image, so use a presence test.
-
-HTTP 400 comes back when the identifier names the main wallet, when the request
-has no image form field, or when the service could not send the change to the
-wallet. HTTP 404 comes back when the organisation has no sandbox organisation
-with that identifier.
+reading the record again.
 
 ### List
-Query parameters: `offset` (default `0`), `limit` (default `10`), `search`, and
-`sortOrder` (`desc` or `asc`, default `desc`). The service sorts by the time of
-the last update and leaves out deleted sandbox organisations. The answer holds
-`sandboxOrgs` (an array) and `pagination`. The list has no upper bound on
-`limit`.
+Query parameters: `offset` (default `0`), `limit` (default `10`), `search`
+(part of the name or the description, not case-sensitive), and `sortOrder`
+(`desc` or `asc`, default `desc`). The service sorts by the time of the last
+update and leaves out deleted sandbox organisations. The answer holds
+`sandboxOrgs` (an array) and `pagination` (`currentPage`, `totalItems`,
+`totalPages`, `limit`, `hasPrevious`, `hasNext`). The list has no upper bound
+on `limit`.
 
 ## Authentication
 Send an API key:
 
 ```
-Authorization: ApiKey <your-api-key>
+Authorization: ApiKey <YOUR_API_KEY>
 ```
 
-Note the space after `ApiKey`. A bearer access token also works on every
-operation of this group. The key is held only by the tenant backend. The
+Note the space after `ApiKey`. The key is held only by the tenant backend. The
 browser never sees it.
 
 ## Validation / done criteria
-- You know that `X-SandboxOrgId` has no effect on an API-key call, and you bind
-  the key instead.
-- You store the new token value after each `PUT .../apikey/{apiKeyId}/sandbox-org`.
-- Your client reads `secureVaults` as a nullable integer array, and tests for
-  the presence of `logoImageId` and `coverImageId`.
-- You know that a bad sandbox identifier gives HTTP 400, and you do not look
-  for a 404.
+- To work in a sandbox organisation, you call the API with a key that is bound
+  to it. You send no extra header.
+- Your client tests for the presence of `logoImageId` and `coverImageId`.
+- A key change through a bound key changes the keys of the main wallet.
 
 ## Documentation is the source of truth
 This skill mirrors the iGrant.io OID4VC API documentation. If this skill and
@@ -310,7 +269,5 @@ can be corrected.
 
 ## Cross-references
 - `igrantio-ows-overview` - architecture, glossary, and the shared contracts.
-- `igrantio-api-api-keys` - create, update, delete, and list API keys, and bind
-  a key to a sandbox organisation.
 - `igrantio-api-wallet-provider` - deploy the main wallet before you make a
   sandbox organisation.

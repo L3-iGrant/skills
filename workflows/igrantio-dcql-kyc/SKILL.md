@@ -1,12 +1,12 @@
 ---
 name: igrantio-dcql-kyc
-description: 'DCQL pattern: KYC request combining two required credential groups in one OpenID4VP verification on the iGrant.io Organisation Wallet Suite - a Photo ID (mso_mdoc) for identity plus proof of address where either a Utility Bill or a Bank Statement (dc+sd-jwt) is acceptable. Know-your-customer onboarding for banks, fintechs, and regulated services with EUDI Wallet (EUDIW) under eIDAS 2.0.'
+description: 'DCQL pattern: KYC request combining two required credential groups in one OpenID4VP verification on the iGrant.io Organisation Wallet Suite - a Photo ID for identity plus proof of address where either a Utility Bill or a Bank Statement is acceptable, all dc+sd-jwt. Know-your-customer onboarding for banks, fintechs, and regulated services with EUDI Wallet (EUDIW) under eIDAS 2.0.'
 license: Apache-2.0
 metadata:
   categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, KYC, know your customer, Photo ID, proof of address, utility bill, bank statement, credential_sets, OpenID4VP, EUDIW, eIDAS2
-  version: 2026.09.01
+  version: 2026.10.01
   source-doc: https://docs.igrant.io/docs/dcql-2-4-4-kyc-request-photo-id-address-proof/
   requires-skills: igrantio-ows-overview, igrantio-verifier-backend
 ---
@@ -56,54 +56,44 @@ Record the answers before you write code.
   "credentials": [
     {
       "id": "photo_id",
-      "format": "mso_mdoc",
+      "format": "dc+sd-jwt",
+      "meta": {
+        "vct_values": ["eu.europa.ec.eudi.photoid.1"]
+      },
       "claims": [
-        {
-          "path": [
-            "family_name"
-          ]
-        }
+        { "path": ["iso23220", "family_name_unicode"] },
+        { "path": ["iso23220", "given_name_unicode"] },
+        { "path": ["iso23220", "birth_date"] }
       ]
     },
     {
       "id": "utility_bill",
       "format": "dc+sd-jwt",
+      "meta": {
+        "vct_values": ["UtilityBill"]
+      },
       "claims": [
-        {
-          "path": [
-            "address"
-          ]
-        }
+        { "path": ["address"] }
       ]
     },
     {
       "id": "bank_statement",
       "format": "dc+sd-jwt",
+      "meta": {
+        "vct_values": ["BankStatement"]
+      },
       "claims": [
-        {
-          "path": [
-            "address"
-          ]
-        }
+        { "path": ["address"] }
       ]
     }
   ],
   "credential_sets": [
     {
-      "options": [
-        "photo_id"
-      ],
+      "options": [["photo_id"]],
       "required": true
     },
     {
-      "options": [
-        [
-          "utility_bill"
-        ],
-        [
-          "bank_statement"
-        ]
-      ],
+      "options": [["utility_bill"], ["bank_statement"]],
       "required": true
     }
   ]
@@ -111,18 +101,24 @@ Record the answers before you write code.
 ```
 
 ## Run it on OWS
-1. Store as a presentation definition; keep the `presentationDefinitionId`.
+1. Store the query in `dcqlQuery` of a presentation definition (`POST
+   /v2/config/digital-wallet/openid/sdjwt/presentation-definition`, with
+   `label`, `version: "version_01"` and `cryptographicKeyFormat: "x509"`);
+   keep the `presentationDefinitionId`.
+   The label `Know-Your-Customer (KYC)` is reserved; use another label.
 2. Send the verification request (v3); QR or DC API.
 3. On `presentation_acked` + `verified === true`: the presentation carries
-   TWO credentials - map each via `presentationSubmission`, cross-check the
-   name on the Photo ID against the address document holder.
+   TWO credentials. The keys of the `presentationValidity` entries name the
+   credential queries that the wallet answered. Cross-check the name on the
+   Photo ID against the address document holder.
 
 ## Adjust for your deployment
-- Add the identity claims KYC actually needs to `photo_id` (`given_name`,
-  `birth_date`, `document_number`, portrait) - the example discloses only
-  `family_name`.
-- Add `meta` (`doctype_value` / `vct_values`) pinned to your issuers'
-  types, and `trusted_authorities` for regulated onboarding.
+- The Photo ID type and claim paths come from the iGrant.io registry
+  (`igrantio-dcql-query-photo-id`). Add the identity claims KYC actually
+  needs (for example `["iso23220", "portrait"]`).
+- `UtilityBill` and `BankStatement` are example types: set `vct_values` to
+  the types your issuers use, and add `trusted_authorities` for regulated
+  onboarding (`igrantio-dcql-trusted-authority`).
 - Extend the address group's `options` with other accepted evidence
   (rental agreement, bank letter).
 

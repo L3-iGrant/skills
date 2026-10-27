@@ -6,7 +6,7 @@ metadata:
   categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, credential_sets, optional credentials, required false, student ID, transport pass, PID, OpenID4VP, EUDIW, eIDAS2
-  version: 2026.09.01
+  version: 2026.10.01
   source-doc: https://docs.igrant.io/docs/dcql-2-4-5-student-transport-pass/
   requires-skills: igrantio-ows-overview, igrantio-verifier-backend
 ---
@@ -59,50 +59,46 @@ Record the answers before you write code.
     {
       "id": "pid",
       "format": "mso_mdoc",
-      "meta": {
-        "doctype_value": "urn:eu.europa.ec.eudi:pid:1"
-      },
+      "meta": { "doctype_value": "eu.europa.ec.eudi.pid.1" },
       "claims": [
-        { "id": "full_name", "path": ["full_name"] },
-        { "id": "dob", "path": ["date_of_birth"] }
-      ],
-      "claim_sets": [["full_name"], ["dob"]]
+        { "path": ["eu.europa.ec.eudi.pid.1", "family_name"] },
+        { "path": ["eu.europa.ec.eudi.pid.1", "given_name"] },
+        { "path": ["eu.europa.ec.eudi.pid.1", "birth_date"] }
+      ]
     },
     {
       "id": "student_id_card",
       "format": "dc+sd-jwt",
-      "meta": { "vct_values": ["student_id"] },
+      "meta": { "vct_values": ["VerifiableStudentID"] },
       "claims": [
-        { "id": "student_id", "path": ["student_id"] },
-        { "id": "university_name", "path": ["university_name"] }
-      ],
-      "claim_sets": [["university_name", "student_id"]]
+        { "path": ["schacPersonalUniqueID"] },
+        { "path": ["schacHomeOrganization"] }
+      ]
     },
     {
       "id": "enrolment_letter",
       "format": "dc+sd-jwt",
-      "meta": { "vct_values": ["employment_letter"] },
+      "meta": { "vct_values": ["EnrolmentLetter"] },
       "claims": [
-        { "id": "status", "path": ["status"] },
-        { "id": "university_name", "path": ["university_name"] }
-      ],
-      "claim_sets": [["university_name", "status"]]
+        { "path": ["statusActive"] },
+        { "path": ["universityName"] }
+      ]
     },
     {
       "id": "utility_bill_doc",
       "format": "dc+sd-jwt",
-      "meta": { "vct_values": ["utility_bill_doc"] },
-      "claims": [{ "id": "address", "path": ["address"] }]
+      "meta": { "vct_values": ["UtilityBill"] },
+      "claims": [{ "path": ["address"] }]
     },
     {
       "id": "rental_agreement_doc",
       "format": "dc+sd-jwt",
-      "meta": { "vct_values": ["rental_agreement_doc"] },
-      "claims": [{ "id": "address", "path": ["address"] }]
+      "meta": { "vct_values": ["RentalAgreement"] },
+      "claims": [{ "path": ["address"] }]
     }
   ],
   "credential_sets": [
-    { "options": ["pid"], "required": true },
+    { "options": [["pid"]], "required": true },
     { "options": [["student_id_card"], ["enrolment_letter"]], "required": true },
     { "options": [["utility_bill_doc"], ["rental_agreement_doc"]], "required": false }
   ]
@@ -110,14 +106,23 @@ Record the answers before you write code.
 ```
 
 ## Run it on OWS
-1. Store as a presentation definition; send the verification request (v3).
+1. Store the query in `dcqlQuery` of a presentation definition (`POST
+   /v2/config/digital-wallet/openid/sdjwt/presentation-definition`, with
+   `label`, `version: "version_01"` and `cryptographicKeyFormat: "x509"`);
+   then send the verification request (v3).
 2. On `presentation_acked` + `verified === true`, the presentation holds 2
    OR 3 credentials. Branch on whether the optional residency group came
-   back (check `presentationSubmission`) and price the pass accordingly.
+   back (the keys of the `presentationValidity` entries name the credential
+   queries that the wallet answered) and price the pass accordingly.
 
 ## Adjust for your deployment
-- The example `vct_values` are pilot values (note `employment_letter` for
-  the enrolment letter) - pin them to your issuers' real VCTs.
+- The PID doctype and the Student ID vct and claim paths come from the
+  iGrant.io registry (`igrantio-dcql-query-pid`,
+  `igrantio-dcql-query-student-id`). `EnrolmentLetter`, `UtilityBill` and
+  `RentalAgreement` are example types: pin them to your issuers' real
+  types.
+- When you add `claim_sets`, give each claim an `id` that is unique in the
+  whole query.
 - Optional groups must change an OUTCOME (discount tier), never gate the
   flow; treat absence as the normal path.
 - Trim claims to what pricing actually needs.

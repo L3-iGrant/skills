@@ -1,7 +1,6 @@
 /**
  * Receive panel: paste a credential offer (there is no camera scanning in the
- * reference wallet - input is a plain textarea), pick the trust anchor
- * (did:key default; picking x509 clears the kid), then walk the follow-up the
+ * reference wallet - input is a plain textarea), then walk the follow-up the
  * offer demands: transaction code, front-channel authorization, deferred
  * retry, or review (accept/reject).
  */
@@ -54,24 +53,19 @@ export function ReceivePanel({
 }) {
   const receive = useReceiveCredential({ proxyBaseUrl });
   const [offer, setOffer] = useState("");
-  const [trustAnchor, setTrustAnchor] = useState("did:key");
-  const [kid, setKid] = useState("");
   const [reviewing, setReviewing] = useState<PendingCredential | null>(null);
 
   // Front-channel return leg: the issuer redirected back with ?code&state.
   useEffect(() => {
     const captured = captureAuthorizationCode();
     if (captured) {
-      void receive.exchangeCode(captured.code, captured.state).then((ok) => ok && onDone?.());
+      void receive.exchangeCode(captured).then((ok) => ok && onDone?.());
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const submit = async () => {
-    const pending = await receive.receive(offer.trim(), {
-      trustAnchor,
-      kid: trustAnchor === "x509" ? "" : kid || undefined,
-    });
+    const pending = await receive.receive(offer.trim());
     if (pending?.every((p) => p.action === "none")) onDone?.();
   };
 
@@ -85,30 +79,11 @@ export function ReceivePanel({
         placeholder="Enter Credential Offer URL"
         style={{ width: "100%", height: 120, padding: 10, fontSize: 13, boxSizing: "border-box" }}
       />
-      <div style={{ display: "flex", gap: 12, margin: "10px 0", fontSize: 13 }}>
-        <label>
-          Trust anchor{" "}
-          <select
-            value={trustAnchor}
-            onChange={(e) => {
-              setTrustAnchor(e.target.value);
-              if (e.target.value === "x509") setKid("");
-            }}
-          >
-            <option value="did:key">did:key</option>
-            <option value="x509">x509</option>
-          </select>
-        </label>
-        {trustAnchor !== "x509" && (
-          <label>
-            Key identifier (optional){" "}
-            <input value={kid} onChange={(e) => setKid(e.target.value)} style={{ width: 180 }} />
-          </label>
-        )}
+      <div style={{ marginTop: 10 }}>
+        <Button disabled={!offer.trim() || receive.status === "receiving"} onClick={() => void submit()}>
+          Receive
+        </Button>
       </div>
-      <Button disabled={!offer.trim() || receive.status === "receiving"} onClick={() => void submit()}>
-        Receive
-      </Button>
 
       {receive.error && <div style={{ color: COLORS.red, fontSize: 13, marginTop: 8 }}>{receive.error}</div>}
       {receive.status === "done" && (

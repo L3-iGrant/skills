@@ -6,7 +6,7 @@ metadata:
   categories: [backend, education]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VP, DCQL, relying party, credential verification, verifiable presentations, transaction data, SCA, e-mandate, QES
-  version: 2026.09.01
+  version: 2026.10.01
   api: https://docs.igrant.io/docs/category/openid4vc-api/verifier
   protocols: OpenID4VP-1.0, DCQL, SD-JWT-VC
   auth: OWS API key (Authorization "ApiKey <key>") injected by the proxy; browser sends no key
@@ -61,7 +61,9 @@ Record the answers before you write code.
 
 ## What it does
 - **Proxy** `GET|POST|PUT|DELETE ${PROXY_PREFIX}/{tenant}/...` → OWS, injecting the tenant's
-  `ApiKey`. Allow-lists only OWS **verification** endpoints (send, history).
+  `ApiKey`. Allow-lists only OWS **verification** endpoints: v3 send and
+  history, and the v2 history record (delete, Digital Credentials API
+  receive).
 - **Register** the verifier webhook idempotently (`VERIFIER_TOPICS`) via
   `scripts/register-webhook.ts`.
 - **Receive** `POST /webhook`, verify the `X-iGrant-Signature` HMAC, extract the
@@ -88,16 +90,18 @@ Default `PORT=6002` so it can run alongside an issuer backend.
 ## Verification contract (what the frontend drives through this backend)
 - `POST …/verification/send` → response `verificationHistory.presentationExchangeId`
   (SSE key) + `verificationHistory.vpTokenQrCode` (QR URI).
-- The send body may carry optional `transactionData` - wallet-displayed and
+- The send body may carry `transactionData` - wallet-displayed and
   wallet-signed transaction data (SCA): simple `payment_data`, an EUDI SCA
   rulebook (TS12) `payload` (payment / e-mandate / login-risk / account
-  access), or `qes_data` (QES document signing). The proxy passes it through
+  access), or `qes_data` (QES document signing). The presentation definition
+  must name the type in `transactionDataDefinitionType`; then the send needs
+  the data, and without that type OWS refuses it. The proxy passes it through
   unchanged; see `igrantio-ows-overview/references/api-reference.md` §2.1 for
   the exact shapes and §2.2 for verifying the returned
   `transaction_data_hashes`.
-- Done on webhook `openid.presentation.presentation_acked.v3` /
-  `digitalwallet.presentation.verified`; the SSE event carries
-  `data.presentation.verified` and `data.presentation.presentation[0]` (claims).
+- Done on webhook `openid.presentation.presentation_acked.v3`; the SSE event
+  carries `data.presentation.verified` and `data.presentation.presentation[0]`
+  (claims).
 See `igrantio-ows-overview/references/api-reference.md` §2 and §4.
 
 ## Adapting

@@ -6,7 +6,7 @@ metadata:
   categories: [credential-schema, education]
   provider: iGrant.io
   keywords: diploma, education credential, qualification, National Learner Registry, ULID, awarding institution, credential schema, claim path pointer, SD-JWT VC, EUDIW, GovStack, ITU
-  version: 2026.09.01
+  version: 2026.10.01
   source-doc: https://giga-staging.igrant.io/knowledgebase/showcase-credentials
   credential-formats: dc+sd-jwt
   requires-skills: igrantio-api-issuer
@@ -49,8 +49,9 @@ before you write code.
 3. **Label** - the credential definition label. Must be unique in the
    organisation and at least 3 characters. Pick a fresh label so you do not
    collide with an existing definition (for example `National Diploma`).
-4. **Signing key (`kid`)** - the id of the x509 key to sign with, and its
-   certificate on the trust list.
+4. **Signing key (`cryptographicKeyIdentifier`)** - the id of the X.509 key to
+   sign with, and its certificate on the trust list. _Default: the default key
+   of the organisation._
 5. **Revocation** - status list on? _Recommend on; a diploma has a lifetime._
 6. **Validity** - `expirationInDays`? _The showcase uses 3650 (10 years)._
 
@@ -98,7 +99,7 @@ Create the credential definition with
 {
   "label": "National Diploma",
   "version": "version_01",
-  "trustAnchor": "x509",
+  "cryptographicKeyFormat": "x509",
   "supportInteractiveAuthorisationEndpoint": true,
   "display": {
     "name": "Diploma",
@@ -136,8 +137,11 @@ Notes on the request.
 - `label` must be unique and at least 3 characters. The platform reserves the
   labels `Payment User Credential`, `Payment Card Credential`, `Payment Account
   Credential`, `PID Issuance` and `Photo ID Issuance`; pick another label.
-- Always send `version` with the value `version_01`. You cannot change it after
-  you create the definition.
+- `version` is required. Its only value is `version_01` (OpenID4VCI 1.0), and
+  you cannot change it after you create the definition.
+- `cryptographicKeyFormat: "x509"` signs with the default key of the
+  organisation and its X.509 certificate chain. Add
+  `cryptographicKeyIdentifier` to sign with another key.
 - `supportInteractiveAuthorisationEndpoint: true` lets the payment credential be
   presented during issuance, so the diploma follows in the same session (the
   dynamic credential request). Leave it off if you issue the diploma on its own.

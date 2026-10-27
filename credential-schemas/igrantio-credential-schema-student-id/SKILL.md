@@ -6,7 +6,7 @@ metadata:
   categories: [credential-schema, education]
   provider: iGrant.io
   keywords: Student ID, VerifiableStudentID, eduPerson, SCHAC, eduGAIN, affiliation, enrolment, credential schema, claim path pointer, SD-JWT VC, mso_mdoc, jwt_vc_json, EUDIW, verifiable data registry
-  version: 2026.09.01
+  version: 2026.10.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/credentialSchemas/claimPathPointer/studentId
   schema-version: 2025.7.1
   credential-formats: dc+sd-jwt, jwt_vc_json, mso_mdoc
@@ -60,8 +60,9 @@ Record the answers before you write code.
    arrive later)?
 6. **Revocation** - status list on? _Recommend on for any credential with a
    lifetime._
-7. **Signing** - a DID key or an X.509 certificate (`x5c`)? _X.509 is needed
-   for mdoc and for the trust list._
+7. **Signing key** - which key signs the credentials? _Recommend a key with an
+   X.509 certificate chain (`cryptographicKeyFormat: "x509"`). The trust list
+   needs it, and `mso_mdoc` accepts only `x509`._
 8. **Trust list** - is your issuer certificate (the trust anchor) registered
    in the trust list? If not, contact
    [support@igrant.io](mailto:support@igrant.io) and follow
@@ -326,91 +327,89 @@ This format uses the credential type `VerifiableStudentIDJWT`, not
 | `validationPath` | `$` |
 | Claim carrier in the request | `claims` |
 
-The first element of every path is `eu.europa.ec.eudi`. That value is the mDoc
-namespace of the claims. It is not the same string as the doctype
-`eu.europa.ec.eudi.studentid.1`. Send the doctype in the `doctype` field, and
-keep `eu.europa.ec.eudi` as the first path element, as the registry has it.
+The first element of every path is the mDoc namespace
+`eu.europa.ec.eudi.studentid.1`, the same value as the doctype.
 
 ```json
 {
   "claims": [
     {
-      "path": ["eu.europa.ec.eudi", "commonName"],
+      "path": ["eu.europa.ec.eudi.studentid.1", "commonName"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "dateOfBirth"],
+      "path": ["eu.europa.ec.eudi.studentid.1", "dateOfBirth"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "displayName"],
+      "path": ["eu.europa.ec.eudi.studentid.1", "displayName"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "eduPersonAffiliation", null],
+      "path": ["eu.europa.ec.eudi.studentid.1", "eduPersonAffiliation", null],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "eduPersonAssurance", null],
+      "path": ["eu.europa.ec.eudi.studentid.1", "eduPersonAssurance", null],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "eduPersonPrimaryAffiliation"],
+      "path": ["eu.europa.ec.eudi.studentid.1", "eduPersonPrimaryAffiliation"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "eduPersonPrincipalName"],
+      "path": ["eu.europa.ec.eudi.studentid.1", "eduPersonPrincipalName"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "eduPersonScopedAffiliation", null],
+      "path": ["eu.europa.ec.eudi.studentid.1", "eduPersonScopedAffiliation", null],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "familyName"],
+      "path": ["eu.europa.ec.eudi.studentid.1", "familyName"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "firstName"],
+      "path": ["eu.europa.ec.eudi.studentid.1", "firstName"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "id"],
+      "path": ["eu.europa.ec.eudi.studentid.1", "id"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "identifier"],
+      "path": ["eu.europa.ec.eudi.studentid.1", "identifier"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "mail"],
+      "path": ["eu.europa.ec.eudi.studentid.1", "mail"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "schacHomeOrganization"],
+      "path": ["eu.europa.ec.eudi.studentid.1", "schacHomeOrganization"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "schacPersonalUniqueCode", null],
+      "path": ["eu.europa.ec.eudi.studentid.1", "schacPersonalUniqueCode", null],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "schacPersonalUniqueID"],
+      "path": ["eu.europa.ec.eudi.studentid.1", "schacPersonalUniqueID"],
       "mandatory": true,
       "limitDisclosure": true
     }
@@ -454,6 +453,7 @@ the format fields that the table above gives.
 {
   "label": "Issue Student ID",
   "version": "version_01",
+  "cryptographicKeyFormat": "x509",
   "credentialDefinitions": [
     {
       "credentialFormat": "dc+sd-jwt",
@@ -487,9 +487,12 @@ Notes on the request.
 - `label` must hold at least 3 characters. The platform reserves the labels
   `Payment User Credential`, `Payment Card Credential`, `Payment Account
   Credential`, `PID Issuance` and `Photo ID Issuance`, so pick another label.
-- Always send `version` with the value `version_01`. The issuer falls back to an
-  earlier version of the specification when you leave the field out, and you
-  cannot change the value after you create the credential definition.
+- `version` is required. Its only value is `version_01` (OpenID4VCI 1.0), and
+  you cannot change it after you create the credential definition.
+- `cryptographicKeyFormat: "x509"` signs the credentials with the default key of
+  the organisation and its X.509 certificate chain. Name another key with
+  `cryptographicKeyIdentifier`. Upload the chain to the key first
+  (`igrantio-api-key-management`).
 - Add one entry of `credentialDefinitions[]` for each format that you want to
   publish. You can publish more than one format from one credential definition.
 - Keep the `id` that the response returns for each entry. The issue operation

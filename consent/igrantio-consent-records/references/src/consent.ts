@@ -12,17 +12,16 @@ export async function readConsent(
   individualId: string,
   dataAgreementId: string,
 ): Promise<ConsentRecord | null> {
-  try {
-    const { consentRecord } = await client.consentRecords.read(individualId, dataAgreementId);
-    return consentRecord ?? null;
-  } catch {
-    return null;
-  }
+  const { consentRecord } = await client.consentRecords.read(individualId, dataAgreementId);
+  return consentRecord ?? null;
 }
 
 /**
  * Give or withdraw consent for a data agreement. Creates the record on first use,
- * otherwise updates it. `optIn` true = allow, false = withdraw.
+ * otherwise updates it. `optIn` true = allow, false = withdraw. A new record is
+ * always opted in, so a first withdraw is a create and then an update.
+ * `revisionId` applies only to a new record: an update always moves the record
+ * to the latest revision of the data agreement.
  */
 export async function setConsent(
   client: ConsentClient,
@@ -33,23 +32,16 @@ export async function setConsent(
 ): Promise<ConsentRecord> {
   const existing = await readConsent(client, individualId, dataAgreementId);
 
-  if (!existing?.id) {
-    const { consentRecord } = await client.consentRecords.create(
-      individualId,
-      dataAgreementId,
-      { optIn },
-      { revisionId: opts.revisionId },
-    );
-    return consentRecord;
+  let record = existing;
+  if (!record?.id) {
+    ({ consentRecord: record } = await client.consentRecords.create(individualId, dataAgreementId, {
+      revisionId: opts.revisionId,
+    }));
+    if (!record.id) throw new Error("Create consent record returned no id");
+    if (record.optIn === optIn) return record;
   }
 
-  const revisionId = opts.revisionId ?? existing.dataAgreementRevisionId ?? "";
-  const { consentRecord } = await client.consentRecords.update(
-    individualId,
-    existing.id,
-    { optIn },
-    { dataAgreementId, revisionId },
-  );
+  const { consentRecord } = await client.consentRecords.update(individualId, record.id, { optIn });
   return consentRecord;
 }
 

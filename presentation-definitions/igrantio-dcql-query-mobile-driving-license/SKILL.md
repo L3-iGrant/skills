@@ -6,7 +6,7 @@ metadata:
   categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, mDL, mobile driving licence, ISO 18013-5, org.iso.18013.5.1.mDL, driving_privileges, age_over_18, portrait, mso_mdoc, OpenID4VP, presentation definition, EUDIW, eIDAS2
-  version: 2026.09.01
+  version: 2026.10.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/presentationDefinitions/dcqlQuery/mobileDrivingLicense
   requires-skills: igrantio-api-verifier
 ---
@@ -49,8 +49,8 @@ Record the answers before you write code.
 2. **API key** - do you have the OWS API key for that environment? If not,
    request it from [support@igrant.io](mailto:support@igrant.io) before you
    continue.
-3. **Format** - `dc+sd-jwt`, `jwt_vc_json` or `mso_mdoc`? _Match the format
-   the issuer used._
+3. **Format** - the registry publishes this template in `mso_mdoc` only, so
+   use `mso_mdoc`.
 4. **Claims** - which claims does the use case need? _Ask for the minimum._
 5. **Channel** - cross-device QR, same-device Digital Credentials API, or
    both? _Recommend QR first; `igrantio-dcapi-android` and
@@ -142,6 +142,7 @@ Set `version` to `version_01`.
 {
   "label": "Driving licence check at pickup",
   "version": "version_01",
+  "cryptographicKeyFormat": "x509",
   "responseType": "vp_token",
   "responseMode": "direct_post",
   "dcqlQuery": {
@@ -163,15 +164,21 @@ Set `version` to `version_01`.
 }
 ```
 
+`cryptographicKeyFormat: "x509"` signs the request with the default key of the
+organisation and its X.509 certificate chain, and `clientIdScheme` then
+defaults to `x509_hash`. Name another key with `cryptographicKeyIdentifier`.
+
 Then send the verification request with the V3 send operation,
 `POST /v3/config/digital-wallet/openid/sdjwt/verification/send`, and pass the
 `presentationDefinitionId` of the record that you created. Read the disclosed
 data elements from `presentation` on the verification history record.
 
 For a same-device check in a browser, the presentation definition also supports
-the ISO 18013-7 Annex C profile. That profile needs a different `version` value,
-`trustAnchor` set to `x509`, and `expectedOrigins`. Read `igrantio-api-verifier`
-before you use it.
+the ISO 18013-7 Annex C profile (`version` `iso18013_7_annex_c`). It has its own
+rules, for example `responseType` `device_response`, `cryptographicKeyFormat`
+`x509`, no `clientIdScheme`, `require_cryptographic_holder_binding: true` and
+exactly one origin in `expectedOrigins`. Read `igrantio-dcapi-ios` before you
+use it.
 
 The `igrantio-api-verifier` skill holds the full operation reference: every
 field of the presentation definition, every transport option, and the shape of

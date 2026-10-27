@@ -6,7 +6,7 @@ metadata:
   categories: [credential-schema]
   provider: iGrant.io
   keywords: authenticator, io.igrant.authenticator, passwordless login, email_address, SD-JWT VC, dc+sd-jwt, jwt_vc_json, mso_mdoc, claim path pointer, credential definition, EUDIW, selective disclosure
-  version: 2026.09.01
+  version: 2026.10.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/credentialSchemas/claimPathPointer/authenticator
   schema-version: 2025.7.1
   formats: dc+sd-jwt, jwt_vc_json, mso_mdoc
@@ -63,8 +63,9 @@ Record the answers before you write code.
    arrive later)?
 6. **Revocation** - status list on? _Recommend on for any credential with a
    lifetime._
-7. **Signing** - a DID key or an X.509 certificate (`x5c`)? _X.509 is needed
-   for mdoc and for the trust list._
+7. **Signing key** - which key signs the credentials? _Recommend a key with an
+   X.509 certificate chain (`cryptographicKeyFormat: "x509"`). The trust list
+   needs it, and `mso_mdoc` accepts only `x509`._
 8. **Trust list** - is your issuer certificate (the trust anchor) registered
    in the trust list? If not, contact
    [support@igrant.io](mailto:support@igrant.io) and follow
@@ -75,7 +76,7 @@ Record the answers before you write code.
 
 | Fact | Value |
 | --- | --- |
-| Title | iGrant.io Authenticator |
+| Title | Authenticator |
 | Credential type | `io.igrant.authenticator` |
 | Namespace | `io.igrant.authenticator` |
 | Format | `dc+sd-jwt` |
@@ -99,7 +100,7 @@ Record the answers before you write code.
 
 | Fact | Value |
 | --- | --- |
-| Title | iGrant.io Authenticator |
+| Title | Authenticator |
 | Credential type | `io.igrant.authenticator` |
 | Namespace | `io.igrant.authenticator` |
 | Format | `jwt_vc_json` |
@@ -123,7 +124,7 @@ Record the answers before you write code.
 
 | Fact | Value |
 | --- | --- |
-| Title | iGrant.io Authenticator |
+| Title | Authenticator |
 | Credential type | `io.igrant.authenticator` |
 | Doctype | `io.igrant.authenticator` |
 | Namespace | `io.igrant.authenticator` |
@@ -170,6 +171,9 @@ Put one entry in `credentialDefinitions[]` for each format that you publish, and
 copy the `claims` array of the matching schema document into that entry.
 
 - Set `version` to `version_01` at the top level of the request.
+- Set `cryptographicKeyFormat` to `x509` at the top level. The default key of
+  the organisation then signs, with its X.509 certificate chain. Name another
+  key with `cryptographicKeyIdentifier`.
 - For `dc+sd-jwt`: set `vct` to `io.igrant.authenticator`, put the array in
   `claims.claims`, and set `validationPath` to `$`.
 - For `jwt_vc_json`: set `type` to an array that holds
@@ -182,6 +186,7 @@ copy the `claims` array of the matching schema document into that entry.
 {
   "label": "Issue iGrant.io Authenticator",
   "version": "version_01",
+  "cryptographicKeyFormat": "x509",
   "credentialDefinitions": [
     {
       "credentialFormat": "dc+sd-jwt",

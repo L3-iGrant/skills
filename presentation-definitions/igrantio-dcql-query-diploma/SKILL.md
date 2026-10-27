@@ -6,7 +6,7 @@ metadata:
   categories: [dcql-query, education]
   provider: iGrant.io
   keywords: DCQL, presentation definition, OpenID4VP, diploma, qualification check, employer, selective disclosure, PID, National Learner Registry, EUDIW, GovStack, ITU
-  version: 2026.09.01
+  version: 2026.10.01
   source-doc: https://giga-staging.igrant.io/knowledgebase/showcase-credentials
   requires-skills: igrantio-api-verifier
 ---
@@ -41,8 +41,9 @@ data.
 2. **API key** - the OWS API key for the verifying organisation.
 3. **Label** - a unique presentation definition label (at least 3 characters),
    for example `Diploma qualification check`.
-4. **Signing key (`kid`)** - the x509 verifier key, its certificate on the trust
-   list.
+4. **Signing key (`cryptographicKeyIdentifier`)** - the X.509 verifier key and
+   its certificate on the trust list. _Default: the default key of the
+   organisation._
 5. **Fields** - the identity and diploma claims to request. _Default: the five
    diploma fields below plus three PID fields; ask for no more than you need._
 
@@ -92,7 +93,7 @@ it at request time with the V3 verification `send` operation
   "responseType": "vp_token",
   "responseMode": "direct_post",
   "clientIdScheme": "x509_hash",
-  "trustAnchor": "x509",
+  "cryptographicKeyFormat": "x509",
   "dcqlQuery": {
     "credentials": [
       {
@@ -126,12 +127,13 @@ Notes on the request.
 
 - `label` must be unique and at least 3 characters. Pick a fresh label so you do
   not collide with an existing presentation definition.
-- Always send `version` with the value `version_01`.
+- `version` is required. Use `version_01` (OpenID4VP 1.0).
 - Both queries are required by default, so the wallet must hold both a PID and a
   diploma. Read the verification result with
-  `GET /v3/config/digital-wallet/openid/sdjwt/verification/history/{exchangeId}`.
-- `clientIdScheme: "x509_hash"` and `trustAnchor: "x509"` sign the request with
-  the verifier certificate, so the wallet shows the request as trusted.
+  `GET /v3/config/digital-wallet/openid/sdjwt/verification/history/{presentationExchangeId}`.
+- `clientIdScheme: "x509_hash"` and `cryptographicKeyFormat: "x509"` sign the
+  request with the verifier certificate, so the wallet shows the request as
+  trusted.
 
 Read `igrantio-api-verifier` for the full DCQL reference (claim sets, credential
 sets, trusted authorities, transaction data) and the send and history

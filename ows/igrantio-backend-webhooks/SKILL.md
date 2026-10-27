@@ -6,7 +6,7 @@ metadata:
   categories: [backend, education]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, OpenID4VCI, OpenID4VP, webhooks, HMAC, digital identity wallet
-  version: 2026.09.01
+  version: 2026.10.01
   api: https://docs.igrant.io/docs/openid4vc-api/config-create-webhook
   auth: OWS API key to register; shared HMAC secretKey to verify deliveries
   requires-skills: igrantio-ows-overview, igrantio-backend-sse
@@ -49,8 +49,11 @@ Record the answers before you write code.
 - **Register (idempotent)** - `POST /v2/config/webhook` with `payloadUrl`,
   `contentType`, `subscribedEvents.digitalWalletWebhook`, `secretKey`. Lists
   existing webhooks first and **skips if one already targets the payloadUrl**.
-- **Receive** - `POST /webhook`: verify `X-iGrant-Signature: t=<ts>,sig=<hex>`
-  where `sig = HMAC_SHA256(secretKey, "<t>.<raw body>")` (constant-time compare),
+  OWS answers `200` with `{ "webhook": { … } }`. It refuses (`400`) an unknown
+  topic and a second webhook for the same `payloadUrl`.
+- **Receive** - `POST /webhook`: verify `X-iGrant-Signature: t=<time>,sig=<hex>`
+  where `t` is the UTC delivery time in ISO 8601 and
+  `sig = HMAC_SHA256(secretKey, "<t>.<raw body>")` (constant-time compare),
   reject unknown topics, extract the exchange id, store the event.
 
 ## Reference
@@ -64,8 +67,10 @@ Record the answers before you write code.
 ## Topics → exchange id
 | Topic | Exchange id path in `data` |
 | --- | --- |
-| `openid.credential.offer_received` / `token_issued` / `credential_acked` / `credential_accepted` | `credential.CredentialExchangeId` |
-| `openid.presentation.presentation_acked.v3` / `digitalwallet.presentation.verified` | `presentation.presentationExchangeId` |
+| `openid.credential.offer_received` / `token_issued` / `credential_acked` / `credential_accepted` / `issuance_denied` | `credential.CredentialExchangeId` |
+| `openid.presentation.presentation_acked.v3` | `presentation.presentationExchangeId` |
+
+`GET /v2/config/webhooks/event-types` lists every topic that OWS sends.
 
 ## Register once per org (idempotent)
 ```ts

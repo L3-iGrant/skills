@@ -15,7 +15,7 @@ export interface IssuerFlowProps extends IssuanceConfig {
   claims: Record<string, unknown>;
   /** The logo on the white disc in the centre of the QR code. */
   logoSrc?: string;
-  /** Pre-authorised transaction code, when the definition asks for one. */
+  /** Transaction code (4 to 12 characters): sent as `userPin`, shown in the panel. */
   txCode?: string;
 }
 
@@ -28,8 +28,14 @@ export function IssuerFlow({
 }: IssuerFlowProps) {
   const { status, offerUri, error, issueInTime, reset } = useIssuance(config);
 
+  // A transaction code selects the pre-authorised code flow; the panel shows the same code.
   const issue = () =>
-    issueInTime({ issuanceMode: "InTime", credentialDefinitionId, credential: { claims } });
+    issueInTime({
+      issuanceMode: "InTime",
+      credentialDefinitionId,
+      credential: { claims },
+      ...(txCode ? { userPin: txCode } : {}),
+    });
 
   // Refresh mints a NEW exchange: the hook closes the old SSE session and
   // opens one on the new exchange id. An expired offer is never re-rendered.

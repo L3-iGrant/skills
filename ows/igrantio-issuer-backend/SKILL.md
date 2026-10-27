@@ -6,7 +6,7 @@ metadata:
   categories: [backend, education]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VCI, credential issuance, verifiable credentials, SD-JWT VC, mso_mdoc
-  version: 2026.09.01
+  version: 2026.10.01
   api: https://docs.igrant.io/docs/category/openid4vc-api/issuer
   protocols: OpenID4VCI-1.0, SD-JWT-VC, W3C-VC-2.0, mso_mdoc
   auth: OWS API key (Authorization "ApiKey <key>") injected by the proxy; browser sends no key
@@ -97,9 +97,12 @@ references/
 ## Issuance contract (what the frontend drives through this backend)
 - `POST …/credential/issue` → response `credentialHistory.CredentialExchangeId`
   (SSE key) + `credentialHistory.credentialOffer` (QR URI).
-- Deferred: on webhook `openid.credential.offer_received`,
-  `PUT …/credential/history/{CredentialExchangeId}` with the claims.
-- Done on webhook `openid.credential.credential_accepted` / `token_issued`.
+- Deferred: on the first webhook `openid.credential.offer_received` or
+  `token_issued`, `PUT …/credential/history/{CredentialExchangeId}` with the
+  claims.
+- Done on webhook `openid.credential.credential_acked` (the wallet has the
+  credential) or `credential_accepted` (the wallet confirmed it). Failed on
+  `openid.credential.issuance_denied` (`credential.issuanceDeniedReason`).
 See `igrantio-ows-overview/references/api-reference.md` §1 and §4.
 
 ## Adapting

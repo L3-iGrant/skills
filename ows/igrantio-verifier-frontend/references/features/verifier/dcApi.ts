@@ -4,18 +4,15 @@
  * Optional companion to the QR (cross-device) path. When
  * `verificationHistory.dcApiRequest` is present, invoke the wallet on THIS device
  * with `navigator.credentials.get`, then post the response back to OWS (through
- * your backend proxy) to complete the exchange. The SSE stream still delivers the
- * final verified result, so the UI code path is unchanged.
+ * your backend proxy, `client.verification.receiveDcApiResponse`) to complete the
+ * exchange. The SSE stream still delivers the final verified result, so the UI
+ * code path is unchanged.
  *
- * Dependency-free; genericised from the landing-page dcApiService.
+ * Dependency-free.
  */
+import type { DcApiProtocol, DcApiReceivePayload, DcApiRequest } from "../../lib/ows";
 
-export type DcApiProtocol = "openid4vp" | "openid4vp-v1-signed";
-
-export interface DcApiRequest {
-  chrome: unknown;
-  safari: unknown;
-}
+export type { DcApiProtocol, DcApiRequest };
 
 export interface DcApiResult {
   success: boolean;
@@ -51,16 +48,22 @@ export async function invokeWallet(request: DcApiRequest): Promise<DcApiResult> 
     return { success: false, error: "DC API not supported", errorType: "not_supported" };
   }
 
+  // Each variant is the `navigator.credentials.get` argument: { digital: … }.
   const platformRequest = getPlatformRequest(request) as {
-    digital?: { providers?: Array<{ protocol: string; request: string | object }> };
+    digital?: {
+      providers?: Array<{ protocol: string; request: string | object }>;
+      requests?: unknown[];
+    };
   };
   const nav = navigator as DigitalCredentialsNavigator;
 
   try {
-    const providers = platformRequest?.digital?.providers;
+    const digital = platformRequest?.digital;
+    const providers = digital?.providers;
     let credential: { data: unknown; protocol: string } | null = null;
 
     if (providers?.length) {
+      // Older `providers` form: send it in the current `requests` form.
       const provider = providers[0];
       const data =
         typeof provider.request === "string" ? JSON.parse(provider.request) : provider.request;
@@ -68,7 +71,7 @@ export async function invokeWallet(request: DcApiRequest): Promise<DcApiResult> 
         digital: { requests: [{ protocol: provider.protocol, data }] },
       });
     } else {
-      credential = await nav.credentials.get({ digital: platformRequest });
+      credential = await nav.credentials.get({ digital });
     }
 
     if (!credential?.data) {
@@ -90,18 +93,23 @@ export async function invokeWallet(request: DcApiRequest): Promise<DcApiResult> 
   }
 }
 
-/** Shape the wallet response for posting back to OWS to complete the exchange. */
+/**
+ * Shape the wallet response for the receive call. ISO 18013-7 Annex C
+ * (`org-iso-mdoc`): the base64url EncryptedResponse from `{ response }`.
+ * OpenID4VP: the wallet data as it came (`{ vp_token }` for `dc_api`, or
+ * `{ response: <JWE> }` for `dc_api.jwt`); OWS reads both from `response`.
+ */
 export function buildReceivePayload(
   credentialData: string,
   protocol: DcApiProtocol,
-): Record<string, unknown> {
-  if (protocol === "openid4vp-v1-signed") {
-    return { response: credentialData }; // encrypted JWE - send as-is
+): DcApiReceivePayload {
+  if (protocol === "org-iso-mdoc") {
+    try {
+      const parsed = JSON.parse(credentialData);
+      if (typeof parsed?.response === "string") return { response: parsed.response };
+    } catch {
+      // not JSON: the EncryptedResponse itself
+    }
   }
-  try {
-    const parsed = JSON.parse(credentialData);
-    return { vp_token: parsed.vp_token ?? parsed };
-  } catch {
-    return { vp_token: credentialData };
-  }
+  return { response: credentialData };
 }

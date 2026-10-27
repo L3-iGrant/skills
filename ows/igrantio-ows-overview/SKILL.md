@@ -6,7 +6,7 @@ metadata:
   categories: [overview, education]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VCI, OpenID4VP, DCQL, verifiable credentials, digital identity wallet, transaction data, SCA
-  version: 2026.09.01
+  version: 2026.10.01
   api: https://docs.igrant.io/docs/developer-apis
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0, DCQL, SD-JWT-VC, W3C-VC-2.0, mso_mdoc
   auth: OWS API key (Authorization "ApiKey <key>") - held only by the tenant backend, never the browser
@@ -88,19 +88,21 @@ data-flow, path allow-list, HMAC scheme, and the exchange-id correlation table.
    carries `credentialHistory.CredentialExchangeId` (correlation key) and
    `credentialHistory.credentialOffer` (the `openid-credential-offer://` URI → render as QR / deep link).
 2. Open SSE on the `CredentialExchangeId`.
-3. Wallet scans, accepts → webhook `openid.credential.credential_accepted` /
-   `token_issued` → SSE fires → mark issued.
+3. Wallet scans and takes the credential → webhook
+   `openid.credential.credential_acked` (then `credential_accepted` when the
+   wallet confirms) → SSE fires → mark issued. `openid.credential.issuance_denied`
+   → show the failure.
 4. **Deferred** variant: issue with `issuanceMode: "Deferred"`, then on
-   `openid.credential.offer_received` `PUT …/credential/history/{CredentialExchangeId}`
-   with the collected claims.
+   `openid.credential.offer_received` or `token_issued` (the first that arrives)
+   `PUT …/credential/history/{CredentialExchangeId}` with the collected claims.
 
 ### Verification (OpenID4VP + DCQL) - you are the verifier / relying party
 1. `POST …/verification/send` with `presentationDefinitionId` (a stored DCQL query)
    → response carries `verificationHistory.presentationExchangeId` (correlation key)
-   and `verificationHistory.vpTokenQrCode` (the `openid4vp://` URI → render as QR / DC API request).
+   and `verificationHistory.vpTokenQrCode` (the `openid4vp://` URI → render as QR),
+   or `verificationHistory.dcApiRequest` for the same-device Digital Credentials API.
 2. Open SSE on the `presentationExchangeId`.
-3. Wallet presents → webhook `openid.presentation.presentation_acked.v3` /
-   `digitalwallet.presentation.verified` → SSE fires with
+3. Wallet presents → webhook `openid.presentation.presentation_acked.v3` → SSE fires with
    `data.presentation.vpTokenResponse` (non-empty = responded),
    `data.presentation.presentation[0]` (the disclosed claims), and
    `data.presentation.verified`.
@@ -124,7 +126,7 @@ never these directly.
 - **OWS** - Organisation Wallet Suite (the iGrant.io API surface).
 - **credentialDefinitionId** - a stored issuer credential configuration.
 - **presentationDefinitionId** - a stored verifier DCQL query / presentation definition.
-- **CredentialExchangeId / presentationExchangeId** - per-transaction id; the **SSE correlation key** and the webhook's `external_id`.
+- **CredentialExchangeId / presentationExchangeId** - per-transaction id; the **SSE correlation key**, also in the webhook payload (`data.credential.CredentialExchangeId` / `data.presentation.presentationExchangeId`).
 - **credentialOffer / vpTokenQrCode** - the wallet-facing URI you render as a QR code or open as a same-device deep link.
 - **exchange id** - umbrella term for the two above.
 

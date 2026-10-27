@@ -55,7 +55,7 @@ export interface MatchedCredential {
   [k: string]: unknown;
 }
 
-/** One entry of the filter response (`inputDescriptors` / `inputDescriptor` / `credentials`). */
+/** One entry of the filter response (`credentials` for DCQL, `inputDescriptors` for Presentation Exchange). */
 export interface FilterDescriptor {
   id: string;
   name?: string;

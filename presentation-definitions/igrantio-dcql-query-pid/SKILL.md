@@ -1,12 +1,12 @@
 ---
 name: igrantio-dcql-query-pid
-description: 'DCQL query template for the Person Identification Data (PID) credential (vct urn:eu.europa.ec.eudi:pid:1, mDoc doctype eu.europa.ec.eudi.pid.1) from the iGrant.io verifiable data registry. Holds the claim list for three formats: dc+sd-jwt, jwt_vc_json and mso_mdoc, with the name, birth date, address, contact and age-over claims. Use this skill when you build an OpenID4VP presentation definition that asks an EUDI Wallet for identity data, or when you need the exact PID claim path for an age check or an address check. For the EU ARF 2.8.0 PID, read igrantio-dcql-query-pid-v2.'
+description: 'DCQL query template for the Person Identification Data (PID) credential (vct urn:eu.europa.ec.eudi:pid:1, mDoc doctype eu.europa.ec.eudi.pid.1) from the iGrant.io verifiable data registry. Holds the claim list for three formats: dc+sd-jwt, jwt_vc_json and mso_mdoc, with the name, birth date, address, contact and age-over claims. Use this skill when you build an OpenID4VP presentation definition that asks an EUDI Wallet for identity data, or when you need the exact PID claim path for an age check or an address check. For the current PID Rulebook PID (vct urn:eudi:pid:1), read igrantio-dcql-query-pid-v2.'
 license: Apache-2.0
 metadata:
   categories: [dcql-query, education]
   provider: iGrant.io
   keywords: DCQL, PID, Person Identification Data, urn:eu.europa.ec.eudi:pid:1, eu.europa.ec.eudi.pid.1, age_over_18, is_over_18, presentation definition, OpenID4VP, mso_mdoc, SD-JWT VC, jwt_vc_json, EUDIW, eIDAS2
-  version: 2026.09.01
+  version: 2026.10.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/presentationDefinitions/dcqlQuery/pid
   registry-version: 2025.7.1
   requires-skills: igrantio-api-verifier
@@ -31,8 +31,8 @@ Common needs:
 Ask only for the claims that your use case needs. An age check needs one
 boolean claim, not the birth date.
 
-This template follows the earlier PID rules. For the PID of EU ARF 2.8.0,
-read `igrantio-dcql-query-pid-v2`.
+This template follows the earlier PID rules. For the PID of the current PID
+Rulebook (vct `urn:eudi:pid:1`), read `igrantio-dcql-query-pid-v2`.
 
 ## Prerequisites
 - An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
@@ -198,6 +198,7 @@ to `version_01`.
 {
   "label": "Prove age over 18",
   "version": "version_01",
+  "cryptographicKeyFormat": "x509",
   "responseType": "vp_token",
   "responseMode": "direct_post",
   "dcqlQuery": {
@@ -214,6 +215,10 @@ to `version_01`.
   }
 }
 ```
+
+`cryptographicKeyFormat: "x509"` signs the request with the default key of the
+organisation and its X.509 certificate chain, and `clientIdScheme` then
+defaults to `x509_hash`. Name another key with `cryptographicKeyIdentifier`.
 
 `mso_mdoc` takes `doctype_value` only:
 

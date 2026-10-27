@@ -1,7 +1,9 @@
 import { useCallback, useRef, useState } from "react";
 import { useOwsClient, useSSE } from "../../lib/ows";
 import type {
+  CredentialHistoryItem,
   IssuanceSSEData,
+  IssueCredentialResponse,
   IssueInTimeRequest,
   OwsWebhookEvent,
   StartDeferredRequest,
@@ -25,6 +27,20 @@ export interface IssuanceState {
   error: string | null;
 }
 
+/** The wallet has the offer: the first of these events moves the flow to "scanned". */
+const SCANNED = new Set(["offer_received", "token_issued"]);
+/** The wallet has the credential (acked) or has confirmed it (accepted). */
+const ISSUED = new Set(["credential_acked", "credential_accepted"]);
+
+/**
+ * The record of an issue response. A definition with more than one credential
+ * configuration answers one record per configuration; this flow follows the first.
+ */
+function firstRecord(response: IssueCredentialResponse): CredentialHistoryItem | undefined {
+  const history = response.credentialHistory;
+  return Array.isArray(history) ? history[0] : history;
+}
+
 /**
  * Issuer flow (OpenID4VCI): request issuance, expose the offer QR, and resolve
  * the outcome via SSE. Supports in-time issuance (claims known now) and deferred
@@ -41,8 +57,8 @@ export function useIssuance({ proxyBaseUrl, webhookBaseUrl }: IssuanceConfig) {
     error: null,
   });
   const deferredClaimsRef = useRef<UpdateCredentialHistoryPayload | null>(null);
-  /** Deferred flows only: set once completeDeferred's PUT has actually delivered the claims. */
-  const deferredDoneRef = useRef(false);
+  /** Deferred flows only: set when the PUT of completeDeferred starts, so it runs once. */
+  const deferredSentRef = useRef(false);
 
   const fail = useCallback((message: string) => {
     setState((s) => ({ ...s, status: "error", error: message }));
@@ -53,29 +69,26 @@ export function useIssuance({ proxyBaseUrl, webhookBaseUrl }: IssuanceConfig) {
       const credential = (event.data as IssuanceSSEData).credential;
       if (!credential) return;
 
-      // Deferred: the wallet has the offer - supply the claims now.
-      if (
-        credential.status === "offer_received" &&
-        deferredClaimsRef.current &&
-        credential.CredentialExchangeId
-      ) {
-        setState((s) => ({ ...s, status: "scanned" }));
-        client.issuance
-          .completeDeferred(credential.CredentialExchangeId, deferredClaimsRef.current)
-          .then(() => {
-            deferredDoneRef.current = true;
-          })
-          .catch((e) => {
-            deferredDoneRef.current = false;
-            fail(e instanceof Error ? e.message : String(e));
-          });
+      if (credential.status === "issuance_denied") {
+        fail(credential.issuanceDeniedReason || "The issuer refused the issuance");
+        close();
         return;
       }
 
-      if (credential.status === "credential_accepted" || credential.status === "token_issued") {
-        // OWS fires token_issued even when the completing PUT failed, so a deferred
-        // issuance is only truly "issued" once completeDeferred actually delivered the claims.
-        if (deferredClaimsRef.current && !deferredDoneRef.current) return;
+      if (SCANNED.has(credential.status)) {
+        setState((s) => (s.status === "offer_ready" ? { ...s, status: "scanned" } : s));
+        // Deferred: the wallet has the offer - supply the claims now, once.
+        // The backend keeps only the latest event, so either status can come first.
+        if (deferredClaimsRef.current && !deferredSentRef.current && credential.CredentialExchangeId) {
+          deferredSentRef.current = true;
+          client.issuance
+            .completeDeferred(credential.CredentialExchangeId, deferredClaimsRef.current)
+            .catch((e) => fail(e instanceof Error ? e.message : String(e)));
+        }
+        return;
+      }
+
+      if (ISSUED.has(credential.status)) {
         setState((s) => ({ ...s, status: "issued" }));
         close();
       }
@@ -95,9 +108,9 @@ export function useIssuance({ proxyBaseUrl, webhookBaseUrl }: IssuanceConfig) {
   const issueInTime = useCallback(
     async (payload: IssueInTimeRequest) => {
       deferredClaimsRef.current = null;
-      deferredDoneRef.current = false;
+      deferredSentRef.current = false;
       try {
-        const { credentialHistory } = await client.issuance.issueInTime(payload);
+        const credentialHistory = firstRecord(await client.issuance.issueInTime(payload));
         if (!credentialHistory?.CredentialExchangeId || !credentialHistory.credentialOffer) {
           throw new Error("Issuance response missing CredentialExchangeId/credentialOffer");
         }
@@ -113,9 +126,9 @@ export function useIssuance({ proxyBaseUrl, webhookBaseUrl }: IssuanceConfig) {
   const issueDeferred = useCallback(
     async (request: StartDeferredRequest, claims: UpdateCredentialHistoryPayload) => {
       deferredClaimsRef.current = claims;
-      deferredDoneRef.current = false;
+      deferredSentRef.current = false;
       try {
-        const { credentialHistory } = await client.issuance.startDeferred(request);
+        const credentialHistory = firstRecord(await client.issuance.startDeferred(request));
         if (!credentialHistory?.CredentialExchangeId || !credentialHistory.credentialOffer) {
           throw new Error("Issuance response missing CredentialExchangeId/credentialOffer");
         }
@@ -138,7 +151,7 @@ export function useIssuance({ proxyBaseUrl, webhookBaseUrl }: IssuanceConfig) {
   const reset = useCallback(() => {
     close();
     deferredClaimsRef.current = null;
-    deferredDoneRef.current = false;
+    deferredSentRef.current = false;
     setState({ status: "idle", offerUri: null, credentialExchangeId: null, error: null });
   }, [close]);
 

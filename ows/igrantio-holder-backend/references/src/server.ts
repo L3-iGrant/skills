@@ -27,8 +27,8 @@ const HOLDER_PERMITTED_PATHS: Array<string | RegExp> = [
   /^v2\/config\/digital-wallet\/openid\/sdjwt\/verification\/(?!send$|history(\/|$))[^/]+(\/filter)?$/,
   // Notifications REST (the SSE path is served by notificationsSseRouter, not the proxy)
   /^v2\/config\/digital-wallet\/openid\/notifications?(\/(?!sse$)[^/]+)?$/,
-  // Holder global configuration + wallet unit status
-  "v2/config/digital-wallet/openid/holder/global-configuration",
+  // Holder global configuration (one per organisation: GET + PUT, no id) + wallet unit status
+  /^v2\/config\/digital-wallet\/openid\/holder\/global-configuration$/,
   "v2/config/digital-wallet/openid/wallet-unit/status",
 ];
 
@@ -46,8 +46,8 @@ app.use(
 
 app.get("/healthz", (_req, res) => res.json({ ok: true, role: "holder" }));
 
-// SSE relay first: same tenant base URL as the proxy, but streamed, with the
-// authorization injected as a query parameter (EventSource cannot send headers).
+// SSE relay first: same tenant base URL as the proxy, but streamed. The relay
+// sends the key in the Authorization header (EventSource cannot send headers).
 app.use(
   config.proxyPrefix,
   notificationsSseRouter({

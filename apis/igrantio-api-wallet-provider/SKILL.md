@@ -6,10 +6,10 @@ metadata:
   categories: [ows-api]
   provider: iGrant.io
   keywords: wallet provider, wallet unit, Wallet Unit Attestation, WUA, LPID, assertionToken, client assertion, EUDIW, EUBW, eIDAS2, OpenID4VCI, OpenID4VP, wallet deployment, performance statistics
-  version: 2026.09.01
+  version: 2026.10.01
   source-doc: https://docs.igrant.io/docs/developer-apis/
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0, OAuth-2.0-client-assertion
-  auth: OWS API key (Authorization "ApiKey <key>") or a bearer access token - the key is held only by the tenant backend, never the browser
+  auth: OWS API key (Authorization "ApiKey <YOUR_API_KEY>") - the key is held only by the tenant backend, never the browser
 ---
 
 # iGrant.io OID4VC API - Wallet Provider
@@ -30,8 +30,9 @@ For issuance and verification, use the issuer and the verifier skills. For the
 architecture and the glossary, read `igrantio-ows-overview` first.
 
 **Order of work.** Deploy the wallet, then turn on the wallet provider
-capability, then register wallet units. Every wallet unit operation gives
-HTTP 400 when the organisation is not a wallet provider.
+capability, then register wallet units. Every wallet unit operation and the
+statistics operation give HTTP 400 when the organisation is not a wallet
+provider.
 
 ## Prerequisites
 - An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
@@ -54,9 +55,9 @@ Record the answers before you write code.
 2. **API key** - do you have the OWS API key for that environment? If not,
    request it from [support@igrant.io](mailto:support@igrant.io) before you
    continue.
-3. **Organisation** - the main wallet, or a sandbox organisation? _A sandbox
-   needs the `X-SandboxOrgId` header and a bearer token; see
-   `igrantio-api-sandboxes`._
+3. **Organisation** - the wallet provider capability belongs to the main
+   wallet. _Use an API key of the main wallet: a sandbox organisation cannot
+   be a wallet provider._
 4. **Step** - deploy the wallet, turn on the wallet provider capability, or
    manage wallet units? _Do them in that order._
 5. **Wallet units** - how are wallet instances registered, and by whom?
@@ -73,12 +74,12 @@ Base URL for the demo environment: `https://demo-api.igrant.io`.
 | `POST` | `/v2/config/digital-wallet/openid/wallet-provider/wallet-unit` | Register a new wallet unit. | [Create wallet unit](https://docs.igrant.io/docs/openid4vc-api/config-create-digital-wallet-open-id-wallet-unit/) |
 | `GET` | `/v2/config/digital-wallet/openid/wallet-provider/wallet-unit/{walletUnitId}` | Read one wallet unit. | [Read wallet unit](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-wallet-unit/) |
 | `PUT` | `/v2/config/digital-wallet/openid/wallet-provider/wallet-unit/{walletUnitId}` | Update one wallet unit. | [Update wallet unit](https://docs.igrant.io/docs/openid4vc-api/config-update-digital-wallet-open-id-wallet-unit/) |
-| `DELETE` | `/v2/config/digital-wallet/openid/wallet-provider/wallet-unit/{walletUnitId}` | Delete one wallet unit. The body of the answer is empty. | [Delete wallet unit](https://docs.igrant.io/docs/openid4vc-api/config-delete-digital-wallet-open-id-wallet-unit/) |
+| `DELETE` | `/v2/config/digital-wallet/openid/wallet-provider/wallet-unit/{walletUnitId}` | Delete one wallet unit. HTTP 200 with an empty body. | [Delete wallet unit](https://docs.igrant.io/docs/openid4vc-api/config-delete-digital-wallet-open-id-wallet-unit/) |
 | `GET` | `/v2/config/digital-wallet/openid/wallet-provider/wallet-units` | List wallet units, with filters and pages. | [List wallet units](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-wallet-unit/) |
 | `GET` | `/v2/config/digital-wallet/openid/wallet-provider/organisation-wallet-units` | List organisation wallet units with LPID status, WUA status, and usage counts. | [List organisation wallet units](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-organisation-wallet-unit/) |
 | `GET` | `/v2/config/digital-wallet/openid/wallet-provider/statistics` | Read the performance statistics of the wallet provider. | [Performance statistics of a wallet provider](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-performance-statistics/) |
 
-Ten operations. Each one accepts an API key or a bearer access token.
+Ten operations. Each one accepts an API key.
 
 ## Key fields
 
@@ -108,17 +109,23 @@ treat the full answer of every wallet unit operation as a secret.
 
 ### Create a wallet unit
 `POST .../wallet-unit` body: `clientId` (mandatory), `clientPublicKey`
-(mandatory; the service refuses an empty object with HTTP 400), `clientUrl`
-(optional), `isAuthorised` (optional). The answer is HTTP 201 with the new
-record, and it holds the `assertionToken`.
+(mandatory; a public JWK of `kty` `EC`, `RSA` or `OKP`; the service refuses an
+empty object and a JWK with a private member such as `d` with HTTP 400),
+`clientUrl` (optional), `isAuthorised` (optional, default `false`). The
+service refuses a `clientId` that another wallet unit of the organisation
+has (HTTP 400 `Wallet provider client exists`). The answer is HTTP 201 with
+the new record, and it holds the `assertionToken`.
 
-### Update a wallet unit - the `isAuthorised` trap
-On `PUT .../wallet-unit/{walletUnitId}` every field is optional, but
-`isAuthorised` does not behave like the others. The service always forwards it.
-**If you leave `isAuthorised` out, the service sets it to `false` and the
-wallet unit loses its authorisation.** Always send the value that you want to
-keep. If you leave out `clientId`, `clientUrl`, or `clientPublicKey`, the
-service keeps the stored value.
+### Update a wallet unit - the kill switch
+On `PUT .../wallet-unit/{walletUnitId}` every field is optional. A field that
+you leave out, or send empty, keeps the stored value; this is also true for
+`isAuthorised`.
+
+**`isAuthorised: false` on an authorised wallet unit revokes every active
+Wallet Unit Attestation of that unit**, in the same change. Issuers that
+check the status list then refuse the unit at once, and the unit gets no new
+attestation until you set `isAuthorised: true` again. Send `false` only when
+you mean to stop the unit.
 
 ### Deployment read - the status collapse
 `GET /v2/config/digital-wallet/openid` gives HTTP 200 even when the
@@ -145,11 +152,14 @@ organisation has no deployment**. Do not read them as proof of a deployment:
 `status` is the only correct test for "is the wallet deployed".
 
 ### Deploy
-`POST /v2/config/digital-wallet/openid` takes an optional body with
-`cryptographicSeed`. The service uses the seed only when it holds one character
-or more. **The seed is a secret**: keep it out of logs and out of version
-control. The organisation must have no deployment: if a deployment exists, or a
-deployment request is open, the service gives HTTP 400. There is no operation
+`POST /v2/config/digital-wallet/openid` needs a JSON object as its body: send
+`{}` for a deployment without a seed. The optional members are
+`cryptographicSeed` and `infrastructureProvider` (only the value `iGrant.io`);
+the service refuses an empty body and an unknown member with HTTP 400. The
+service uses the seed only when it holds one character or more. **The seed is
+a secret**: keep it out of logs and out of version control. The organisation
+must have no deployment: if a deployment exists, or a deployment request is
+open, the service gives HTTP 400. There is no operation
 that removes a deployment, so you cannot deploy a second time. A good deploy
 always gives `status` `2` and `statusStr` `Deployed`, and `isWalletProvider`
 `false`.
@@ -157,16 +167,22 @@ always gives `status` `2` and `statusStr` `Deployed`, and `isWalletProvider`
 ### Turn on the wallet provider capability
 `PUT /v2/config/digital-wallet/openid` with `{"isWalletProvider": true}`. The
 service ignores the value `false` and keeps the current setting, so this
-operation cannot turn the capability off. The service gives HTTP 400 when the
-organisation is already a wallet provider.
+operation cannot turn the capability off.
+
+**One organisation in an environment can be the wallet provider.** The
+service gives HTTP 400 `Wallet provider already exists` when another
+organisation of the environment has the capability, and also for an API key
+that is bound to a sandbox organisation. A second call for the organisation
+that has the capability succeeds.
 
 ### List wallet units
 Query parameters: `holderDid`, `platform` (`ios`, `android`, `organisation`;
 the service does not check the value, so an unknown value matches nothing),
 `offset` (default `0`), `limit` (default `10`). The service replaces an
-`offset` below 0 and a `limit` of 0 or less with the default. If `offset` is
-larger than the number of results, the service gives the last page. The answer
-holds `walletUnit` (an array) and `pagination`.
+`offset` below 0 and a `limit` of 0 or less with the default. The answer holds
+`walletUnit` (an array) and `pagination` (`currentPage`, `totalItems`,
+`totalPages`, `limit`, `hasPrevious`, `hasNext`). Each item also carries
+`totalCountOfCredentialHistory`.
 
 ### List organisation wallet units
 Query parameters: `lpidStatus` (`inactive`, `active`, `expired`, `revoked`),
@@ -179,8 +195,8 @@ Each item of `organisationWalletUnit` holds `organisationName`, `lpidStatus`,
 and `lastActivity`. `lpidStatus` and `wuaStatus` add an **empty string** to
 their value sets: the service gives an empty string when the lookup fails.
 `lpidExpiry` and `wuaExpiry` are Unix times in seconds, and hold `0` when there
-is no credential or no attestation. `lastActivity` is an empty string when the
-service recorded no activity.
+is no credential or no attestation. `lastActivity` is an ISO 8601 time, or an
+empty string when the service recorded no activity.
 
 ### Performance statistics
 The answer holds one object, `performanceStatistics`, with four members:
@@ -189,38 +205,36 @@ The answer holds one object, `performanceStatistics`, with four members:
   `totalVerifications`.
 - `totalCredentialIssuanceHistory` - `currentMonth`, `last3Months`,
   `last6Months`, `last12Months` (arrays of monthly records, newest first, each
-  with `month` in the format `<month-name>-<year>`, for example
-  `january-2026`), and `cumulative`. **The service does not calculate
+  with `month` as the short month name in lower case and the year, for
+  example `jan-2026`), and `cumulative`. **The service does not calculate
   `cumulative` today, so every count in it is `0`.** Add the monthly records
   yourself if you need a total.
-- `individualWalletUnit` and `organisationWalletUnit` - each with `total`,
-  `active`, and `revoked`. The service makes `revoked` from `total` minus
-  `active`, so it is not a count of true revocations.
+- `individualWalletUnit` (the `ios` and `android` units) and
+  `organisationWalletUnit` - each with `total`, `active`, and `revoked`. A
+  unit is `active` while it holds an attestation that is not revoked, and
+  `revoked` when every attestation it got is revoked. A unit that never got
+  an attestation is in `total` only.
 
 The service keeps the statistics in a cache and refreshes them in the
-background, so a value can be some minutes old. Do not use these numbers for
-billing or for an audit.
+background, so a value can be some minutes old. When the calculation fails,
+the service answers with zero values and tries again in the background. Do not
+use these numbers for billing or for an audit.
 
-## Sandbox call style
-Every wallet unit operation, the statistics operation, and the `PUT` that turns
-on the wallet provider capability accept the `X-SandboxOrgId` header, so you
-can run them against a sandbox organisation. `POST` and `GET` on
-`/v2/config/digital-wallet/openid` do **not** accept the header: they always
-work on the main wallet.
-
-The header works only with a bearer access token. With an API key, the service
-takes the sandbox organisation from the key itself. For the full rules, read
-**`igrantio-api-sandboxes`**.
+## Sandbox organisations
+A sandbox organisation cannot be a wallet provider. Use an API key of the main
+wallet for this group. With an API key that is bound to a sandbox
+organisation, `POST` and `GET` on `/v2/config/digital-wallet/openid` work on
+the main wallet, and the `PUT` and the wallet unit operations give HTTP 400.
+For sandbox organisations in general, read **`igrantio-api-sandboxes`**.
 
 ## Authentication
 Send an API key:
 
 ```
-Authorization: ApiKey <your-api-key>
+Authorization: ApiKey <YOUR_API_KEY>
 ```
 
-Note the space after `ApiKey`. A bearer access token also works on every
-operation of this group. The key is held only by the tenant backend. The
+Note the space after `ApiKey`. The key is held only by the tenant backend. The
 browser never sees it, and it never sees an `assertionToken`.
 
 ## Validation / done criteria
@@ -229,7 +243,8 @@ browser never sees it, and it never sees an `assertionToken`.
   without a guess.
 - You test the deployment with `status`, and not with `deploymentRegion` or
   another constant field.
-- Your update of a wallet unit always sends `isAuthorised`.
+- Your update of a wallet unit sends `isAuthorised: false` only when you
+  mean to revoke the attestations of that unit.
 - No `assertionToken` reaches a browser, a log, or version control.
 
 ## Documentation is the source of truth
@@ -244,4 +259,3 @@ can be corrected.
 ## Cross-references
 - `igrantio-ows-overview` - architecture, glossary, and the shared contracts.
 - `igrantio-api-sandboxes` - sandbox organisations and the sandbox call style.
-- `igrantio-api-api-keys` - create and manage the API keys of the organisation.

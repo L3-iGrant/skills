@@ -1,11 +1,11 @@
 import type {
   CredentialHistoryResponse,
+  DcApiReceivePayload,
   IssueCredentialResponse,
   IssueInTimeRequest,
   SendVerificationRequest,
   StartDeferredRequest,
   UpdateCredentialHistoryPayload,
-  UpdateCredentialHistoryResponse,
   VerificationHistoryResponse,
   VerificationResponse,
 } from "./types";
@@ -39,6 +39,8 @@ const PATHS = {
   credentialHistory: (id: string) => `/v2/config/digital-wallet/openid/sdjwt/credential/history/${id}`,
   verificationSend: "/v3/config/digital-wallet/openid/sdjwt/verification/send",
   verificationHistory: (id: string) => `/v3/config/digital-wallet/openid/sdjwt/verification/history/${id}`,
+  // Delete and the Digital Credentials API receive exist on v2 only.
+  verificationRecord: (id: string) => `/v2/config/digital-wallet/openid/sdjwt/verification/history/${id}`,
 } as const;
 
 export interface OwsClient {
@@ -51,7 +53,7 @@ export interface OwsClient {
     completeDeferred(
       credentialExchangeId: string,
       payload: UpdateCredentialHistoryPayload,
-    ): Promise<UpdateCredentialHistoryResponse>;
+    ): Promise<CredentialHistoryResponse>;
     /** Read the current issuance state. */
     readHistory(credentialExchangeId: string): Promise<CredentialHistoryResponse>;
     deleteHistory(credentialExchangeId: string): Promise<void>;
@@ -62,6 +64,8 @@ export interface OwsClient {
     /** Read the verification result (verified flag + disclosed claims). */
     readHistory(presentationExchangeId: string): Promise<VerificationHistoryResponse>;
     deleteHistory(presentationExchangeId: string): Promise<void>;
+    /** Post the wallet answer of a same-device Digital Credentials API request back to OWS. */
+    receiveDcApiResponse(presentationExchangeId: string, payload: DcApiReceivePayload): Promise<unknown>;
   };
   /** Escape hatch for ad-hoc calls. */
   request<T>(method: string, path: string, body?: unknown): Promise<T>;
@@ -82,8 +86,9 @@ export function createOwsClient(config: OwsClientConfig): OwsClient {
       body: body === undefined ? undefined : JSON.stringify(body),
     });
     if (!res.ok) throw new OwsError(res.status, await res.text().catch(() => ""));
-    if (res.status === 204) return undefined as T;
-    return (await res.json()) as T;
+    // A delete answers 200 with an empty body.
+    const text = await res.text();
+    return (text ? JSON.parse(text) : undefined) as T;
   }
 
   return {
@@ -97,7 +102,8 @@ export function createOwsClient(config: OwsClientConfig): OwsClient {
     verification: {
       sendRequest: (payload) => request("POST", PATHS.verificationSend, payload),
       readHistory: (id) => request("GET", PATHS.verificationHistory(id)),
-      deleteHistory: (id) => request("DELETE", PATHS.verificationHistory(id)),
+      deleteHistory: (id) => request("DELETE", PATHS.verificationRecord(id)),
+      receiveDcApiResponse: (id, payload) => request("POST", `${PATHS.verificationRecord(id)}/receive`, payload),
     },
     request,
   };

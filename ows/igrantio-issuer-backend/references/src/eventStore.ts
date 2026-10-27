@@ -33,7 +33,7 @@ export class InMemoryEventStore implements EventStore {
 
   put(e: NewEvent): StoredEvent {
     const ev: StoredEvent = { ...e, id: ++this.seq, created_at: new Date().toISOString() };
-    // Keep the latest event per exchange id (mirrors the reference aca-proxy).
+    // Keep only the latest event per exchange id.
     this.byExchange.set(e.webhook_id, ev);
     return ev;
   }

@@ -93,17 +93,15 @@ disagree, the agent must follow the page and check it for updates.
 
 | Skill | API group |
 | --- | --- |
-| [`igrantio-api-issuer`](./apis/igrantio-api-issuer) | Issuer: credential definitions (claim path pointers, `credentialDefinitions[]`), issuance, history, revocation |
-| [`igrantio-api-holder`](./apis/igrantio-api-holder) | Holder: receive and hold credentials, present, deny, notifications with SSE stream |
+| [`igrantio-api-issuer`](./apis/igrantio-api-issuer) | Issuer: credential definitions (claim path pointers, `credentialDefinitions[]`, credential categories), issuance, history, revocation |
+| [`igrantio-api-holder`](./apis/igrantio-api-holder) | Holder: receive and hold credentials (also wallet-initiated), present, notifications with SSE stream |
 | [`igrantio-api-verifier`](./apis/igrantio-api-verifier) | Verifier: DCQL presentation definitions, transaction data, v3 verification, DC API |
 | [`igrantio-api-webhooks`](./apis/igrantio-api-webhooks) | Webhook configuration, event types, ping, deliveries |
-| [`igrantio-api-trust-anchor`](./apis/igrantio-api-trust-anchor) | Trust authorities the wallet accepts |
+| [`igrantio-api-trust-anchor`](./apis/igrantio-api-trust-anchor) | Trust authorities the wallet accepts: ETSI trusted lists, lists of trusted entities, X.509 CAs |
 | [`igrantio-api-wallet-provider`](./apis/igrantio-api-wallet-provider) | Wallet units, WUA, statistics, wallet deployment |
-| [`igrantio-api-key-management`](./apis/igrantio-api-key-management) | Keys, CSR, certificate chains, QTSP, secure vault |
+| [`igrantio-api-key-management`](./apis/igrantio-api-key-management) | Key stores, signing keys, CSR and certificate presets, certificate chains, test certificates, trust lookup |
 | [`igrantio-api-sandboxes`](./apis/igrantio-api-sandboxes) | Sandbox organisations and the sandbox call style |
-| [`igrantio-api-api-keys`](./apis/igrantio-api-api-keys) | API keys and sandbox binding |
-| [`igrantio-api-team-management`](./apis/igrantio-api-team-management) | Organisation admins (Manage Team): create, read, delete, list, and the passwordless-login switch per admin |
-| [`igrantio-api-user-management`](./apis/igrantio-api-user-management) | The signed-in admin's account (Manage User): profile, avatar, password, and passwordless-login methods with SSE |
+| [`igrantio-api-user-management`](./apis/igrantio-api-user-management) | The admin account of an API key: profile, avatar, and authentication configuration |
 
 ### Trust list skills
 
@@ -201,16 +199,16 @@ may adjust.
 | [`igrantio-dcql-postal-codes`](./workflows/igrantio-dcql-postal-codes) | DCQL: claim value matching (restricted postal codes) |
 <!-- END SKILLS -->
 
-Every skill ships a runnable TypeScript reference implementation in its
-`references/` folder, so the agent adapts working code rather than generating
-an integration from scratch.
+The issuer, verifier, holder, and consent building blocks ship a runnable
+TypeScript reference implementation in their `references/` folder, so the
+agent adapts working code rather than generating an integration from scratch.
 
 ## Release versioning
 
 Each skill is versioned individually through the `metadata.version` field in
 its `SKILL.md`, following the `yyyy.mm.NN` scheme, where `yyyy.mm` is the year
 and month of the release and `NN` is the release number within that month. The
-current release is `2026.09.01`. Versions are bumped whenever a skill's
+current release is `2026.10.01`. Versions are bumped whenever a skill's
 contract changes.
 
 To update installed skills to the latest release:

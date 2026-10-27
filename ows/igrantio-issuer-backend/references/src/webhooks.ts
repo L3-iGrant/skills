@@ -5,7 +5,8 @@ import type { EventStore } from "./eventStore";
 import { isSupportedTopic, extractExchangeId } from "./topics";
 
 /**
- * Verify the `X-iGrant-Signature: t=<ts>,sig=<hex>` header.
+ * Verify the `X-iGrant-Signature: t=<time>,sig=<hex>` header. `t` is the UTC
+ * time of the delivery in ISO 8601 (for example 2026-10-27T10:15:00Z).
  * sig = HMAC_SHA256(secret, "<t>.<raw body>"), hex-encoded, compared constant-time.
  */
 export function verifySignature(

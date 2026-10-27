@@ -6,7 +6,7 @@ metadata:
   categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, age verification, age_over_18, eu.europa.ec.av.1, mso_mdoc, age gate, data minimisation, OpenID4VP, presentation definition, EUDIW, eIDAS2
-  version: 2026.09.01
+  version: 2026.10.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/presentationDefinitions/dcqlQuery/ageVerification
   requires-skills: igrantio-api-verifier
 ---
@@ -43,8 +43,8 @@ Record the answers before you write code.
 2. **API key** - do you have the OWS API key for that environment? If not,
    request it from [support@igrant.io](mailto:support@igrant.io) before you
    continue.
-3. **Format** - `dc+sd-jwt`, `jwt_vc_json` or `mso_mdoc`? _Match the format
-   the issuer used._
+3. **Format** - the registry publishes this template in `mso_mdoc` only, so
+   use `mso_mdoc`.
 4. **Claims** - which claims does the use case need? _Ask for the minimum._
 5. **Channel** - cross-device QR, same-device Digital Credentials API, or
    both? _Recommend QR first; `igrantio-dcapi-android` and
@@ -121,6 +121,7 @@ Set `version` to `version_01`.
 {
   "label": "Age gate at checkout",
   "version": "version_01",
+  "cryptographicKeyFormat": "x509",
   "responseType": "vp_token",
   "responseMode": "direct_post",
   "dcqlQuery": {
@@ -137,6 +138,10 @@ Set `version` to `version_01`.
   }
 }
 ```
+
+`cryptographicKeyFormat: "x509"` signs the request with the default key of the
+organisation and its X.509 certificate chain, and `clientIdScheme` then
+defaults to `x509_hash`. Name another key with `cryptographicKeyIdentifier`.
 
 **Do not use the label `Age Verification`.** The server reserves that label for
 an extension and refuses it. Give the definition a label that names your use,

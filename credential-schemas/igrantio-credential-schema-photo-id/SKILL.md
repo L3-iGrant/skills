@@ -6,7 +6,7 @@ metadata:
   categories: [credential-schema]
   provider: iGrant.io
   keywords: Photo ID, photoid, ISO 23220, digital travel credential, DTC, portrait, credential schema, claim path pointer, SD-JWT VC, mso_mdoc, jwt_vc_json, EUDIW, verifiable data registry
-  version: 2026.09.01
+  version: 2026.10.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/credentialSchemas/claimPathPointer/photoId
   schema-version: 2025.7.1
   credential-formats: dc+sd-jwt, jwt_vc_json, mso_mdoc
@@ -60,8 +60,9 @@ Record the answers before you write code.
    arrive later)?
 6. **Revocation** - status list on? _Recommend on for any credential with a
    lifetime._
-7. **Signing** - a DID key or an X.509 certificate (`x5c`)? _X.509 is needed
-   for mdoc and for the trust list._
+7. **Signing key** - which key signs the credentials? _Recommend a key with an
+   X.509 certificate chain (`cryptographicKeyFormat: "x509"`). The trust list
+   needs it, and `mso_mdoc` accepts only `x509`._
 8. **Trust list** - is your issuer certificate (the trust anchor) registered
    in the trust list? If not, contact
    [support@igrant.io](mailto:support@igrant.io) and follow
@@ -927,257 +928,255 @@ a change.
 | `validationPath` | `$` |
 | Claim carrier in the request | `claims` |
 
-The first element of every path is `eu.europa.ec.eudi`. That value is the mDoc
-namespace of the claims. It is not the same string as the doctype
-`eu.europa.ec.eudi.photoid.1`. Send the doctype in the `doctype` field, and keep
-`eu.europa.ec.eudi` as the first path element, as the registry has it. The group
-name (`iso23220`, `photoid` or `dtc`) is the second element.
+The first element of every path is the mDoc namespace
+`eu.europa.ec.eudi.photoid.1`, the same value as the doctype. The group name
+(`iso23220`, `photoid` or `dtc`) is the second element.
 
 ```json
 {
   "claims": [
     {
-      "path": ["eu.europa.ec.eudi", "dtc", "dg_content_info"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "dtc", "dg_content_info"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "dtc", "dtc_dg1"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "dtc", "dtc_dg1"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "dtc", "dtc_dg10"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "dtc", "dtc_dg10"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "dtc", "dtc_dg11"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "dtc", "dtc_dg11"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "dtc", "dtc_dg12"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "dtc", "dtc_dg12"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "dtc", "dtc_dg13"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "dtc", "dtc_dg13"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "dtc", "dtc_dg14"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "dtc", "dtc_dg14"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "dtc", "dtc_dg15"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "dtc", "dtc_dg15"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "dtc", "dtc_dg16"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "dtc", "dtc_dg16"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "dtc", "dtc_dg2"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "dtc", "dtc_dg2"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "dtc", "dtc_dg3"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "dtc", "dtc_dg3"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "dtc", "dtc_dg4"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "dtc", "dtc_dg4"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "dtc", "dtc_dg5"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "dtc", "dtc_dg5"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "dtc", "dtc_dg6"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "dtc", "dtc_dg6"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "dtc", "dtc_dg7"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "dtc", "dtc_dg7"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "dtc", "dtc_dg8"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "dtc", "dtc_dg8"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "dtc", "dtc_dg9"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "dtc", "dtc_dg9"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "dtc", "dtc_sod"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "dtc", "dtc_sod"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "dtc", "dtc_version"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "dtc", "dtc_version"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "iso23220", "age_birth_year"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "iso23220", "age_birth_year"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "iso23220", "age_in_years"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "iso23220", "age_in_years"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "iso23220", "age_over_18"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "iso23220", "age_over_18"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "iso23220", "family_name_latin1"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "iso23220", "family_name_latin1"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "iso23220", "given_name_latin1"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "iso23220", "given_name_latin1"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "iso23220", "issue_date"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "iso23220", "issue_date"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "iso23220", "issuing_authority_unicode"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "iso23220", "issuing_authority_unicode"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "iso23220", "name_at_birth"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "iso23220", "name_at_birth"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "iso23220", "nationality"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "iso23220", "nationality"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "iso23220", "birthplace"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "iso23220", "birthplace"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "iso23220", "given_name_unicode"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "iso23220", "given_name_unicode"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "iso23220", "family_name_unicode"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "iso23220", "family_name_unicode"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "iso23220", "birth_date"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "iso23220", "birth_date"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "iso23220", "sex"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "iso23220", "sex"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "iso23220", "portrait"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "iso23220", "portrait"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "iso23220", "portrait_capture_date"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "iso23220", "portrait_capture_date"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "iso23220", "resident_address_unicode"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "iso23220", "resident_address_unicode"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "iso23220", "resident_city_unicode"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "iso23220", "resident_city_unicode"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "iso23220", "resident_postal_code"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "iso23220", "resident_postal_code"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "iso23220", "issuing_country"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "iso23220", "issuing_country"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "iso23220", "expiry_date"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "iso23220", "expiry_date"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "iso23220", "resident_country"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "iso23220", "resident_country"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "photoid", "birth_city"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "photoid", "birth_city"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "photoid", "birth_country"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "photoid", "birth_country"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "photoid", "birth_state"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "photoid", "birth_state"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "photoid", "travel_document_number"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "photoid", "travel_document_number"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "photoid", "person_id"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "photoid", "person_id"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "photoid", "administrative_number"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "photoid", "administrative_number"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "photoid", "resident_street"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "photoid", "resident_street"],
       "mandatory": true,
       "limitDisclosure": true
     },
     {
-      "path": ["eu.europa.ec.eudi", "photoid", "resident_state"],
+      "path": ["eu.europa.ec.eudi.photoid.1", "photoid", "resident_state"],
       "mandatory": true,
       "limitDisclosure": true
     }
@@ -1221,6 +1220,7 @@ the format fields that the table above gives.
 {
   "label": "Issue Photo ID",
   "version": "version_01",
+  "cryptographicKeyFormat": "x509",
   "credentialDefinitions": [
     {
       "credentialFormat": "dc+sd-jwt",
@@ -1259,9 +1259,12 @@ Notes on the request.
 - `label` must hold at least 3 characters. The platform reserves the labels
   `Payment User Credential`, `Payment Card Credential`, `Payment Account
   Credential`, `PID Issuance` and `Photo ID Issuance`, so pick another label.
-- Always send `version` with the value `version_01`. The issuer falls back to an
-  earlier version of the specification when you leave the field out, and you
-  cannot change the value after you create the credential definition.
+- `version` is required. Its only value is `version_01` (OpenID4VCI 1.0), and
+  you cannot change it after you create the credential definition.
+- `cryptographicKeyFormat: "x509"` signs the credentials with the default key of
+  the organisation and its X.509 certificate chain. Name another key with
+  `cryptographicKeyIdentifier`. Upload the chain to the key first
+  (`igrantio-api-key-management`).
 - Add one entry of `credentialDefinitions[]` for each format that you want to
   publish. You can publish more than one format from one credential definition.
 - Keep the `id` that the response returns for each entry. The issue operation

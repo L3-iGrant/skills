@@ -326,8 +326,8 @@ export function notificationTypeLabel(type: string): string {
 /** SSE snackbar copy per notification type. */
 export function snackbarText(type: string): string {
   const texts: Record<string, string> = {
-    credential_received: "New credential is received",
     credential_revoked: "A credential is archived",
+    credential_expired: "A credential has expired",
     credential_acked: "New credential has been acknowledged",
     credential_pending: "New Pending Credential is received",
   };

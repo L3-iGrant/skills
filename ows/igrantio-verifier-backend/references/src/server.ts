@@ -11,11 +11,11 @@ import { sseRouter } from "./sse";
  * VERIFIER backend - least privilege: the proxy only forwards OWS *verification*
  * endpoints. (Register VERIFIER_TOPICS with scripts/register-webhook.ts.)
  */
-const VERIFIER_PERMITTED_PREFIXES = [
+const VERIFIER_PERMITTED_PREFIXES: Array<string | RegExp> = [
   "v3/config/digital-wallet/openid/sdjwt/verification/send",
   "v3/config/digital-wallet/openid/sdjwt/verification/history",
-  "v2/config/digital-wallet/openid/sdjwt/verification/send",
-  "v2/config/digital-wallet/openid/sdjwt/verification/history",
+  // v2: delete a record, and post a Digital Credentials API response back (.../receive)
+  /^v2\/config\/digital-wallet\/openid\/sdjwt\/verification\/history\/[^/]+(\/receive)?$/,
 ];
 
 const app = express();

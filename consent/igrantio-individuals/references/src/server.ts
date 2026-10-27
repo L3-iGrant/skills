@@ -34,8 +34,8 @@ app.post("/individuals/onboard", async (req, res) => {
     return;
   }
   const { name, email, phone } = req.body ?? {};
-  if (!name || !email || !phone) {
-    res.status(400).json({ error: "name, email and phone are required" });
+  if (!name) {
+    res.status(400).json({ error: "name is required" });
     return;
   }
   try {

@@ -6,7 +6,7 @@ metadata:
   categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, authenticator, passwordless login, email_address, io.igrant.authenticator, dc+sd-jwt, jwt_vc_json, mso_mdoc, OpenID4VP, presentation definition, EUDIW, eIDAS2
-  version: 2026.09.01
+  version: 2026.10.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/presentationDefinitions/dcqlQuery/authenticator
   requires-skills: igrantio-api-verifier
 ---
@@ -61,8 +61,8 @@ Registry version: **2025.7.1**.
 
 | Fact | Value |
 | --- | --- |
-| Title | iGrant.io Authenticator |
-| Purpose | iGrant.io Authenticator |
+| Title | Authenticator |
+| Purpose | Authenticator |
 | Credential type | `io.igrant.authenticator` for all three formats |
 | Namespace (`mso_mdoc`) | `io.igrant.authenticator` |
 | Formats | `dc+sd-jwt`, `jwt_vc_json`, `mso_mdoc` |
@@ -153,6 +153,7 @@ Set `version` to `version_01`.
 {
   "label": "Sign in with your wallet",
   "version": "version_01",
+  "cryptographicKeyFormat": "x509",
   "responseType": "vp_token",
   "responseMode": "direct_post",
   "dcqlQuery": {
@@ -169,6 +170,10 @@ Set `version` to `version_01`.
   }
 }
 ```
+
+`cryptographicKeyFormat: "x509"` signs the request with the default key of the
+organisation and its X.509 certificate chain, and `clientIdScheme` then
+defaults to `x509_hash`. Name another key with `cryptographicKeyIdentifier`.
 
 Then send the verification request with the V3 send operation,
 `POST /v3/config/digital-wallet/openid/sdjwt/verification/send`, and pass the

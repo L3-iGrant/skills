@@ -3,7 +3,7 @@
  *
  *   npm run register-webhook -- <tenant-slug>
  *
- * Requires env: OWS_BASE_URL, WEBHOOK_SECRET_KEY, PUBLIC_BASE_URL, and the
+ * Requires env: OWS_ENV/OWS_BASE_URL, WEBHOOK_SECRET_KEY, PUBLIC_BASE_URL, and the
  * tenant's OWS_TENANT_<SLUG>_API_KEY. The payloadUrl is `${PUBLIC_BASE_URL}/webhook`.
  */
 import { config } from "../src/config";

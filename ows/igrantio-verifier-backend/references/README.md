@@ -21,7 +21,7 @@ npm run register-webhook -- acme
 | GET | `/webhook/sse/:exchangeId` | SSE stream for a presentationExchangeId |
 | DELETE | `/webhook/:exchangeId` | consume-and-delete |
 
-Allow-listed OWS paths (proxy): `…/verification/send`, `…/verification/history` (v3 + v2).
-Registered topics: `openid.presentation.presentation_acked.v3`, `digitalwallet.presentation.verified`.
+Allow-listed OWS paths (proxy): v3 `…/verification/send` and `…/verification/history`; v2 `…/verification/history/{id}` (delete) and `…/verification/history/{id}/receive` (Digital Credentials API).
+Registered topic: `openid.presentation.presentation_acked.v3`.
 
 See the parent `SKILL.md` and `igrantio-ows-overview` for the full contract.

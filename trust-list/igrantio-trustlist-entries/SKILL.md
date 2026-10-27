@@ -6,7 +6,7 @@ metadata:
   categories: [trust-list, education]
   provider: iGrant.io
   keywords: trust list, NXD Foundation, WRPAC, WRPRC, QEAA, EAA, Pub-EAA, PID, wallet provider, registrars, ETSI TS 119 612, ETSI TS 119 602, participant, trust anchor, OAuth2 client_credentials, approvals, write:review, x509 certificate, eIDAS2
-  version: 2026.09.01
+  version: 2026.10.01
   source-doc: https://github.com/NXD-Foundation/nxd-trust-list-backend
   protocols: OAuth-2.0-client-credentials, JWT
   auth: Bearer access token from POST /auth/token with grant_type=client_credentials
@@ -24,16 +24,16 @@ Use this skill when the task is one of these:
   certificate upload can be followed by a trust-list registration.
 
 ## Prerequisites
-- An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
-  [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
-  an environment variable or a secret manager. The browser never sees it.
-- The **OWS environment** the key belongs to. The default is **demo**
-  (`https://demo-api.igrant.io`). Use **staging**
-  (`https://staging-api.igrant.io`) only when the integrator asks for it.
-  A key works only in its own environment.
-- The organisation whose certificate you register must already hold the key
-  and certificate chain in OWS (`igrantio-api-key-management`).
 - A trust-list client id and secret (next section).
+- The X.509 certificate to register, as base64 DER.
+- When the certificate belongs to a key in the iGrant.io Organisation Wallet
+  Suite (OWS): an **OWS API key** from
+  [support@igrant.io](mailto:support@igrant.io), kept on the server, and the
+  **OWS environment** of the key (default **demo**,
+  `https://demo-api.igrant.io`; **staging**, `https://staging-api.igrant.io`,
+  only when the integrator asks for it). The key must already hold its
+  certificate chain (`igrantio-api-key-management`). The trust-list API
+  itself does not use the OWS API key.
 
 ## Ask the integrator first
 Ask one question at a time. Wait for the answer. Give the recommended
@@ -41,12 +41,11 @@ default with each question. Look up facts in the project (framework,
 environment variables, an existing backend) instead of asking for them.
 Record the answers before you write code.
 
-1. **Environment** - demo or staging? _Default demo
-   (`https://demo-api.igrant.io`); a switch later is a configuration
-   change._
-2. **API key** - do you have the OWS API key for that environment? If not,
-   request it from [support@igrant.io](mailto:support@igrant.io) before you
-   continue.
+1. **Certificate** - which certificate, and from where? _If it is an OWS key,
+   ask for the OWS environment (default demo) and check that the OWS API key
+   is available; read the chain with `igrantio-api-key-management`._
+2. **Participant** - is the organisation already in the list? _Read
+   `GET /admin/participants` first: a write replaces the whole record._
 3. **Client** - do you have the trust-list client id and secret? _Created on
    the backoffice OAuth2 Clients page; the secret shows once._
 4. **List** - which trust list: WRPAC (relying party), QEAA / EAA / Pub-EAA /
@@ -68,7 +67,7 @@ A client holds **one or more scopes**, and the scopes decide what a write does:
 
 | Scope | PUT (upsert) | DELETE | Notes |
 | --- | --- | --- | --- |
-| `read` | refused (403) | refused (403) | list participants and trust lists only |
+| `read` | refused (403) | refused (403) | `GET /admin/participants` only |
 | `write` | applies directly, lists re-sign | queued for approval | for high-trust automation |
 | `write:review` | queued for approval | queued for approval | every action waits for a super admin |
 
@@ -104,31 +103,39 @@ RFC 6749: `{"error": "invalid_client", "error_description": "..."}`.
 `PUT {base}/admin/participants` with a participant record. Common rules:
 
 - `participant_id`: `^[a-z0-9][a-z0-9-]{1,63}$`. The upsert is idempotent on
-  this id; add `?mode=create` to refuse (409) an id that is already taken.
-- `name`, `address` (street, locality, country as 2-letter code;
+  this id. With the `write` scope, add `?mode=create` to refuse (409) an id
+  that is already taken; a queued write ignores the mode.
+- **A PUT replaces the whole record.** To add a service to an existing
+  participant, read it with `GET /admin/participants` and send every service
+  it keeps plus the new one.
+- `name`, `address` (street, locality, country as two upper-case letters;
   `postal_code` optional), at least one `electronic_addresses` entry, an
   `information_uri`, and at least one `services` entry are required.
   `trade_name` is optional.
 - One participant may carry several services across several lists.
-- `service_type` is optional; when omitted, the list's first (issuance)
-  type from the tables below is used. `status` is `granted` (default) or
-  `withdrawn`. `status_starting_time` and `service_supply_points` are
-  optional.
+- `service_type` is optional. When omitted, the list's default (the first
+  type in the table below) is used; a type that the list does not define is
+  a `400`. `status` is `granted` (default) or `withdrawn`.
+  `status_starting_time` and `service_supply_points` are optional.
 - Answers: `200 {"status": "participant saved and lists re-signed"}` for a
   direct write, or the `202` approval answer. An expired certificate is
-  accepted but flagged as a warning in the dashboard; a syntactically
-  invalid record is a `400`.
+  accepted but flagged as a warning in the dashboard; a record that does not
+  match these rules is a `400`.
 
 ### Primary (per-type) lists
 
 These lists **require** `digital_ids.x509_certificates`: base64 DER (the same
-encoding as a JWS `x5c` element), leaf certificate. Every other digital-id
-kind is discarded on these lists.
+encoding as a JWS `x5c` element). List the certificate that wallets must
+trust: the signing certificate itself, or a CA certificate that it chains to.
+Every other digital-id kind is discarded on these lists.
+
+`NXD-TL-QEAA.xml` and `NXD-TL-EAA.xml` are TS 119 612 trusted lists. The
+other lists are TS 119 602 lists of trusted entities (LoTE), in XML and JSON.
 
 | `list` key | Documents | Allowed `service_type` URIs (first is the default) |
 | --- | --- | --- |
-| `qeaa` | `NXD-TL-QEAA.xml` (TS 119 612 TSL) | `http://uri.etsi.org/TrstSvc/Svctype/EAA/Q` |
-| `eaa` | `NXD-TL-EAA.xml`, `nxd-eaa-providers-lote.json` | `http://uri.etsi.org/19602/SvcType/PubEAA/Issuance`, `http://uri.etsi.org/19602/SvcType/PubEAA/Revocation` |
+| `qeaa` | `NXD-TL-QEAA.xml` | `http://uri.etsi.org/TrstSvc/Svctype/EAA/Q` |
+| `eaa` | `NXD-TL-EAA.xml` | `http://uri.etsi.org/TrstSvc/Svctype/EAA` |
 | `pub-eaa` | `NXD-TL-PubEAA.xml`, `nxd-pub-eaa-providers-lote.json` | `http://uri.etsi.org/19602/SvcType/PubEAA/Issuance`, `http://uri.etsi.org/19602/SvcType/PubEAA/Revocation` |
 | `pid` | `NXD-TL-PID.xml`, `nxd-pid-providers-lote.json` | `http://uri.etsi.org/19602/SvcType/PID/Issuance`, `http://uri.etsi.org/19602/SvcType/PID/Revocation` |
 | `wallet` | `NXD-TL-WalletProviders.xml`, `nxd-wallet-providers-lote.json` | `http://uri.etsi.org/19602/SvcType/WalletSolution/Issuance`, `http://uri.etsi.org/19602/SvcType/WalletSolution/Revocation` |
@@ -174,7 +181,7 @@ service publishes validity status rather than issuing.
     {
       "list": "eaa",
       "name": "Acme EAA Issuance",
-      "service_type": "http://uri.etsi.org/19602/SvcType/PubEAA/Issuance",
+      "service_type": "http://uri.etsi.org/TrstSvc/Svctype/EAA",
       "digital_ids": { "x509_certificates": ["<base64 DER leaf certificate>"] }
     }
   ]
@@ -303,8 +310,9 @@ service publishes validity status rather than issuing.
 
 ### Secondary (legacy) lists
 
-The legacy lists accept any subset of six digital-id kinds; at least one must
-be non-empty. `service_type` is free-form here and usually omitted.
+The legacy lists are TS 119 612 trusted lists. They accept any subset of six
+digital-id kinds; at least one must be non-empty. `service_type` takes any
+URI here; when omitted it is `http://uri.etsi.org/TrstSvc/Svctype/EAA`.
 
 | `list` key | Document | Digital-id kinds |
 | --- | --- | --- |
@@ -324,12 +332,7 @@ be non-empty. `service_type` is free-form here and usually omitted.
     {
       "list": "nxd-tl",
       "name": "Acme Issuer",
-      "digital_ids": {
-        "x509_certificates": ["<base64 DER leaf certificate>"],
-        "dids": ["did:web:acme.example#key-1"],
-        "kids": ["<kid>"],
-        "jwks_uris": ["https://acme.example/.well-known/jwks.json"]
-      }
+      "digital_ids": { "x509_certificates": ["<base64 DER leaf certificate>"] }
     }
   ]
 }
@@ -348,7 +351,7 @@ be non-empty. `service_type` is free-form here and usually omitted.
     {
       "list": "ewc-tl",
       "name": "Acme EWC Issuer",
-      "digital_ids": { "dids": ["did:web:acme.example#key-1"] }
+      "digital_ids": { "x509_certificates": ["<base64 DER leaf certificate>"] }
     }
   ]
 }
@@ -356,27 +359,32 @@ be non-empty. `service_type` is free-form here and usually omitted.
 
 ## 3. Remove an entry
 
-`DELETE {base}/admin/participants/{participant_id}`. For a service client this
-**always** answers `202` and queues a `participant.delete` approval, whatever
-the scopes - the same rule human admins live under.
+`DELETE {base}/admin/participants/{participant_id}` (needs `write` or
+`write:review`). For a client this **always** answers `202` and queues a
+`participant.delete` approval, whatever the scopes: the same rule that applies
+to human admins. An unknown id is a `404`.
 
 ## 4. Read back
 
-- `GET {base}/admin/participants` - every entry, with per-service certificate
-  expiry warnings (needs any scope).
-- `GET {base}/admin/trust-lists` - the signed documents and their sequence
-  numbers; a successful write bumps the sequence.
-- `POST {base}/trust-list/lookup` with `{"x5c": ["<base64 DER>"]}` - public,
-  no auth; the definitive check that a certificate is granted by a list.
+- `GET {base}/admin/participants`: every entry, with per-service certificate
+  expiry warnings (any scope).
+- `GET {base}/trust-lists/{file}` and `GET {base}/trust-lists/legacy/{file}`:
+  the signed documents, public. A successful write re-signs the lists and
+  increases their sequence number.
+- `POST {base}/trust-list/lookup` with `{"x5c": ["<base64 DER>"]}`: public, no
+  authentication. It answers `{"match": true, "entries": [...]}`; each entry
+  gives the list and a `matchType` of `end-entity` (the certificate is listed)
+  or `chain` (a listed CA certificate). This is the definitive check.
 
 ## Pitfalls
 
 - The secret is shown once at creation or rotation; there is no read-back.
 - A `401` on a token that worked a moment ago usually means the client was
-  disabled or deleted - the backend re-reads the client row on every request.
-- Do not retry a `202` - resubmitting creates nothing new (a pending approval
-  for the same participant and action is refused with `400`) but the queue
-  only drains when a super admin acts.
+  disabled or deleted: the backend reads the client again on every request.
+- Do not retry a `202`. A second pending approval for the same participant
+  and action is refused with `400`; the queue only drains when a super admin
+  acts.
+- A PUT that leaves out a service removes that service from the lists.
 - The approvals queue re-validates the payload at approval time, so a record
   that was valid when queued can still be rejected if the rules tightened.
 - On the per-type lists every digital-id kind except `x509_certificates` is

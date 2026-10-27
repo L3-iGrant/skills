@@ -6,7 +6,7 @@ metadata:
   categories: [frontend, education]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, QR code, credential offer, OpenID4VCI, OpenID4VP, deep link, open in wallet, logo disc, refresh, transaction code, EUDI Wallet
-  version: 2026.09.01
+  version: 2026.10.01
   design-source: iGrant.io demonstrators (sme-business-wallet WalletInvite, piggy-bank-demo and infogreffe-ebwoid-issuer WalletQr, webuild-shop-demo CheckoutFlow) and the OWS passwordless-login QR panel
   auth: none
   requires-skills: igrantio-ows-overview
@@ -116,8 +116,9 @@ default black). Everything else is fixed.
      onRefresh={recreateExchange}
    />
    ```
-5. For issuance, pass `credentialHistory.credentialOffer` as `uri` and the
-   user PIN as `txCode` when the definition uses a pre-authorised code.
+5. For issuance, pass `credentialHistory.credentialOffer` as `uri`. When the
+   issue request sent a `userPin` (the transaction code of the pre-authorised
+   code flow), pass the same value as `txCode`.
 
 ## Behaviour rules (from the demonstrators)
 - `onRefresh` mints a **new** exchange: re-call issue or send through the

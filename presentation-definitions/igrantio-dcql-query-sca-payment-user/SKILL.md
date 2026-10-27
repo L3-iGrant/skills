@@ -1,12 +1,12 @@
 ---
 name: igrantio-dcql-query-sca-payment-user
-description: 'DCQL query template for the Payment User Credential (TS12) from the iGrant.io verifiable data registry. The dc+sd-jwt query holds an empty claims array, so it asks for the whole credential of the payment service user, and the vct is the payment_service_user VCT metadata URL of the issuer. Use this skill when you build a Strong Customer Authentication (SCA) flow under ETSI TS 119 462 (TS12) and the holder must prove who authorises the payment: the presentation definition must set a transactionDataDefinitionType, and the send request must carry the matching transactionData.'
+description: 'DCQL query template for the Payment User Credential (TS12) from the iGrant.io verifiable data registry. The registry template holds an empty claims array, so the dc+sd-jwt query leaves claims out and asks for the whole credential of the payment service user. The vct is the payment_service_user VCT metadata URL of the issuer. Use this skill when you build a Strong Customer Authentication (SCA) flow under the EUDI Wallet technical specification TS12 and the holder must prove who authorises the payment: the presentation definition must set a transactionDataDefinitionType, and the send request must carry the matching transactionData.'
 license: Apache-2.0
 metadata:
   categories: [dcql-query]
   provider: iGrant.io
-  keywords: DCQL, SCA, Strong Customer Authentication, TS12, ETSI TS 119 462, payment service user, PSU, PSD2, whole credential, empty claims, transaction data, presentation definition, OpenID4VP, SD-JWT VC, EUDIW, eIDAS2
-  version: 2026.09.01
+  keywords: DCQL, SCA, Strong Customer Authentication, TS12, payment service user, PSU, PSD2, whole credential, empty claims, transaction data, presentation definition, OpenID4VP, SD-JWT VC, EUDIW, eIDAS2
+  version: 2026.10.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/presentationDefinitions/dcqlQuery/scaPaymentUser
   registry-version: 2025.7.1
   requires-skills: igrantio-api-verifier
@@ -20,7 +20,7 @@ The Payment User Credential names the payment service user. It is one of the
 three TS12 credentials of a Strong Customer Authentication flow.
 
 This template is different from the other two. Its claims array is **empty**.
-An empty claims array asks for the whole credential, so the wallet returns
+A query without `claims` asks for the whole credential, so the wallet returns
 every claim that the credential holds. The registry does not fix a claim list
 here, because the issuer decides which attributes describe the user.
 
@@ -49,8 +49,8 @@ Record the answers before you write code.
 2. **API key** - do you have the OWS API key for that environment? If not,
    request it from [support@igrant.io](mailto:support@igrant.io) before you
    continue.
-3. **Format** - `dc+sd-jwt`, `jwt_vc_json` or `mso_mdoc`? _Match the format
-   the issuer used._
+3. **Format** - the registry publishes this template in `dc+sd-jwt` only, so
+   use `dc+sd-jwt`.
 4. **Claims** - which claims does the use case need? _Ask for the minimum._
 5. **Channel** - cross-device QR, same-device Digital Credentials API, or
    both? _Recommend QR first; `igrantio-dcapi-android` and
@@ -80,11 +80,15 @@ Record the answers before you write code.
 The registry gives no `mso_mdoc` file and no `jwt_vc_json` file for this
 template. The Payment User Credential is an SD-JWT VC only.
 
-**`{baseUrl}` is a placeholder.** The vct is not a fixed string. It is the
-VCT metadata URL of the issuer. Replace `{baseUrl}` with the base URL of the
-service that issues the credential, for example
-`https://demo-api.igrant.io/service/vct-metadata/payment_service_user`. Do
-not send the literal text `{baseUrl}` in a query.
+**`{baseUrl}` is a placeholder.** Replace it with the OpenID4VC service URL of
+the issuer. For a credential that an iGrant.io organisation issues, that is
+`https://oid4vc.igrant.io` on demo and `https://staging-oid4vc.igrant.io` on
+staging, so the demo vct is
+`https://oid4vc.igrant.io/service/vct-metadata/payment_service_user`.
+The templates operation
+`GET /v2/config/digital-wallet/openid/sdjwt/presentation-definition/templates`
+returns the value with `{baseUrl}` already replaced. Do not send the literal
+text `{baseUrl}` in a query.
 
 The metadata flag `isScaCredential: true` tells the platform that this
 template belongs to an SCA flow, and that the request needs transaction data.
@@ -100,9 +104,8 @@ The registry file is `2025.7.1/dc+sd-jwt.schema.json`.
 }
 ```
 
-To read the claims that the credential really holds, fetch the VCT metadata
-of the issuer at the vct URL. The metadata lists the attributes and their
-display names.
+To see what the credential holds, fetch the VCT metadata at the vct URL. Its
+`schema_uri` points at the JSON Schema of the credential.
 
 ## How to read the `path` arrays
 This template lists no path. When you add paths later, follow the
@@ -130,7 +133,8 @@ entry in `dcqlQuery.credentials` with the `dc+sd-jwt` format and the
   "version": "version_01",
   "responseType": "vp_token",
   "responseMode": "direct_post",
-  "transactionDataDefinitionType": "payment_data",
+  "cryptographicKeyFormat": "x509",
+  "transactionDataDefinitionType": "login_risk_transaction",
   "dcqlQuery": {
     "credentials": [
       {
@@ -138,7 +142,7 @@ entry in `dcqlQuery.credentials` with the `dc+sd-jwt` format and the
         "format": "dc+sd-jwt",
         "meta": {
           "vct_values": [
-            "https://demo-api.igrant.io/service/vct-metadata/payment_service_user"
+            "https://oid4vc.igrant.io/service/vct-metadata/payment_service_user"
           ]
         }
       }
@@ -147,25 +151,28 @@ entry in `dcqlQuery.credentials` with the `dc+sd-jwt` format and the
 }
 ```
 
+`cryptographicKeyFormat: "x509"` signs the request with the default key of the
+organisation and its X.509 certificate chain, and `clientIdScheme` then
+defaults to `x509_hash`. Name another key with `cryptographicKeyIdentifier`.
+
 Leaving `claims` out is not the same as sending an empty array. Leave the key
 out when you want the whole credential. Send a `claims` array only when you
-name at least one path, because `claim_sets` needs a non-empty `claims`
-array.
+name at least one path: the API refuses an empty `claims` array.
 
 Asking for the whole credential is the widest request that DCQL allows. Ask
 for named claims when you know which attributes you need. The consent screen
 of the wallet then shows a short list, and you hold less data.
 
 **Pick the transaction data type that matches your action.** The field is
-mandatory when the DCQL query asks for an SCA attestation. The API offers
-`payment_data`, `payment`, `login_risk_transaction`,
-`login_risk_transaction_non_ts12`, `account_access`, `emandate`,
-`data_agreement_record`, `data_disclosure_agreement_record` and `qes_data`.
-A payment uses a payment type. A login step uses a login risk type. Read the
-JSON Schema of each type with
-`GET /v2/config/digital-wallet/openid/sdjwt/transaction-data-definitions`
-and take the one that fits, because the schema decides which fields the
-request must carry.
+mandatory when the DCQL query asks for an SCA attestation. A TS12 type
+(`payment`, `login_risk_transaction`, `account_access` or `emandate`) must be
+one that the VCT metadata of the credential lists in `transaction_data_types`.
+For this credential the platform metadata lists `login_risk_transaction` (a
+login or a risk-based authentication step).
+`payment_data` belongs to the Payment Wallet Attestation and `qes_data` to the
+QESAC, so the API refuses them here. Read the JSON Schema of each type with
+`GET /v2/config/digital-wallet/openid/sdjwt/transaction-data-definitions`,
+because the schema decides which fields the request must carry.
 
 **Step 2.** Send the request with the V3 send operation,
 `POST /v3/config/digital-wallet/openid/sdjwt/verification/send`. Send the
@@ -178,9 +185,9 @@ definition sets a `transactionDataDefinitionType` and the request carries no
 `presentationExchangeId` for the correlation id. The finished record holds
 `transactionData` and `transactionDataBase64`.
 
-To ask for the user and the paying account in one request, put a second entry
-in `credentials` for the Payment Account Credential, and mark both as needed
-with a `credential_sets` option that lists the two identifiers.
+One DCQL query can hold only one SCA attestation. The API refuses a query
+that asks for two, for example a Payment Account Credential and a Payment User
+Credential together.
 
 `label` must hold 3 to 100 characters. The server refuses the labels that
 extensions reserve.

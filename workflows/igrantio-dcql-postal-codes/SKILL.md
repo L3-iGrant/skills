@@ -1,12 +1,12 @@
 ---
 name: igrantio-dcql-postal-codes
-description: 'DCQL pattern: claim VALUE matching - accept a credential only when a claim equals one of an allowed list, using the values array on a claim query in OpenID4VP on the iGrant.io Organisation Wallet Suite. Example: a delivery service accepts a PID/address credential (dc+sd-jwt) only for postal codes inside its delivery zones. Geographic or attribute-gated eligibility checks with EUDI Wallet (EUDIW) under eIDAS 2.0.'
+description: 'DCQL pattern: claim VALUE matching - accept a credential only when a claim equals one of an allowed list, using the values array on a claim query in OpenID4VP on the iGrant.io Organisation Wallet Suite. Example: a delivery service accepts a PID (dc+sd-jwt) only for postal codes inside its delivery zones. Geographic or attribute-gated eligibility checks with EUDI Wallet (EUDIW) under eIDAS 2.0.'
 license: Apache-2.0
 metadata:
   categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, values constraint, claim value matching, postal code, delivery zones, address credential, OpenID4VP, EUDIW, eIDAS2
-  version: 2026.09.01
+  version: 2026.10.01
   source-doc: https://docs.igrant.io/docs/dcql-2-4-7-delivery-service-restricted-postal-codes/
   requires-skills: igrantio-ows-overview, igrantio-verifier-backend
 ---
@@ -14,8 +14,8 @@ metadata:
 # DCQL: claim value matching (restricted postal codes)
 
 ## Scenario
-A delivery service requests the holder's residential address credential but
-accepts it only when `postal_code` is in its allowed delivery zones. The
+A delivery service requests the holder's address from the PID but accepts
+it only when the postal code is in its allowed delivery zones. The
 `values` array on a claim query makes the wallet match the claim VALUE, not
 just its presence.
 
@@ -59,22 +59,20 @@ Record the answers before you write code.
       "id": "residential_address",
       "format": "dc+sd-jwt",
       "meta": {
-        "vct_values": [
-          "https://credentials.gov.example/address_credential"
-        ]
+        "vct_values": ["urn:eudi:pid:1"]
       },
       "claims": [
-        { "id": "full_address", "path": ["street_address"] },
+        { "id": "street", "path": ["address", "street_address"] },
         {
           "id": "postal_code",
-          "path": ["postal_code"],
-          "values": ["43242", "234234"]
+          "path": ["address", "postal_code"],
+          "values": ["11134", "41103"]
         },
-        { "id": "city", "path": ["locality"] },
-        { "id": "country", "path": ["country"] }
+        { "id": "city", "path": ["address", "locality"] },
+        { "id": "country", "path": ["address", "country"] }
       ],
       "claim_sets": [
-        ["full_address", "postal_code", "city", "country"]
+        ["street", "postal_code", "city", "country"]
       ]
     }
   ]
@@ -82,19 +80,24 @@ Record the answers before you write code.
 ```
 
 ## Run it on OWS
-1. Store as a presentation definition; send the verification request (v3).
+1. Store the query in `dcqlQuery` of a presentation definition (`POST
+   /v2/config/digital-wallet/openid/sdjwt/presentation-definition`, with
+   `label`, `version: "version_01"` and `cryptographicKeyFormat: "x509"`);
+   then send the verification request (v3).
 2. A wallet whose postal code is outside `values` simply has no match - the
    holder cannot present. Design the UX for that outcome (clear "not in
    delivery area" message, not an error).
-3. On `presentation_acked` + `verified === true`, STILL re-check the
-   disclosed `postal_code` server-side - the wallet match is a UX filter,
-   your backend is the enforcement point.
+3. On `presentation_acked` + `verified === true`, the verifier has also
+   checked the value (a postal code outside `values` gives
+   `verified: false`). Still re-check the disclosed postal code in your
+   backend before you accept the order.
 
 ## Adjust for your deployment
-- `values`: your real postal-code allow-list (the doc values are dummies).
-  Regenerate the presentation definition when zones change.
-- `vct_values` and claim `path`s per your address credential profile
-  (PID address claims may be nested, e.g. `["address", "postal_code"]`).
+- `values`: your real postal-code allow-list (the example values are
+  dummies). Update the presentation definition when zones change.
+- The vct and the claim paths are those of the registry PID template
+  (`igrantio-dcql-query-pid-v2`); change them for another address
+  credential.
 - Large allow-lists: consider verifying the code server-side only
   (drop `values`) instead of shipping thousands of codes to the wallet.
 

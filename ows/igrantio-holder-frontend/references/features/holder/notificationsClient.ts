@@ -13,7 +13,6 @@ const NOTIFICATION_PATH = "v2/config/digital-wallet/openid/notification";
 export type NotificationType =
   | "credential_pending"
   | "credential_acked"
-  | "credential_received" // SSE only
   | "credential_revoked"
   | "credential_expired"
   | (string & {});
@@ -37,11 +36,14 @@ export interface NotificationContent {
 export interface HolderNotification {
   id: string;
   notificationType: NotificationType;
+  /** The id of the credential record that the notification is about. */
+  notificationTypeRelatedId?: string;
   /** An object, or an array whose first entry is the content. */
   notificationContent?: NotificationContent | NotificationContent[];
   status?: string; // "unread"
-  createdAt?: string;
-  updatedAt?: string;
+  /** Unix time in seconds. */
+  createdAt?: number;
+  updatedAt?: number;
   [key: string]: unknown;
 }
 
@@ -55,7 +57,7 @@ export type NotificationAction =
   | "transaction_code" // PUT  …/sdjwt/credential/{id}/user-pin
   | "authorization" // open content.authorizationRequest, then POST …/credential/exchange-code
   | "deferred_credential" // PUT  …/sdjwt/credential/{id}/receive-deferred
-  | "verification" // POST …/sdjwt/verification/{id}/filter → …/{presentationId}/send
+  | "verification" // POST …/sdjwt/verification/{presentationId}/filter, then v3 …/{presentationId}/send
   | "review_credential" // PUT  …/sdjwt/credential/{id}/accept (or DELETE to reject)
   | "none";
 
@@ -169,9 +171,11 @@ export class NotificationsClient {
 export interface NotificationsStreamOptions {
   /** Proxy tenant base, e.g. https://your-backend.example.com/ows/acme */
   baseUrl: string;
-  status?: string; // default "unread"
-  limit?: number; // default 10
-  offset?: number; // default 0
+  /**
+   * One notification frame. A notification can change in place (a pending
+   * credential that arrives): the same `id` then comes again with the new
+   * type and content, so replace the stored entry by `id`.
+   */
   onNotification: (n: HolderNotification) => void;
   onConnected?: () => void;
   onError?: (err: unknown) => void;
@@ -183,60 +187,51 @@ export interface NotificationsStreamOptions {
 
 /**
  * Opens the relayed holder notifications SSE stream. Returns a close()
- * function. Handles the named `connected` / `notification` / `close` events
- * plus untyped messages, accepts both payload shapes (a root-level
- * notification, or `{ notification: [ … ] }`), de-duplicates by id, and
- * reconnects with exponential backoff.
+ * function. Handles the named `connected` / `notification` / `error` events,
+ * drops a frame that it has already delivered (by the frame `id`), and
+ * reconnects with exponential backoff. A reconnect sends the `id` of the last
+ * frame as `lastEventId`, so OWS replays the frames that were missed.
  */
 export function openNotificationsStream(opts: NotificationsStreamOptions): () => void {
   const seen: string[] = [];
+  let lastEventId = "";
   let attempts = 0;
   let closed = false;
   let source: EventSource | undefined;
   let retryTimer: ReturnType<typeof setTimeout> | undefined;
 
-  const base = opts.baseUrl.replace(/\/$/, "");
-  const qs = new URLSearchParams({
-    status: opts.status ?? "unread",
-    limit: String(opts.limit ?? 10),
-    offset: String(opts.offset ?? 0),
-  });
-  const url = `${base}/${NOTIFICATIONS_PATH}/sse?${qs}`;
+  const url = `${opts.baseUrl.replace(/\/$/, "")}/${NOTIFICATIONS_PATH}/sse`;
 
-  const deliver = (raw: string) => {
+  const deliver = (e: MessageEvent) => {
+    if (e.lastEventId) {
+      if (seen.includes(e.lastEventId)) return;
+      seen.push(e.lastEventId);
+      if (seen.length > 200) seen.shift();
+      lastEventId = e.lastEventId;
+    }
     let data: any;
     try {
-      data = JSON.parse(raw);
+      data = JSON.parse(e.data);
     } catch {
       return;
     }
-    const items: any[] = Array.isArray(data?.notification)
-      ? data.notification
-      : data?.notificationType
-        ? [data]
-        : [];
-    for (const item of items) {
-      const id = String(item.id ?? `${item.notificationType}:${item.timestamp ?? ""}`);
-      if (seen.includes(id)) continue;
-      seen.push(id);
-      if (seen.length > 100) seen.shift();
-      opts.onNotification({ status: "unread", ...item, id });
-    }
+    if (typeof data?.id !== "string" || !data.notificationType) return;
+    opts.onNotification(data as HolderNotification);
   };
 
   const connect = () => {
     if (closed) return;
-    source = new EventSource(url);
+    // A new EventSource does not send Last-Event-ID, so resume with the query parameter.
+    source = new EventSource(lastEventId ? `${url}?${new URLSearchParams({ lastEventId })}` : url);
     source.addEventListener("connected", () => {
       attempts = 0;
       opts.onConnected?.();
     });
-    source.addEventListener("notification", (e) => deliver((e as MessageEvent).data));
-    source.onmessage = (e) => deliver(e.data);
-    source.addEventListener("close", () => source?.close());
+    source.addEventListener("notification", (e) => deliver(e as MessageEvent));
     source.onerror = (err) => {
-      // A server-sent `event: error` arrives here as a MessageEvent with data;
-      // the stream is still open, so report it and keep listening.
+      // A server-sent `event: error` arrives here as a MessageEvent with data
+      // (for example an organisation without a wallet); report it. The server
+      // then ends the stream, which arrives here again without data.
       if ((err as MessageEvent).data !== undefined) {
         opts.onError?.((err as MessageEvent).data);
         return;

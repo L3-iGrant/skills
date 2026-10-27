@@ -17,9 +17,9 @@ Three views (plus a base-configuration page in the reference wallet):
 | Shared credentials | `GET …/sdjwt/verifications` | Stats double as status filters. |
 | Notifications | list + SSE stream | The holder's action centre; a badge with the count sits on the wallet menu/tab. |
 
-Default sort: received by `createdAt` desc, shared by `updatedAt` desc - the
-API only honours `sortOrder` on those fields. Search is a single box per
-table ("Search by Credential Type, Issuer"), debounced ~100ms.
+Default sort: received by `createdAt` desc (send `sortBy=createdAt`; the
+list sorts on `updatedAt` otherwise), shared by `updatedAt` desc. Search is a
+single box per table ("Search by Credential Type, Issuer"), debounced ~100ms.
 
 ## 2. Gating
 
@@ -48,7 +48,7 @@ join → `credentialConfigurations.vct` → `credential.issuerAuth.docType` →
 When a title is an http(s) URL, fetch it and use `data.name ?? data.display.name`.
 
 **Format labels**: `mso_mdoc` → "ISO 18013-5 mdoc/mDL"; `dc+sd-jwt` /
-`vp+sd-jwt` / `vc+sd-jwt` / `sdjwt` → "IETF SD-JWT VC"; `jwt_vc` /
+`vp+sd-jwt` / `vc+sd-jwt` → "IETF SD-JWT VC"; `jwt_vc` /
 `jwt_vc_json` → "W3C VC (JWT)". Structural fallbacks: `nameSpaces` → mdoc,
 `vc.credentialSubject` → W3C, `vct`/`dataAgreement` → SD-JWT.
 
@@ -188,28 +188,29 @@ expired grey.
 | --- | --- | --- | --- |
 | informational | type `credential_revoked` / `credential_expired` | "Credential revoked by issuer." / "Credential expired and cannot be used." | none |
 | `transaction_code` | pending + `userPinRequired` + no `userPin` | "Click to enter transaction code to continue." | PIN input sized/typed by `txCode` |
-| `authorization` | pending + no `acceptanceToken` + `oAuthFlow=="frontchannel"` + `authorizationRequest` | "Authorise credential issuance" | open URL; exchange `?code`/`?state` on return |
+| `authorization` | pending + no `acceptanceToken` + `oAuthFlow=="frontchannel"` + `authorizationRequest` | "Authorise credential issuance" | open URL; exchange `?code`/`?state` (and `?iss`) on return |
 | `deferred_credential` | pending + `acceptanceToken` present | "Get the credential issued" | `receive-deferred`; delete the notification ONLY when the response is `credential_acked` |
 | `verification` | pending + `presentationId` + no `acceptanceToken` | "Provide additional details to continue" | filter → share wizard |
 | `review_credential` | `credential_acked` | "Get the credential issued" | detail view in review mode |
 
 In-flight rows show a spinner + "Processing...". Deleting a notification is
 the "handled" signal; "Clear all" deletes the whole inbox (typed confirmation
-in the reference wallet). Wrong transaction code → surface "Invalid
-transaction code, check and try again".
+in the reference wallet). Wrong transaction code → surface the
+`errorDescription` of the 400 answer.
 
-SSE: new notifications prepend to the list (dedupe by id) and may raise a
-snackbar (max ~5 visible, 6s auto-hide). The stream emits only creations -
-status changes and deletions produce no frame, and there is no replay on
-reconnect, so refetch the list after reconnecting.
+SSE: new notifications prepend to the list and may raise a snackbar (max ~5
+visible, 6s auto-hide). A pending notification that changes in place comes
+again with the same id: replace the row. Status changes and deletions
+produce no frame. A reconnect resumes from the last frame id (replay); also
+refetch the list after reconnecting.
 
 ## 8. Input UX
 
 No camera scanning exists in the reference wallet - offers and verification
 requests are pasted into a required textarea ("Enter Credential Offer URL" /
-"Enter Verification Request URL") with a Trust Anchor dropdown (default
-`did:key`; choosing `x509` clears the optional Key Identifier). A pasted
-verification value starting with `http(s)://` is sent verbatim. Deep links
+"Enter Verification Request URL"). The wallet uses the organisation default
+key, so there is no key choice. A pasted verification value starting with
+`http(s)://` is sent verbatim. Deep links
 carrying `request_uri` can auto-open and auto-submit the respond modal.
 
 ## 9. Palette

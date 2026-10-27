@@ -6,7 +6,7 @@ metadata:
   categories: [frontend]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VP, DCQL, Digital Credentials API, credential verification, QR code, transaction data, SCA
-  version: 2026.09.01
+  version: 2026.10.01
   api: https://docs.igrant.io/docs/category/openid4vc-api/verifier
   protocols: OpenID4VP-1.0, DCQL, SD-JWT-VC, Digital-Credentials-API
   auth: none in the browser - the verifier backend injects the OWS API key
@@ -68,7 +68,8 @@ Record the answers before you write code.
   - `result`: `{ verified, claims, presentations }` once the wallet responds.
   - `status`: `idle → waiting → verified | rejected` (or `error`).
 - **`dcApi.ts`** - same-device Digital Credentials API helpers (`supportsDcApi`,
-  `invokeWallet`, `buildReceivePayload`).
+  `getPlatformRequest`, `invokeWallet`, `buildReceivePayload`) for the
+  protocols `openid4vp-v1-signed`, `openid4vp-v1-unsigned` and `org-iso-mdoc`.
 - **`VerifierFlow`** - a minimal end-to-end demo component that renders the
   wallet QR with `WalletQrPanel` (`logoSrc`).
 - **`walletQr/`** - `WalletQrPanel.tsx` + `walletQr.css`, the demonstrator
@@ -77,10 +78,11 @@ Record the answers before you write code.
 ## Flow (what happens)
 1. `POST …/verification/send` with `presentationDefinitionId` → read
    `verificationHistory.presentationExchangeId` (SSE key) and
-   `verificationHistory.vpTokenQrCode` (QR URI). Optionally include
-   `transactionData` (SCA payment, e-mandate, login/risk, account access, or
-   QES signing - typed as `TransactionData` in `lib/ows/types.ts`; shapes in
-   `igrantio-ows-overview` api-reference §2.1) so the wallet displays and
+   `verificationHistory.vpTokenQrCode` (QR URI). Include `transactionData`
+   (SCA payment, e-mandate, login/risk, account access, or QES signing - typed
+   as `TransactionData` in `lib/ows/types.ts`; shapes in
+   `igrantio-ows-overview` api-reference §2.1) when the presentation
+   definition sets `transactionDataDefinitionType`; the wallet displays and
    signs over the transaction details.
 2. Open SSE on the exchange id; render the wallet QR panel
    (`WalletQrPanel`, vendored from `igrantio-qr-code` at
@@ -111,10 +113,15 @@ Record the answers before you write code.
    ```
 
 ## Same-device (optional)
-If `requestPresentation` returns a `verificationHistory.dcApiRequest`, call
-`invokeWallet(dcApiRequest)` from `dcApi.ts`, then post the result back to OWS via
-the proxy (`buildReceivePayload`) on an allow-listed receive path. The SSE stream
-still delivers the final verified result, so the render path is unchanged.
+When the presentation definition uses a `dc_api` response mode,
+`requestPresentation` returns a `verificationHistory.dcApiRequest` and
+`dcApiProtocol`, and `vpTokenQrCode` is empty. Call
+`invokeWallet(dcApiRequest)` from `dcApi.ts`, then post
+`buildReceivePayload(data, dcApiProtocol)` back with
+`client.verification.receiveDcApiResponse(presentationExchangeId, payload)`
+(`POST /v2/config/digital-wallet/openid/sdjwt/verification/history/{id}/receive`
+through the proxy). The SSE stream still delivers the final verified result,
+so the render path is unchanged.
 Platform-specific end-to-end recipes: `igrantio-dcapi-android` (OpenID4VP) and
 `igrantio-dcapi-ios` (ISO 18013-7 Annex C, signed).
 

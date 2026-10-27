@@ -1,12 +1,12 @@
 ---
 name: igrantio-schema-discovery
-description: 'How to find a credential schema or a DCQL query for the iGrant.io Organisation Wallet Suite. Start with the iGrant.io verifiable data registry (claim path pointer schemas and DCQL query templates). If the credential type you need is not there, check the WE BUILD attestation rulebooks catalog for a rulebook that defines it, and build the claim path pointer document from the rulebook. Use this skill when no igrantio-credential-schema-* or igrantio-dcql-query-* skill matches the credential you must issue or verify.'
+description: 'How to find a credential schema or a DCQL query for the iGrant.io Organisation Wallet Suite. Start with the iGrant.io verifiable data registry (claim path pointer schemas and DCQL query templates), which the API also serves through its template operations. If the credential type you need is not there, check the EUDI Wallet attestation rulebooks catalog for a rulebook that defines it, and build the claim path pointer document from the rulebook. Use this skill when no igrantio-credential-schema-* or igrantio-dcql-query-* skill matches the credential you must issue or verify.'
 license: Apache-2.0
 metadata:
   categories: [credential-schema]
   provider: iGrant.io
-  keywords: credential schema, claim path pointer, DCQL query, schema discovery, verifiable data registry, WE BUILD, attestation rulebook, EUDIW, eIDAS2
-  version: 2026.09.01
+  keywords: credential schema, claim path pointer, DCQL query, schema discovery, verifiable data registry, attestation rulebook, ARF, EUDIW, eIDAS2
+  version: 2026.10.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry
 ---
 
@@ -60,16 +60,29 @@ directory. It holds one schema file and one metadata file per credential
 format. The registry can hold templates that are newer than the skills in
 this collection, so check it even when a skill exists.
 
-## Step 2: the WE BUILD attestation rulebooks catalog
-**If the credential type is not in the iGrant.io registry, check the WE BUILD
-attestation rulebooks catalog:**
+The API serves the latest version of each template, with your API key:
 
-<https://github.com/webuild-consortium/webuild-attestation-rulebooks-catalog>
+- `GET /v2/config/digital-wallet/openid/sdjwt/credential-definition/templates`
+- `GET /v2/config/digital-wallet/openid/sdjwt/presentation-definition/templates`
 
-The catalog collects attestation rulebooks for the European Business Wallet
-ecosystem. A rulebook defines the attestation: its attribute names, formats,
-and namespaces. When you find a rulebook for your credential type, build the
-claim path pointer document from its attribute definitions:
+Each answer holds a `templates` array and a `pagination` object (`offset` and
+`limit` query parameters, 10 items by default). In the first answer, use the
+entries with `type: claimPathPointer`. In the second, use the entries whose
+format metadata has `isDcqlQuery: true`. The answers fill in placeholders such
+as `{baseUrl}` for your environment.
+
+## Step 2: the EUDI Wallet attestation rulebooks catalog
+**If the credential type is not in the iGrant.io registry, check the EUDI
+Wallet attestation rulebooks catalog of the ARF:**
+
+<https://github.com/eu-digital-identity-wallet/eudi-doc-attestation-rulebooks-catalog>
+
+A rulebook defines the attestation: its attribute names, formats, and
+namespaces. The WE BUILD consortium catalog
+(<https://github.com/webuild-consortium/webuild-attestation-rulebooks-catalog>)
+holds draft rulebooks for the European Business Wallet. Treat those as drafts,
+not as binding rules. When you find a rulebook for your credential type, build
+the claim path pointer document from its attribute definitions:
 
 - One `claims[]` entry per attribute.
 - For `mso_mdoc`, the first element of each `path` array is the namespace
@@ -79,9 +92,10 @@ claim path pointer document from its attribute definitions:
 - Set `mandatory` and `limitDisclosure` per attribute as the rulebook
   requires.
 
-Then create the credential definition with the `credentialDefinitions[]`
-approach and `version: version_01`. Read `igrantio-api-issuer` for the
-operation, or `igrantio-api-verifier` to build the matching DCQL query.
+Then create the credential definition with one `credentialDefinitions[]` entry
+per format, `version: version_01` and `cryptographicKeyFormat: x509`. Read
+`igrantio-api-issuer` for the operation, or `igrantio-api-verifier` to build
+the matching DCQL query.
 
 ## Step 3: no rulebook exists
 If neither source covers the credential type, define your own claim path

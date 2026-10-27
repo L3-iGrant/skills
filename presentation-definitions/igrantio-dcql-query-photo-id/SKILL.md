@@ -6,7 +6,7 @@ metadata:
   categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, Photo ID, photoid, eu.europa.ec.eudi.photoid.1, ISO 23220, DTC, digital travel credential, presentation definition, OpenID4VP, mso_mdoc, SD-JWT VC, jwt_vc_json, EUDIW, eIDAS2
-  version: 2026.09.01
+  version: 2026.10.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/presentationDefinitions/dcqlQuery/photoId
   registry-version: 2025.7.1
   requires-skills: igrantio-api-verifier
@@ -78,7 +78,7 @@ Record the answers before you write code.
 | Credential type | `eu.europa.ec.eudi.photoid.1` |
 | Formats | `dc+sd-jwt`, `jwt_vc_json`, `mso_mdoc` |
 | `mso_mdoc` doctype | `eu.europa.ec.eudi.photoid.1` |
-| `mso_mdoc` namespace | `eu.europa.ec.eudi` |
+| `mso_mdoc` namespace | `eu.europa.ec.eudi.photoid.1` |
 | `dc+sd-jwt` vct | `eu.europa.ec.eudi.photoid.1` |
 | `jwt_vc_json` type | `eu.europa.ec.eudi.photoid.1` |
 
@@ -209,9 +209,9 @@ The registry file is `2025.7.1/mso_mdoc.schema.v1.json`. This is the form for
 ```json
 {
   "claims": [
-    { "path": ["eu.europa.ec.eudi", "dtc"] },
-    { "path": ["eu.europa.ec.eudi", "iso23220"] },
-    { "path": ["eu.europa.ec.eudi", "photoid"] }
+    { "path": ["eu.europa.ec.eudi.photoid.1", "dtc"] },
+    { "path": ["eu.europa.ec.eudi.photoid.1", "iso23220"] },
+    { "path": ["eu.europa.ec.eudi.photoid.1", "photoid"] }
   ]
 }
 ```
@@ -234,8 +234,8 @@ same three claims in an older shape, with a `namespace` key and a
   first element is always `credentialSubject`.
 - For `mso_mdoc`, **the first element is the namespace and the second element
   is the data element identifier**. Here the namespace is
-  `eu.europa.ec.eudi` for all three claims. An mDoc path always holds exactly
-  two elements.
+  `eu.europa.ec.eudi.photoid.1`, the same value as the doctype, for all three
+  claims. An mDoc path always holds exactly two elements.
 
 ## Use with the iGrant.io API
 Store the query as a presentation definition, then send the verification
@@ -253,6 +253,7 @@ to `version_01`.
 {
   "label": "Photo ID check",
   "version": "version_01",
+  "cryptographicKeyFormat": "x509",
   "responseType": "vp_token",
   "responseMode": "direct_post",
   "dcqlQuery": {
@@ -262,13 +263,17 @@ to `version_01`.
         "format": "mso_mdoc",
         "meta": { "doctype_value": "eu.europa.ec.eudi.photoid.1" },
         "claims": [
-          { "path": ["eu.europa.ec.eudi", "iso23220"] }
+          { "path": ["eu.europa.ec.eudi.photoid.1", "iso23220"] }
         ]
       }
     ]
   }
 }
 ```
+
+`cryptographicKeyFormat: "x509"` signs the request with the default key of the
+organisation and its X.509 certificate chain, and `clientIdScheme` then
+defaults to `x509_hash`. Name another key with `cryptographicKeyIdentifier`.
 
 `dc+sd-jwt` takes `vct_values` instead:
 

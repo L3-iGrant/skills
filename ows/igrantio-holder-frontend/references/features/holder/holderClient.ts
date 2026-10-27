@@ -36,9 +36,9 @@ export interface CredentialRecord {
   trustServiceProvider?: unknown;
   autoPresent?: boolean;
   revocationStatus?: string;
-  dataAgreement?: { policy?: unknown };
-  createdAt?: number | string;
-  updatedAt?: number | string;
+  /** Unix time in seconds. */
+  createdAt?: number;
+  updatedAt?: number;
   [k: string]: unknown;
 }
 
@@ -55,31 +55,41 @@ export interface PresentationRecord {
   isVerifiedWithTrustList?: boolean;
   trustServiceProvider?: unknown;
   responseType?: string;
-  updatedAt?: number | string;
+  /** Unix time in seconds. */
+  updatedAt?: number;
   [k: string]: unknown;
 }
 
 export interface Pagination {
+  currentPage?: number;
   totalItems?: number;
+  totalPages?: number;
+  limit?: number;
   hasNext?: boolean;
   hasPrevious?: boolean;
 }
 
+/**
+ * The wallet receives and presents with the organisation default key. The
+ * request bodies are strict: an unknown field answers 400.
+ */
 export interface ReceiveOfferPayload {
   /** The scanned/pasted `openid-credential-offer://…` URI (or offer JSON). */
   credentialOffer: string;
   autoPresent?: boolean;
-  kid?: string;
-  /** "did:key" (default) | "x509" - clear `kid` when using x509. */
-  trustAnchor?: string;
 }
 
 export interface ReceiveRequestPayload {
   /** The pasted verification request - `openid4vp://…` URI or https URL, verbatim. */
   vpTokenQrCode: string;
   autoPresent?: boolean;
-  kid?: string;
-  trustAnchor?: string;
+}
+
+/** The `?code`, `?state` and (RFC 9207) `?iss` of the issuer redirect. */
+export interface AuthorizationResponse {
+  code: string;
+  state: string;
+  iss?: string;
 }
 
 export interface ListCredentialsParams {
@@ -88,6 +98,8 @@ export interface ListCredentialsParams {
   expired?: boolean;
   credentialStatus?: string;
   search?: string;
+  /** The list sorts on `updatedAt` unless `createdAt` is asked for. */
+  sortBy?: "createdAt" | "updatedAt";
   sortOrder?: "asc" | "desc";
 }
 
@@ -119,9 +131,9 @@ export function normalizeReceived(credential: CredentialRecord | CredentialRecor
   return Array.isArray(credential) ? credential : [credential];
 }
 
-/** Filter responses vary the key: `inputDescriptors` / `inputDescriptor` / `credentials`. */
+/** The filter answers `credentials` (DCQL) or `inputDescriptors` (Presentation Exchange). */
 export function pickDescriptors(res: Record<string, unknown>): FilterDescriptor[] {
-  const raw = res.inputDescriptors ?? res.inputDescriptor ?? res.credentials;
+  const raw = res.credentials ?? res.inputDescriptors;
   return Array.isArray(raw) ? (raw as FilterDescriptor[]) : [];
 }
 
@@ -133,14 +145,18 @@ export function createHolderClient(ows: OwsRequester) {
         ows.request<{ credential: CredentialRecord | CredentialRecord[] }>(
           "POST",
           `${SD}/credential/receive`,
-          { autoPresent: true, trustAnchor: "did:key", ...payload },
+          { autoPresent: true, ...payload },
         ),
       /** Pre-authorised-code flow: submit the transaction code. */
       submitTransactionCode: (id: string, userPin: string) =>
         ows.request<unknown>("PUT", `${SD}/credential/${id}/user-pin`, { userPin }),
-      /** Front-channel flow: exchange the `?code`/`?state` from the issuer redirect. */
-      exchangeCode: (code: string, state: string | null) =>
-        ows.request<unknown>("POST", `${SD}/credential/exchange-code`, { code, state }),
+      /** Front-channel flow: exchange the code of the issuer redirect (`state` is required). */
+      exchangeCode: (response: AuthorizationResponse) =>
+        ows.request<{ credential: CredentialRecord | CredentialRecord[] | null }>(
+          "POST",
+          `${SD}/credential/exchange-code`,
+          response,
+        ),
       /** Deferred issuance: retry until `credential.credentialStatus === "credential_acked"`. */
       receiveDeferred: (id: string) =>
         ows.request<{ credential?: CredentialRecord }>("PUT", `${SD}/credential/${id}/receive-deferred`),
@@ -168,6 +184,7 @@ export function createHolderClient(ows: OwsRequester) {
             expired: params.expired,
             credentialStatus: params.credentialStatus,
             search: params.search,
+            sortBy: params.sortBy,
             sortOrder: params.sortOrder,
           })}`,
         ),
@@ -179,7 +196,7 @@ export function createHolderClient(ows: OwsRequester) {
         ows.request<{ presentation: PresentationRecord }>(
           "POST",
           `${SD3}/verification/receive`,
-          { autoPresent: true, trustAnchor: "did:key", ...payload },
+          { autoPresent: true, ...payload },
         ),
       /** Match held credentials against the request (v2; empty body). Use `pickDescriptors`. */
       filter: (presentationId: string) =>

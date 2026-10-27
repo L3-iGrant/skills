@@ -6,7 +6,7 @@ metadata:
   categories: [credential-schema]
   provider: iGrant.io
   keywords: age verification, proof of age, age_over_18, eu.europa.ec.av.1, mso_mdoc, mdoc, claim path pointer, credential definition, EUDIW, selective disclosure
-  version: 2026.09.01
+  version: 2026.10.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/credentialSchemas/claimPathPointer/ageVerification
   schema-version: 2026.4.1
   formats: mso_mdoc
@@ -49,17 +49,17 @@ Record the answers before you write code.
 2. **API key** - do you have the OWS API key for that environment? If not,
    request it from [support@igrant.io](mailto:support@igrant.io) before you
    continue.
-3. **Format** - which of the formats the registry publishes for this schema:
-   `dc+sd-jwt`, `jwt_vc_json` or `mso_mdoc`? _Recommend `dc+sd-jwt` unless the
-   rule book requires mdoc._
+3. **Format** - the registry publishes this schema in `mso_mdoc` only, so use
+   `mso_mdoc`.
 4. **Claims** - all claims of the schema, or a subset? _Mandatory claims
    stay._
 5. **Issuance mode** - `InTime` (claims known now) or `Deferred` (claims
    arrive later)?
 6. **Revocation** - status list on? _Recommend on for any credential with a
    lifetime._
-7. **Signing** - a DID key or an X.509 certificate (`x5c`)? _X.509 is needed
-   for mdoc and for the trust list._
+7. **Signing key** - which key signs the credentials? _Recommend a key with an
+   X.509 certificate chain (`cryptographicKeyFormat: "x509"`). The trust list
+   needs it, and `mso_mdoc` accepts only `x509`._
 8. **Trust list** - is your issuer certificate (the trust anchor) registered
    in the trust list? If not, contact
    [support@igrant.io](mailto:support@igrant.io) and follow
@@ -136,17 +136,21 @@ Put one entry in `credentialDefinitions[]` and copy the `claims` array of the
 schema document into that entry.
 
 - Set `version` to `version_01` at the top level of the request.
+- Set `cryptographicKeyFormat` to `x509` at the top level. The default key of
+  the organisation then signs, with its X.509 certificate chain. Name another
+  key with `cryptographicKeyIdentifier`.
 - Set `credentialFormat` to `mso_mdoc`.
 - Set `doctype` to `eu.europa.ec.av.1`.
 - Put the array in `claims.claims`.
 - Set `validationPath` to `$`.
-- Add `cose_key` to `credentialBindingMethods` if the wallet binds the mdoc with
-  a COSE key.
+- Leave out `credentialBindingMethods`. An mdoc is always bound to the device
+  key of the holder, so `["cose_key"]` is the default and the only valid value.
 
 ```json
 {
   "label": "Issue Age Verification",
   "version": "version_01",
+  "cryptographicKeyFormat": "x509",
   "credentialDefinitions": [
     {
       "credentialFormat": "mso_mdoc",

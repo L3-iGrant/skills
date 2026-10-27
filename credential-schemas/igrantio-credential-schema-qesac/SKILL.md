@@ -6,7 +6,7 @@ metadata:
   categories: [credential-schema]
   provider: iGrant.io
   keywords: QESAC, credential schema, claim path pointer, SD-JWT VC, dc+sd-jwt, credentialId, EUDIW, verifiable data registry
-  version: 2026.09.01
+  version: 2026.10.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/credentialSchemas/claimPathPointer/qesac
   schema-version: 2025.7.1
   credential-formats: dc+sd-jwt
@@ -48,17 +48,17 @@ Record the answers before you write code.
 2. **API key** - do you have the OWS API key for that environment? If not,
    request it from [support@igrant.io](mailto:support@igrant.io) before you
    continue.
-3. **Format** - which of the formats the registry publishes for this schema:
-   `dc+sd-jwt`, `jwt_vc_json` or `mso_mdoc`? _Recommend `dc+sd-jwt` unless the
-   rule book requires mdoc._
+3. **Format** - the registry publishes this schema in `dc+sd-jwt` only, so use
+   `dc+sd-jwt`.
 4. **Claims** - all claims of the schema, or a subset? _Mandatory claims
    stay._
 5. **Issuance mode** - `InTime` (claims known now) or `Deferred` (claims
    arrive later)?
 6. **Revocation** - status list on? _Recommend on for any credential with a
    lifetime._
-7. **Signing** - a DID key or an X.509 certificate (`x5c`)? _X.509 is needed
-   for mdoc and for the trust list._
+7. **Signing key** - which key signs the credentials? _Recommend a key with an
+   X.509 certificate chain (`cryptographicKeyFormat: "x509"`). The trust list
+   needs it, and `mso_mdoc` accepts only `x509`._
 8. **Trust list** - is your issuer certificate (the trust anchor) registered
    in the trust list? If not, contact
    [support@igrant.io](mailto:support@igrant.io) and follow
@@ -142,6 +142,7 @@ the format fields that the table above gives.
 {
   "label": "Issue QESAC",
   "version": "version_01",
+  "cryptographicKeyFormat": "x509",
   "credentialDefinitions": [
     {
       "credentialFormat": "dc+sd-jwt",
@@ -167,9 +168,12 @@ Notes on the request.
 - `label` must hold at least 3 characters. The platform reserves the labels
   `Payment User Credential`, `Payment Card Credential`, `Payment Account
   Credential`, `PID Issuance` and `Photo ID Issuance`, so pick another label.
-- Always send `version` with the value `version_01`. The issuer falls back to an
-  earlier version of the specification when you leave the field out, and you
-  cannot change the value after you create the credential definition.
+- `version` is required. Its only value is `version_01` (OpenID4VCI 1.0), and
+  you cannot change it after you create the credential definition.
+- `cryptographicKeyFormat: "x509"` signs the credentials with the default key of
+  the organisation and its X.509 certificate chain. Name another key with
+  `cryptographicKeyIdentifier`. Upload the chain to the key first
+  (`igrantio-api-key-management`).
 - Add one entry of `credentialDefinitions[]` for each format that you want to
   publish. You can publish more than one format from one credential definition.
 - Keep the `id` that the response returns for each entry. The issue operation

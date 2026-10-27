@@ -8,7 +8,9 @@ import type { TenantStore } from "./tenants";
  * Mounts at `${config.proxyPrefix}` and handles `/{tenant}/{owsPath...}`:
  *  - resolves the tenant's OWS API key from the TenantStore,
  *  - rejects any path not on `permittedPrefixes` (least privilege) - a string
- *    rule matches as a path prefix, a RegExp rule is tested against the path,
+ *    rule matches as a path prefix, a RegExp rule is tested against the path -
+ *    and any path with a dot segment, which `fetch` would resolve to another
+ *    OWS route after the check,
  *  - replaces Authorization with `ApiKey <key>` and forwards to OWS,
  *  - streams the upstream response back, stripping hop-by-hop headers.
  *
@@ -21,6 +23,13 @@ const HOP_BY_HOP = new Set([
   "connection",
   "keep-alive",
 ]);
+
+/** "." or "..", also percent-encoded: the URL parser resolves these segments. */
+const DOT_SEGMENT = /^(\.|%2e){1,2}$/i;
+
+function hasDotSegment(path: string): boolean {
+  return path.split(/[\\/]/).some((segment) => DOT_SEGMENT.test(segment));
+}
 
 export function proxyRouter(
   store: TenantStore,
@@ -39,9 +48,9 @@ export function proxyRouter(
       res.status(404).json({ detail: "Unknown tenant or empty path" });
       return;
     }
-    const permitted = permittedPrefixes.some((p) =>
-      typeof p === "string" ? path.startsWith(p) : p.test(path),
-    );
+    const permitted =
+      !hasDotSegment(path) &&
+      permittedPrefixes.some((p) => (typeof p === "string" ? path.startsWith(p) : p.test(path)));
     if (!permitted) {
       res.status(404).json({ detail: "Path not found" });
       return;

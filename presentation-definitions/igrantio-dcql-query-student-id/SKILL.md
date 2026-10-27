@@ -6,7 +6,7 @@ metadata:
   categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, Student ID, VerifiableStudentID, eu.europa.ec.eudi.studentid.1, eduPerson, SCHAC, schacHomeOrganization, eduPersonScopedAffiliation, student status, presentation definition, OpenID4VP, mso_mdoc, SD-JWT VC, jwt_vc_json, EUDIW
-  version: 2026.09.01
+  version: 2026.10.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/presentationDefinitions/dcqlQuery/studentId
   registry-version: 2025.7.1
   requires-skills: igrantio-api-verifier
@@ -81,16 +81,15 @@ Record the answers before you write code.
 | `dc+sd-jwt` vct | `VerifiableStudentID` |
 | `jwt_vc_json` type | `VerifiableStudentIDJWT` |
 | `mso_mdoc` doctype | `eu.europa.ec.eudi.studentid.1` |
-| `mso_mdoc` namespace | `eu.europa.ec.eudi` |
+| `mso_mdoc` namespace | `eu.europa.ec.eudi.studentid.1` |
 
 The credential type is **not** the same in the three formats. The SD-JWT VC
 uses `VerifiableStudentID`, the JWT VC uses `VerifiableStudentIDJWT`, and the
 mDoc uses `eu.europa.ec.eudi.studentid.1`. Take the value that matches the
 format of your query.
 
-Note also that the mDoc namespace is `eu.europa.ec.eudi` and not
-`eu.europa.ec.eudi.studentid.1`. The namespace and the doctype are different
-here.
+The mDoc namespace is the same value as the doctype,
+`eu.europa.ec.eudi.studentid.1`.
 
 ## Claims
 
@@ -151,21 +150,21 @@ The registry file is `2025.7.1/mso_mdoc.schema.v1.json`. This is the form for
 ```json
 {
   "claims": [
-    { "path": ["eu.europa.ec.eudi", "identifier"] },
-    { "path": ["eu.europa.ec.eudi", "schacPersonalUniqueCode"] },
-    { "path": ["eu.europa.ec.eudi", "schacPersonalUniqueID"] },
-    { "path": ["eu.europa.ec.eudi", "schacHomeOrganization"] },
-    { "path": ["eu.europa.ec.eudi", "familyName"] },
-    { "path": ["eu.europa.ec.eudi", "firstName"] },
-    { "path": ["eu.europa.ec.eudi", "displayName"] },
-    { "path": ["eu.europa.ec.eudi", "dateOfBirth"] },
-    { "path": ["eu.europa.ec.eudi", "commonName"] },
-    { "path": ["eu.europa.ec.eudi", "mail"] },
-    { "path": ["eu.europa.ec.eudi", "eduPersonPrincipalName"] },
-    { "path": ["eu.europa.ec.eudi", "eduPersonPrimaryAffiliation"] },
-    { "path": ["eu.europa.ec.eudi", "eduPersonAffiliation"] },
-    { "path": ["eu.europa.ec.eudi", "eduPersonScopedAffiliation"] },
-    { "path": ["eu.europa.ec.eudi", "eduPersonAssurance"] }
+    { "path": ["eu.europa.ec.eudi.studentid.1", "identifier"] },
+    { "path": ["eu.europa.ec.eudi.studentid.1", "schacPersonalUniqueCode"] },
+    { "path": ["eu.europa.ec.eudi.studentid.1", "schacPersonalUniqueID"] },
+    { "path": ["eu.europa.ec.eudi.studentid.1", "schacHomeOrganization"] },
+    { "path": ["eu.europa.ec.eudi.studentid.1", "familyName"] },
+    { "path": ["eu.europa.ec.eudi.studentid.1", "firstName"] },
+    { "path": ["eu.europa.ec.eudi.studentid.1", "displayName"] },
+    { "path": ["eu.europa.ec.eudi.studentid.1", "dateOfBirth"] },
+    { "path": ["eu.europa.ec.eudi.studentid.1", "commonName"] },
+    { "path": ["eu.europa.ec.eudi.studentid.1", "mail"] },
+    { "path": ["eu.europa.ec.eudi.studentid.1", "eduPersonPrincipalName"] },
+    { "path": ["eu.europa.ec.eudi.studentid.1", "eduPersonPrimaryAffiliation"] },
+    { "path": ["eu.europa.ec.eudi.studentid.1", "eduPersonAffiliation"] },
+    { "path": ["eu.europa.ec.eudi.studentid.1", "eduPersonScopedAffiliation"] },
+    { "path": ["eu.europa.ec.eudi.studentid.1", "eduPersonAssurance"] }
   ]
 }
 ```
@@ -184,7 +183,8 @@ path changes.
   first element is always `credentialSubject`.
 - For `mso_mdoc`, **the first element is the namespace and the second element
   is the data element identifier**. Here the namespace is
-  `eu.europa.ec.eudi`. An mDoc path always holds exactly two elements.
+  `eu.europa.ec.eudi.studentid.1`. An mDoc path always holds exactly two
+  elements.
 
 ## Use with the iGrant.io API
 Store the query as a presentation definition, then send the verification
@@ -202,6 +202,7 @@ to `version_01`.
 {
   "label": "Student discount check",
   "version": "version_01",
+  "cryptographicKeyFormat": "x509",
   "responseType": "vp_token",
   "responseMode": "direct_post",
   "dcqlQuery": {
@@ -220,6 +221,10 @@ to `version_01`.
 }
 ```
 
+`cryptographicKeyFormat: "x509"` signs the request with the default key of the
+organisation and its X.509 certificate chain, and `clientIdScheme` then
+defaults to `x509_hash`. Name another key with `cryptographicKeyIdentifier`.
+
 `jwt_vc_json` takes `type_values` only. The value is an array of type sets,
 so it is an array of arrays:
 `{ "type_values": [["VerifiableStudentIDJWT"]] }`.
@@ -232,15 +237,18 @@ so it is an array of arrays:
   "format": "mso_mdoc",
   "meta": { "doctype_value": "eu.europa.ec.eudi.studentid.1" },
   "claims": [
-    { "path": ["eu.europa.ec.eudi", "schacHomeOrganization"] },
-    { "path": ["eu.europa.ec.eudi", "eduPersonScopedAffiliation"] }
+    { "path": ["eu.europa.ec.eudi.studentid.1", "schacHomeOrganization"] },
+    { "path": ["eu.europa.ec.eudi.studentid.1", "eduPersonScopedAffiliation"] }
   ]
 }
 ```
 
 To accept a Student ID in more than one format, put one entry per format in
-`credentials`, and join them with a `credential_sets` option that lists the
-identifiers.
+`credentials`, each with its own `id`, and add a `credential_sets` entry with
+one option per identifier, for example
+`"options": [["student-id-sdjwt"], ["student-id-mdoc"]]`. Any one option then
+satisfies the request. An option that lists every identifier asks for every
+format.
 
 To accept only the students of named institutions, add a `values` array to
 the claim. For example, a `values` array on `schacHomeOrganization` limits

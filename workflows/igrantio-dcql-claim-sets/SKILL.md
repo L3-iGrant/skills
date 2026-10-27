@@ -1,12 +1,12 @@
 ---
 name: igrantio-dcql-claim-sets
-description: 'DCQL pattern: claim_sets with fallback for selective disclosure - prefer a minimal boolean claim (is_over_21) and fall back to birth_date only when the preferred claim is unavailable, in an OpenID4VP verification of a PID SD-JWT on the iGrant.io Organisation Wallet Suite. Data-minimised age verification for EUDI Wallet (EUDIW) under eIDAS 2.0 and GDPR.'
+description: 'DCQL pattern: claim_sets with fallback for selective disclosure - prefer a minimal boolean claim (is_over_21) and fall back to birthdate only when the preferred claim is unavailable, in an OpenID4VP verification of a PID SD-JWT on the iGrant.io Organisation Wallet Suite. Data-minimised age verification for EUDI Wallet (EUDIW) under eIDAS 2.0 and GDPR.'
 license: Apache-2.0
 metadata:
   categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, claim_sets, selective disclosure, age verification, is_over_21, PID, OpenID4VP, EUDIW, eIDAS2, GDPR
-  version: 2026.09.01
+  version: 2026.10.01
   source-doc: https://docs.igrant.io/docs/dcql-2-4-2-claim-set-age-verification/
   requires-skills: igrantio-ows-overview, igrantio-verifier-backend
 ---
@@ -15,7 +15,7 @@ metadata:
 
 ## Scenario
 A verifier needs an age check. It prefers the minimal boolean `is_over_21`;
-if the wallet's PID lacks it, the query falls back to `birth_date`.
+if the wallet's PID lacks it, the query falls back to `birthdate`.
 `claim_sets` are ordered - the wallet satisfies the first set it can.
 
 ## Prerequisites
@@ -59,7 +59,7 @@ Record the answers before you write code.
       "format": "dc+sd-jwt",
       "meta": {
         "vct_values": [
-          "eu.europa.ec.eudi:pid.1"
+          "urn:eu.europa.ec.eudi:pid:1"
         ]
       },
       "claims": [
@@ -72,7 +72,7 @@ Record the answers before you write code.
         {
           "id": "birthdate",
           "path": [
-            "birth_date"
+            "birthdate"
           ]
         }
       ],
@@ -90,8 +90,11 @@ Record the answers before you write code.
 ```
 
 ## Run it on OWS
-1. Store the query as a presentation definition, keep the
-   `presentationDefinitionId` (`igrantio-ows-overview` api-reference §3).
+1. Store the query in `dcqlQuery` of a presentation definition (`POST
+   /v2/config/digital-wallet/openid/sdjwt/presentation-definition`, with
+   `label`, `version: "version_01"` and `cryptographicKeyFormat: "x509"`)
+   and keep the `presentationDefinitionId` (`igrantio-ows-overview`
+   api-reference §3).
 2. Send the verification request (v3), render QR / DC API, await
    `presentation_acked` with `verified === true` (api-reference §2).
 3. Read the disclosed claim from `presentation[0]` - handle BOTH shapes:
@@ -99,7 +102,8 @@ Record the answers before you write code.
 
 ## Adjust for your deployment
 - Change the threshold claim (`is_over_18`, `is_over_65`) and `path` to
-  match your PID profile; `vct_values` to your PID VCT.
+  match your PID profile; `vct_values` to your PID VCT. The claim paths here
+  are those of the registry PID template (`igrantio-dcql-query-pid`).
 - Order `claim_sets` most-minimal first - that is the point of the pattern.
 - If regulators forbid receiving birthdate, drop the fallback set and
   handle "no match" in UX instead.

@@ -1,14 +1,14 @@
 ---
 name: igrantio-holder-notifications
-description: 'Composable building block: the iGrant.io OWS holder notifications inbox - the wallet-side channel that tells a HOLDER a credential offer, transaction code, front-channel authorization, deferred credential, or presentation request needs action. REST endpoints to list and delete notifications, a live Server-Sent Events stream (auth via the authorization query parameter because EventSource cannot send headers), a backend relay that injects the key, and a dependency-free browser client with reconnect/backoff and a notification-to-next-action decision table. Composed by igrantio-holder-backend.'
+description: 'Composable building block: the iGrant.io OWS holder notifications inbox - the wallet-side channel that tells a HOLDER a credential offer, transaction code, front-channel authorization, deferred credential, or presentation request needs action. REST endpoints to list and delete notifications, a live Server-Sent Events stream with replay from the last event id, a backend relay that sends the key in the Authorization header (EventSource cannot send headers), and a dependency-free browser client with reconnect/backoff and a notification-to-next-action decision table. Composed by igrantio-holder-backend.'
 license: Apache-2.0
 metadata:
   categories: [backend]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, holder, wallet, notifications, Server-Sent Events, SSE, OpenID4VCI, OpenID4VP
-  version: 2026.09.01
+  version: 2026.10.01
   api: https://docs.igrant.io/docs/developer-apis
-  auth: OWS API key injected by the backend relay/proxy; the SSE upstream reads the "authorization" query parameter
+  auth: OWS API key (Authorization "ApiKey <key>") injected by the backend relay and proxy; the browser sends no key
   requires-skills: igrantio-ows-overview
 ---
 
@@ -56,18 +56,18 @@ tenant backend proxy (`{backend}/ows/{tenant}/…`).
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| GET | `v2/config/digital-wallet/openid/notifications?limit=&offset=&search=&notificationType=` | list; the array is under the response's **`notification`** key |
+| GET | `v2/config/digital-wallet/openid/notifications?limit=&offset=&search=&notificationType=&status=&sortOrder=` | list; the array is under the response's **`notification`** key, with `pagination` |
 | GET | `v2/config/digital-wallet/openid/notification/{id}` | read one |
 | PUT | `v2/config/digital-wallet/openid/notification/{id}` | update one - body `{ "status": "<string>" }`, response `{ "notification": … }` |
 | DELETE | `v2/config/digital-wallet/openid/notification/{id}` | delete one (the usual "handled" signal, 204) |
 | DELETE | `v2/config/digital-wallet/openid/notifications` | delete all (204) |
-| GET (SSE) | `v2/config/digital-wallet/openid/notifications/sse?status=unread&limit=10&offset=0&authorization=…` | live stream |
+| GET (SSE) | `v2/config/digital-wallet/openid/notifications/sse[?lastEventId=]` | live stream |
 
-**Notification item**: `id`, `notificationType`, `notificationContent`
-(object **or** array - take `[0]`), `status` (`unread`), `createdAt`,
-`updatedAt`. `notificationType` values: `credential_pending`,
-`credential_acked`, `credential_revoked`, `credential_expired`, and (SSE only)
-`credential_received`.
+**Notification item**: `id`, `notificationType`, `notificationTypeRelatedId`
+(the credential record id), `notificationContent` (object **or** array - take
+`[0]`), `status` (`unread`), `createdAt`, `updatedAt` (Unix seconds).
+`notificationType` values: `credential_pending`, `credential_acked`,
+`credential_revoked`, `credential_expired`.
 
 **Next-action decision table** on `notificationContent`
 (`deriveNotificationAction` in the reference client; the calls it names are in
@@ -78,25 +78,29 @@ tenant backend proxy (`{backend}/ows/{tenant}/…`).
 | `transaction_code` | `credentialStatus == "credential_pending"` and `userPinRequired` and `userPin` absent | `PUT …/sdjwt/credential/{id}/user-pin` |
 | `authorization` | pending, `acceptanceToken` absent, `oAuthFlow == "frontchannel"`, `authorizationRequest` set | open `authorizationRequest`, then `POST …/sdjwt/credential/exchange-code` |
 | `deferred_credential` | pending and `acceptanceToken` present | `PUT …/sdjwt/credential/{id}/receive-deferred` |
-| `verification` | pending, `presentationId` present, `acceptanceToken` absent | `POST …/sdjwt/verification/{id}/filter` → `…/{presentationId}/send` |
+| `verification` | pending, `presentationId` present, `acceptanceToken` absent | `POST …/sdjwt/verification/{presentationId}/filter`, then v3 `…/{presentationId}/send` |
 | `review_credential` | `credentialStatus == "credential_acked"` | `PUT …/sdjwt/credential/{id}/accept` (or `DELETE` to reject) |
 
 **SSE specifics**:
-- Auth rides in the **`authorization` query parameter** because `EventSource`
-  cannot send headers. The gateway falls back to it when the Authorization
-  header is absent and accepts both prefixes: `ApiKey <key>` and
-  `Bearer <jwt>`. The key must not reach the browser, so the backend relay
-  injects it.
-- Named events the server emits: `connected`, `notification`, `error`
-  (a server-side problem report - the stream stays open), plus `retry: 30000`
-  and a keep-alive comment every ~15s. Also handle untyped messages.
-- `notification` payloads come in two shapes: a root-level
-  `{ notificationType, notificationContent, id }` or legacy
-  `{ notification: [ … ] }`. De-duplicate by `id`.
+- `EventSource` cannot send headers and the key must not reach the browser,
+  so the backend relay opens the OWS stream with the `Authorization` header.
+- Frames: `retry: 30000`, then `event: connected` (`{}`), then one
+  `event: notification` per notification, and a keep-alive comment every 15s.
+  The `notification` data is the notification object with no envelope; the
+  frame `id` is the event sequence. `event: error` (`{"error": "…"}`, for
+  example an organisation without a wallet) is followed by the end of the
+  stream.
+- A frame comes when a notification is created, and again (same notification
+  `id`, new type and content) when a pending notification changes in place.
+  Replace the stored entry by `id`. Deletions and status updates send no
+  frame.
+- Replay: on reconnect, send the last frame `id` as `Last-Event-ID` or
+  `lastEventId`; OWS sends the missed frames first. A replay can repeat a
+  frame: drop a repeat by the frame `id`. The stream takes no other query
+  parameters; use the list to filter.
 - Reconnect with exponential backoff: 5 attempts, 1s base, x2 per attempt,
-  10s cap, plus up to 500ms jitter; treat ~3 minutes of silence as stale and
-  reconnect. Delete the notification once acted on - deletion is the
-  "handled" signal.
+  10s cap, plus up to 500ms jitter. Refetch the list after a reconnect.
+  Delete the notification once acted on - deletion is the "handled" signal.
 
 ## Reference
 [`./references`](./references):
@@ -104,7 +108,8 @@ tenant backend proxy (`{backend}/ows/{tenant}/…`).
   Express relay; streams `GET /:tenant/v2/config/digital-wallet/openid/notifications/sse`.
   **Canonical copy** - `igrantio-holder-backend` vendors it byte-for-byte.
 - `notificationsClient.ts` - browser types + `NotificationsClient` (list /
-  update / delete / deleteAll), `openNotificationsStream` (backoff + dedup),
+  update / delete / deleteAll), `openNotificationsStream` (backoff, replay,
+  dedup),
   `getNotificationContent`, `deriveNotificationAction`.
 
 ## Usage
@@ -133,9 +138,6 @@ const close = openNotificationsStream({
 ```
 
 ## Adapting
-- **Auth scheme**: if your OWS deployment authenticates SSE with user tokens,
-  return `Bearer <jwt>` from `getAuthorization` - the relay passes the value
-  through unchanged.
 - **Filtering**: pass `notificationType` to `list()` to build a filtered inbox.
 
 ## Validation / done criteria

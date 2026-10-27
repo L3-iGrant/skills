@@ -10,6 +10,7 @@ import {
   createHolderClient,
   normalizeReceived,
   pickDescriptors,
+  type AuthorizationResponse,
   type CredentialRecord,
   type PresentationRecord,
   type PresentationStats,
@@ -69,9 +70,10 @@ export function useWalletCredentials(config: HolderConfig & { expired?: boolean;
         limit: pageSize,
         offset: page * pageSize,
         expired: config.expired,
-        // The wallet lists only fully accepted credentials.
+        // The wallet lists only fully accepted credentials, newest received first.
         credentialStatus: "credential_accepted",
         search: search || undefined,
+        sortBy: "createdAt",
       });
       setRecords(res.credential ?? []);
       setTotal(res.pagination?.totalItems ?? 0);
@@ -179,20 +181,23 @@ export function captureVerificationRequestUrl(): string | null {
 }
 
 /**
- * Front-channel helper: capture `?code`/`?state` after the issuer redirects
- * back, and clean the URL. Call `exchangeCode` with the result.
+ * Front-channel helper: capture `?code`/`?state` (and `?iss`) after the issuer
+ * redirects back, and clean the URL. Call `exchangeCode` with the result. A
+ * redirect without `state` cannot be matched to a credential record: null.
  */
-export function captureAuthorizationCode(): { code: string; state: string | null } | null {
+export function captureAuthorizationCode(): AuthorizationResponse | null {
   if (typeof window === "undefined") return null;
   const params = new URLSearchParams(window.location.search);
   const code = params.get("code");
-  if (!code) return null;
   const state = params.get("state");
+  if (!code || !state) return null;
+  const iss = params.get("iss") ?? undefined;
   params.delete("code");
   params.delete("state");
+  params.delete("iss");
   const qs = params.toString();
   window.history.replaceState({}, "", `${window.location.pathname}${qs ? `?${qs}` : ""}`);
-  return { code, state };
+  return { code, state, iss };
 }
 
 export function useReceiveCredential(config: HolderConfig) {
@@ -214,9 +219,9 @@ export function useReceiveCredential(config: HolderConfig) {
 
   /** Paste/scan a credential offer. Returns the pending records with their next action. */
   const receive = useCallback(
-    async (credentialOffer: string, opts?: { kid?: string; trustAnchor?: string }) => {
+    async (credentialOffer: string) => {
       setStatus("receiving");
-      const res = await wrap(() => client.credentials.receiveOffer({ credentialOffer, ...opts }));
+      const res = await wrap(() => client.credentials.receiveOffer({ credentialOffer }));
       if (!res) return null;
       const records = normalizeReceived(res.credential);
       const withActions = records.map((record) => ({
@@ -240,8 +245,8 @@ export function useReceiveCredential(config: HolderConfig) {
   );
 
   const exchangeCode = useCallback(
-    async (code: string, state: string | null) => {
-      const ok = await wrap(() => client.credentials.exchangeCode(code, state));
+    async (response: AuthorizationResponse) => {
+      const ok = await wrap(() => client.credentials.exchangeCode(response));
       if (ok !== null) setStatus("done");
       return ok !== null;
     },
@@ -303,7 +308,7 @@ export function useShareFlow(config: HolderConfig) {
   /** Start from a pasted request URL, or from a stored `presentationId` (notification flow). */
   const start = useCallback(
     async (
-      source: { requestUrl: string; kid?: string; trustAnchor?: string } | { presentationId: string },
+      source: { requestUrl: string } | { presentationId: string },
     ) => {
       setStatus("resolving");
       setError(null);
@@ -311,11 +316,7 @@ export function useShareFlow(config: HolderConfig) {
         const record =
           "requestUrl" in source
             ? (
-                await client.presentations.receiveRequest({
-                  vpTokenQrCode: source.requestUrl,
-                  kid: source.kid,
-                  trustAnchor: source.trustAnchor,
-                })
+                await client.presentations.receiveRequest({ vpTokenQrCode: source.requestUrl })
               ).presentation
             : (await client.presentations.read(source.presentationId)).presentation;
         setPresentation(record);
@@ -440,10 +441,13 @@ export function useHolderNotifications(config: HolderConfig & { stream?: boolean
     if (!streamEnabled) return;
     closeRef.current = openNotificationsStream({
       baseUrl: config.proxyBaseUrl,
-      // The stream has no replay: refetch on every (re)connect to close gaps.
+      // Refetch on every (re)connect as well: the replay has a size limit.
       onConnected: () => void refresh(),
+      // A pending notification changes in place (same id): replace it.
       onNotification: (n) =>
-        setNotifications((prev) => (prev.some((p) => p.id === n.id) ? prev : [n, ...prev])),
+        setNotifications((prev) =>
+          prev.some((p) => p.id === n.id) ? prev.map((p) => (p.id === n.id ? n : p)) : [n, ...prev],
+        ),
     });
     // Also refetch when the tab becomes visible again.
     const onVisible = () => {

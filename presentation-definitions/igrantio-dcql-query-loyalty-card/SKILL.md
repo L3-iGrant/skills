@@ -6,7 +6,7 @@ metadata:
   categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, loyalty card, membership, eu.europa.ec.eudi.loyaltycard, LoyaltyCard, points, miles, retail, dc+sd-jwt, jwt_vc_json, mso_mdoc, OpenID4VP, presentation definition, EUDIW, eIDAS2
-  version: 2026.09.01
+  version: 2026.10.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/presentationDefinitions/dcqlQuery/loyaltyCard
   requires-skills: igrantio-api-verifier
 ---
@@ -78,12 +78,11 @@ Registry version: **2025.7.1**.
 | Purpose | Loyalty Card |
 | Credential type (`dc+sd-jwt`, `jwt_vc_json`) | `LoyaltyCard` |
 | Credential type (doctype, `mso_mdoc`) | `eu.europa.ec.eudi.loyaltycard` |
-| Namespace (`mso_mdoc`) | `eu.europa.ec.eudi` |
+| Namespace (`mso_mdoc`) | `eu.europa.ec.eudi.loyaltycard` |
 | Formats | `dc+sd-jwt`, `jwt_vc_json`, `mso_mdoc` |
 
-The doctype and the namespace differ for `mso_mdoc`. The doctype names the
-document, `eu.europa.ec.eudi.loyaltycard`. The namespace groups the data
-elements, `eu.europa.ec.eudi`.
+For `mso_mdoc` the namespace of the data elements is the same value as the
+doctype, `eu.europa.ec.eudi.loyaltycard`.
 
 ## Claims
 
@@ -160,11 +159,11 @@ elements, `eu.europa.ec.eudi`.
 ```json
 {
   "claims": [
-    { "path": ["eu.europa.ec.eudi", "customer"] },
-    { "path": ["eu.europa.ec.eudi", "loyalty_card"] },
-    { "path": ["eu.europa.ec.eudi", "portfolio"] },
-    { "path": ["eu.europa.ec.eudi", "organization"] },
-    { "path": ["eu.europa.ec.eudi", "credential"] }
+    { "path": ["eu.europa.ec.eudi.loyaltycard", "customer"] },
+    { "path": ["eu.europa.ec.eudi.loyaltycard", "loyalty_card"] },
+    { "path": ["eu.europa.ec.eudi.loyaltycard", "portfolio"] },
+    { "path": ["eu.europa.ec.eudi.loyaltycard", "organization"] },
+    { "path": ["eu.europa.ec.eudi.loyaltycard", "credential"] }
   ]
 }
 ```
@@ -183,11 +182,11 @@ The `path` array names one claim, one element per level.
   keeps the subject claims under that key. Every path is one element longer than
   the `dc+sd-jwt` path for the same claim.
 - **`mso_mdoc`**: the path holds exactly two elements. The **first element is the
-  namespace**, here `eu.europa.ec.eudi`. The second element is the data element
-  name. An mdoc has no nesting below the data element, so each of the five
-  groups arrives as one whole object. You cannot ask for the card identifier
-  alone in `mso_mdoc`. You ask for `loyalty_card`, and you get every member of
-  it.
+  namespace**, here `eu.europa.ec.eudi.loyaltycard`. The second element is the
+  data element name. An mdoc has no nesting below the data element, so each of
+  the five groups arrives as one whole object. You cannot ask for the card
+  identifier alone in `mso_mdoc`. You ask for `loyalty_card`, and you get every
+  member of it.
 
 This difference matters for data minimisation. The SD-JWT VC and W3C VC forms
 let you ask for single members. The mdoc form does not.
@@ -213,6 +212,7 @@ Set `version` to `version_01`.
 {
   "label": "Loyalty card at checkout",
   "version": "version_01",
+  "cryptographicKeyFormat": "x509",
   "responseType": "vp_token",
   "responseMode": "direct_post",
   "dcqlQuery": {
@@ -232,6 +232,10 @@ Set `version` to `version_01`.
   }
 }
 ```
+
+`cryptographicKeyFormat: "x509"` signs the request with the default key of the
+organisation and its X.509 certificate chain, and `clientIdScheme` then
+defaults to `x509_hash`. Name another key with `cryptographicKeyIdentifier`.
 
 Then send the verification request with the V3 send operation,
 `POST /v3/config/digital-wallet/openid/sdjwt/verification/send`, and pass the

@@ -6,7 +6,7 @@ metadata:
   categories: [recipe]
   provider: iGrant.io
   keywords: EUBW, EBW, European Business Wallet, EUDIW, eIDAS2, holder, wallet portal, custom portal, OpenID4VCI, OpenID4VP, DCQL, notifications, Next.js, TypeScript, Better Auth, passwordless
-  version: 2026.09.01
+  version: 2026.10.01
   api: https://docs.igrant.io/docs/developer-apis
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0, DCQL, SD-JWT-VC, W3C-VC-2.0, mso_mdoc
   auth: OWS API key held only by the holder backend; the portal browser sends no key
@@ -109,6 +109,9 @@ All endpoint contracts: `igrantio-api-holder` +
 | Notifications (bell, drawer inbox, state filter, snackbars) | `components/NotificationsInbox.tsx`, `NotificationSnackbars.tsx`, `ui.tsx` |
 
 ## EBW specifics
+- Use an API key of the main organisation. The v2 holder routes (receive,
+  the credential list and actions, filter) answer 400 for a key that is
+  bound to a sandbox organisation.
 - The wallet-unit ladder gates receiving: `not_installed → installed →
   operational → valid`; the "+ Receive" action needs `operational` or
   `valid`. `valid` means WUA + Owner ID (LPID) held - issue it with

@@ -6,7 +6,7 @@ metadata:
   categories: [backend, education]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, OpenID4VCI, OpenID4VP, reverse proxy, multi-tenant, API key security
-  version: 2026.09.01
+  version: 2026.10.01
   api: https://docs.igrant.io/docs/developer-apis
   auth: OWS API key held server-side; injected per request. Browser sends no key.
   requires-skills: igrantio-ows-overview
@@ -53,7 +53,8 @@ Record the answers before you write code.
 `GET|POST|PUT|DELETE ${proxyPrefix}/{tenant}/{owsPath...}`:
 1. resolves `{tenant}` → OWS API key via a **TenantStore** (env or pluggable),
 2. rejects any path not on the caller-supplied allow-list (least privilege, 404) -
-   a string rule matches as a path prefix, a RegExp rule against the whole path,
+   a string rule matches as a path prefix, a RegExp rule against the whole path;
+   a path with a `.` or `..` segment (also percent-encoded) is always refused,
 3. sets `Authorization: ApiKey <key>` and forwards to OWS,
 4. streams the response back, stripping hop-by-hop headers.
 

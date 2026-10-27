@@ -6,7 +6,7 @@ metadata:
   categories: [recipe]
   provider: iGrant.io
   keywords: EU age verification, age_over_18, mso_mdoc, eu.europa.ec.av.1, EUDIW, eIDAS2, OpenID4VCI, OpenID4VP, DCQL, selective disclosure
-  version: 2026.09.01
+  version: 2026.10.01
   source-doc: https://docs.igrant.io/docs/eu-age-verification/
   requires-skills: igrantio-ows-overview, igrantio-issuer-backend, igrantio-verifier-backend
 ---
@@ -14,8 +14,9 @@ metadata:
 # EU Age Verification (EUDI Wallet)
 
 ## When to use
-Prove an age threshold (18, 21, 65, any `age_over_NN`) without revealing
-birthdate or identity. The attestation is an **ISO/IEC 18013-5 mdoc**,
+Prove an age threshold without revealing birthdate or identity. The
+registry template holds `age_over_14`, `age_over_16`, `age_over_18`,
+`age_over_21` and `age_over_65`. The attestation is an **ISO/IEC 18013-5 mdoc**,
 doctype **`eu.europa.ec.av.1`**, with boolean `age_over_NN` claims and
 selective disclosure.
 
@@ -52,20 +53,59 @@ Record the answers before you write code.
 
 ## Workflow
 **Issuer side (once per user):**
-1. Create a credential definition: format `mso_mdoc`, doctype
-   `eu.europa.ec.av.1`, claims such as `age_over_18`, `age_over_21`,
-   `age_over_65`.
+1. Create a credential definition (`POST
+   /v2/config/digital-wallet/openid/sdjwt/credential-definition`). An mdoc
+   needs an X.509 key with a certificate chain. The claims and the
+   `mandatory` flags follow the registry template
+   (`igrantio-credential-schema-age-verification`).
+
+   ```json
+   {
+     "label": "Age attestation",
+     "version": "version_01",
+     "cryptographicKeyFormat": "x509",
+     "credentialDefinitions": [
+       {
+         "credentialFormat": "mso_mdoc",
+         "doctype": "eu.europa.ec.av.1",
+         "claims": {
+           "claims": [
+             { "path": ["eu.europa.ec.av.1", "age_over_18"], "mandatory": true, "limitDisclosure": true },
+             { "path": ["eu.europa.ec.av.1", "age_over_21"], "mandatory": false, "limitDisclosure": true },
+             { "path": ["eu.europa.ec.av.1", "age_over_65"], "mandatory": false, "limitDisclosure": true }
+           ]
+         }
+       }
+     ]
+   }
+   ```
 2. Issue **InTime** with the boolean claim values, e.g.
    `{ "age_over_18": true, "age_over_21": false, "age_over_65": false }`.
-   The response carries `CredentialExchangeId` + the
+   The response carries `credentialExchangeId` + the
    `openid-credential-offer://` QR/deeplink (render with
    `igrantio-qr-code`). Completion signal: webhook
    `openid.credential.credential_acked`.
 
 **Verifier side (per check):**
-3. Create a presentation definition (DCQL) for `mso_mdoc` /
-   `eu.europa.ec.av.1` requesting only the needed boolean, e.g.
-   `age_over_18`.
+3. Create a presentation definition (`version: "version_01"`,
+   `cryptographicKeyFormat: "x509"`) whose DCQL query asks for one boolean:
+
+   ```json
+   {
+     "credentials": [
+       {
+         "id": "age_verification",
+         "format": "mso_mdoc",
+         "meta": { "doctype_value": "eu.europa.ec.av.1" },
+         "claims": [
+           { "path": ["eu.europa.ec.av.1", "age_over_18"] }
+         ]
+       }
+     ]
+   }
+   ```
+
+   The label `Age Verification` is reserved; use another label.
 4. Send the verification request (v3) with that
    `presentationDefinitionId`; render the `openid4vp://` QR / deeplink.
 5. Wallet discloses only the boolean; done on
