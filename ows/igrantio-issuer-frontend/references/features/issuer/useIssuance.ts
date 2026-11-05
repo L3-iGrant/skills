@@ -1,13 +1,11 @@
 import { useCallback, useRef, useState } from "react";
 import { useOwsClient, useSSE } from "../../lib/ows";
 import type {
-  CredentialHistoryItem,
-  IssuanceSSEData,
-  IssueCredentialResponse,
-  IssueInTimeRequest,
+  CreateIssuanceRequest,
+  IssuanceClaims,
+  IssuanceEventData,
+  IssuanceStatus,
   OwsWebhookEvent,
-  StartDeferredRequest,
-  UpdateCredentialHistoryPayload,
 } from "../../lib/ows";
 
 export interface IssuanceConfig {
@@ -17,47 +15,46 @@ export interface IssuanceConfig {
   webhookBaseUrl: string;
 }
 
-export type IssuanceStatus = "idle" | "offer_ready" | "scanned" | "issued" | "error";
+export type IssuanceFlowStatus = "idle" | "offer_ready" | "scanned" | "issued" | "error";
 
 export interface IssuanceState {
-  status: IssuanceStatus;
-  /** credentialOffer URI → render as QR or open in wallet. */
+  status: IssuanceFlowStatus;
+  /** `offer.uri` of the create answer: render as QR or open in wallet. */
   offerUri: string | null;
-  credentialExchangeId: string | null;
+  /** The transaction code that the issuer made (pre-authorised offers); show it to the holder. */
+  transactionCode: string | null;
+  issuanceId: string | null;
   error: string | null;
 }
 
-/** The wallet has the offer: the first of these events moves the flow to "scanned". */
-const SCANNED = new Set(["offer_received", "token_issued"]);
-/** The wallet has the credential (acked) or has confirmed it (accepted). */
-const ISSUED = new Set(["credential_acked", "credential_accepted"]);
+/** The wallet has the offer: the first of these statuses moves the flow to "scanned". */
+const SCANNED = new Set<IssuanceStatus>(["offer_retrieved", "token_issued", "credential_deferred", "claims_supplied"]);
+/** The wallet has the credential (issued) or has confirmed it (accepted). */
+const ISSUED = new Set<IssuanceStatus>(["credential_issued", "credential_accepted"]);
+/** Deferred only: the wallet has the offer, so the claims can go now. */
+const SUPPLY_CLAIMS = new Set<IssuanceStatus>(["offer_retrieved", "token_issued", "credential_deferred"]);
+
+const EMPTY: IssuanceState = {
+  status: "idle",
+  offerUri: null,
+  transactionCode: null,
+  issuanceId: null,
+  error: null,
+};
 
 /**
- * The record of an issue response. A definition with more than one credential
- * configuration answers one record per configuration; this flow follows the first.
- */
-function firstRecord(response: IssueCredentialResponse): CredentialHistoryItem | undefined {
-  const history = response.credentialHistory;
-  return Array.isArray(history) ? history[0] : history;
-}
-
-/**
- * Issuer flow (OpenID4VCI): request issuance, expose the offer QR, and resolve
- * the outcome via SSE. Supports in-time issuance (claims known now) and deferred
- * issuance (claims supplied once the wallet picks up the offer).
+ * Issuer flow (OpenID4VCI): make an issuance, expose the offer QR, and resolve
+ * the outcome from the issuer events over SSE. Supports in-time issuance
+ * (claims known now) and deferred issuance (claims supplied once the wallet
+ * picks up the offer).
  */
 export function useIssuance({ proxyBaseUrl, webhookBaseUrl }: IssuanceConfig) {
   const client = useOwsClient(proxyBaseUrl);
   const { open, close } = useSSE();
 
-  const [state, setState] = useState<IssuanceState>({
-    status: "idle",
-    offerUri: null,
-    credentialExchangeId: null,
-    error: null,
-  });
-  const deferredClaimsRef = useRef<UpdateCredentialHistoryPayload | null>(null);
-  /** Deferred flows only: set when the PUT of completeDeferred starts, so it runs once. */
+  const [state, setState] = useState<IssuanceState>(EMPTY);
+  const deferredClaimsRef = useRef<IssuanceClaims | null>(null);
+  /** Deferred flows only: set when the PUT of the claims starts, so it runs once. */
   const deferredSentRef = useRef(false);
 
   const fail = useCallback((message: string) => {
@@ -66,93 +63,86 @@ export function useIssuance({ proxyBaseUrl, webhookBaseUrl }: IssuanceConfig) {
 
   const handleEvent = useCallback(
     (event: OwsWebhookEvent) => {
-      const credential = (event.data as IssuanceSSEData).credential;
-      if (!credential) return;
+      const data = event.data as IssuanceEventData;
+      const issuance = data.issuance;
+      if (!issuance) return;
 
-      if (credential.status === "issuance_denied") {
-        fail(credential.issuanceDeniedReason || "The issuer refused the issuance");
+      if (issuance.status === "denied" || issuance.status === "expired") {
+        const reason = data.reason?.description;
+        fail(reason || (issuance.status === "expired" ? "The offer expired" : "The issuer refused the issuance"));
         close();
         return;
       }
 
-      if (SCANNED.has(credential.status)) {
-        setState((s) => (s.status === "offer_ready" ? { ...s, status: "scanned" } : s));
-        // Deferred: the wallet has the offer - supply the claims now, once.
-        // The backend keeps only the latest event, so either status can come first.
-        if (deferredClaimsRef.current && !deferredSentRef.current && credential.CredentialExchangeId) {
-          deferredSentRef.current = true;
-          client.issuance
-            .completeDeferred(credential.CredentialExchangeId, deferredClaimsRef.current)
-            .catch((e) => fail(e instanceof Error ? e.message : String(e)));
-        }
-        return;
-      }
-
-      if (ISSUED.has(credential.status)) {
+      if (ISSUED.has(issuance.status)) {
         setState((s) => ({ ...s, status: "issued" }));
         close();
+        return;
+      }
+
+      if (SCANNED.has(issuance.status)) {
+        setState((s) => (s.status === "offer_ready" ? { ...s, status: "scanned" } : s));
+        // Deferred: the wallet has the offer - give the claims now, once.
+        // The backend keeps only the latest event, so any of these statuses can come first.
+        const claims = deferredClaimsRef.current;
+        if (claims && SUPPLY_CLAIMS.has(issuance.status) && !deferredSentRef.current) {
+          deferredSentRef.current = true;
+          client.issuance
+            .supplyClaims(issuance.id, { claims })
+            .catch((e) => fail(e instanceof Error ? e.message : String(e)));
+        }
       }
     },
     [client, close, fail],
   );
 
-  const start = useCallback(
-    (exchangeId: string, offerUri: string) => {
-      setState({ status: "offer_ready", offerUri, credentialExchangeId: exchangeId, error: null });
-      open(exchangeId, webhookBaseUrl, handleEvent);
+  const createAndOpen = useCallback(
+    async (payload: CreateIssuanceRequest) => {
+      try {
+        const created = await client.issuance.create(payload);
+        if (!created?.id || !created.offer?.uri) {
+          throw new Error("Issuance answer missing id/offer.uri");
+        }
+        setState({
+          status: "offer_ready",
+          offerUri: created.offer.uri,
+          transactionCode: created.offer.transactionCode,
+          issuanceId: created.id,
+          error: null,
+        });
+        open(created.id, webhookBaseUrl, handleEvent);
+      } catch (e) {
+        fail(e instanceof Error ? e.message : String(e));
+      }
     },
-    [open, webhookBaseUrl, handleEvent],
+    [client, open, webhookBaseUrl, handleEvent, fail],
   );
 
   /** Claims are known now; the wallet receives the finished credential. */
   const issueInTime = useCallback(
-    async (payload: IssueInTimeRequest) => {
+    async (payload: Omit<CreateIssuanceRequest, "mode">) => {
       deferredClaimsRef.current = null;
       deferredSentRef.current = false;
-      try {
-        const credentialHistory = firstRecord(await client.issuance.issueInTime(payload));
-        if (!credentialHistory?.CredentialExchangeId || !credentialHistory.credentialOffer) {
-          throw new Error("Issuance response missing CredentialExchangeId/credentialOffer");
-        }
-        start(credentialHistory.CredentialExchangeId, credentialHistory.credentialOffer);
-      } catch (e) {
-        fail(e instanceof Error ? e.message : String(e));
-      }
+      await createAndOpen({ ...payload, mode: "in_time" });
     },
-    [client, start, fail],
+    [createAndOpen],
   );
 
-  /** Create the offer now; `claims` are pushed once the wallet picks it up. */
+  /** Make the offer now; `claims` are given once the wallet picks it up. */
   const issueDeferred = useCallback(
-    async (request: StartDeferredRequest, claims: UpdateCredentialHistoryPayload) => {
+    async (payload: Omit<CreateIssuanceRequest, "mode" | "claims">, claims: IssuanceClaims) => {
       deferredClaimsRef.current = claims;
       deferredSentRef.current = false;
-      try {
-        const credentialHistory = firstRecord(await client.issuance.startDeferred(request));
-        if (!credentialHistory?.CredentialExchangeId || !credentialHistory.credentialOffer) {
-          throw new Error("Issuance response missing CredentialExchangeId/credentialOffer");
-        }
-        // OWS requires the offer's credential id back in the completing PUT (else 400 "Id field is missing in credential").
-        const credentialId = credentialHistory.credential?.id as string | undefined;
-        if (credentialId) {
-          deferredClaimsRef.current = {
-            ...claims,
-            credential: { ...claims.credential, id: credentialId },
-          };
-        }
-        start(credentialHistory.CredentialExchangeId, credentialHistory.credentialOffer);
-      } catch (e) {
-        fail(e instanceof Error ? e.message : String(e));
-      }
+      await createAndOpen({ ...payload, mode: "deferred" });
     },
-    [client, start, fail],
+    [createAndOpen],
   );
 
   const reset = useCallback(() => {
     close();
     deferredClaimsRef.current = null;
     deferredSentRef.current = false;
-    setState({ status: "idle", offerUri: null, credentialExchangeId: null, error: null });
+    setState(EMPTY);
   }, [close]);
 
   return { ...state, issueInTime, issueDeferred, reset };

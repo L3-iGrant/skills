@@ -1,11 +1,11 @@
 import type {
-  CredentialHistoryResponse,
+  CreateIssuanceRequest,
   DcApiReceivePayload,
-  IssueCredentialResponse,
-  IssueInTimeRequest,
+  IssuanceClaimsRequest,
+  IssuanceCreated,
+  IssuanceDetail,
+  IssuanceRevocation,
   SendVerificationRequest,
-  StartDeferredRequest,
-  UpdateCredentialHistoryPayload,
   VerificationHistoryResponse,
   VerificationResponse,
 } from "./types";
@@ -34,29 +34,28 @@ export class OwsError extends Error {
   }
 }
 
+const ISSUANCES = "/v4/config/ows/issuer/issuances";
+const VERIFICATIONS = "/v4/config/ows/verifier/verifications";
+
 const PATHS = {
-  issue: "/v2/config/digital-wallet/openid/sdjwt/credential/issue",
-  credentialHistory: (id: string) => `/v2/config/digital-wallet/openid/sdjwt/credential/history/${id}`,
-  verificationSend: "/v3/config/digital-wallet/openid/sdjwt/verification/send",
-  verificationHistory: (id: string) => `/v3/config/digital-wallet/openid/sdjwt/verification/history/${id}`,
-  // Delete and the Digital Credentials API receive exist on v2 only.
-  verificationRecord: (id: string) => `/v2/config/digital-wallet/openid/sdjwt/verification/history/${id}`,
+  issuances: ISSUANCES,
+  issuance: (id: string) => `${ISSUANCES}/${encodeURIComponent(id)}`,
+  verifications: VERIFICATIONS,
+  verification: (id: string) => `${VERIFICATIONS}/${encodeURIComponent(id)}`,
 } as const;
 
 export interface OwsClient {
   issuance: {
-    /** InTime: claims known now - wallet receives the finished credential. */
-    issueInTime(payload: IssueInTimeRequest): Promise<IssueCredentialResponse>;
-    /** Deferred: create the offer now; supply claims later via completeDeferred(). */
-    startDeferred(payload: StartDeferredRequest): Promise<IssueCredentialResponse>;
-    /** Supply the claims for a deferred issuance (PUT credential/history/{id}). */
-    completeDeferred(
-      credentialExchangeId: string,
-      payload: UpdateCredentialHistoryPayload,
-    ): Promise<CredentialHistoryResponse>;
-    /** Read the current issuance state. */
-    readHistory(credentialExchangeId: string): Promise<CredentialHistoryResponse>;
-    deleteHistory(credentialExchangeId: string): Promise<void>;
+    /** Make one issuance and its credential offer. `in_time` needs the claims now. */
+    create(payload: CreateIssuanceRequest): Promise<IssuanceCreated>;
+    /** Give the claims of a `deferred` issuance (PUT .../issuances/{id}/claims). */
+    supplyClaims(issuanceId: string, payload: IssuanceClaimsRequest): Promise<IssuanceDetail>;
+    /** Read the detail of the issuance; `includeClaims` adds the claims. */
+    read(issuanceId: string, options?: { includeClaims?: boolean }): Promise<IssuanceDetail>;
+    /** Delete the issuance and stop its offer (204). */
+    delete(issuanceId: string): Promise<void>;
+    /** Revoke every issued credential of the issuance. Final. */
+    revoke(issuanceId: string, reason?: string): Promise<IssuanceRevocation>;
   };
   verification: {
     /** Send a DCQL verification request; returns the QR URI + presentationExchangeId. */
@@ -86,24 +85,26 @@ export function createOwsClient(config: OwsClientConfig): OwsClient {
       body: body === undefined ? undefined : JSON.stringify(body),
     });
     if (!res.ok) throw new OwsError(res.status, await res.text().catch(() => ""));
-    // A delete answers 200 with an empty body.
+    // A delete answers 204 (or 200) with an empty body.
     const text = await res.text();
     return (text ? JSON.parse(text) : undefined) as T;
   }
 
   return {
     issuance: {
-      issueInTime: (payload) => request("POST", PATHS.issue, payload),
-      startDeferred: (payload) => request("POST", PATHS.issue, payload),
-      completeDeferred: (id, payload) => request("PUT", PATHS.credentialHistory(id), payload),
-      readHistory: (id) => request("GET", PATHS.credentialHistory(id)),
-      deleteHistory: (id) => request("DELETE", PATHS.credentialHistory(id)),
+      create: (payload) => request("POST", PATHS.issuances, payload),
+      supplyClaims: (id, payload) => request("PUT", `${PATHS.issuance(id)}/claims`, payload),
+      read: (id, options) =>
+        request("GET", `${PATHS.issuance(id)}${options?.includeClaims ? "?include=claims" : ""}`),
+      delete: (id) => request("DELETE", PATHS.issuance(id)),
+      revoke: (id, reason) =>
+        request("POST", `${PATHS.issuance(id)}/revocation`, reason ? { reason } : {}),
     },
     verification: {
-      sendRequest: (payload) => request("POST", PATHS.verificationSend, payload),
-      readHistory: (id) => request("GET", PATHS.verificationHistory(id)),
-      deleteHistory: (id) => request("DELETE", PATHS.verificationRecord(id)),
-      receiveDcApiResponse: (id, payload) => request("POST", `${PATHS.verificationRecord(id)}/receive`, payload),
+      sendRequest: (payload) => request("POST", PATHS.verifications, payload),
+      readHistory: (id) => request("GET", PATHS.verification(id)),
+      deleteHistory: (id) => request("DELETE", PATHS.verification(id)),
+      receiveDcApiResponse: (id, payload) => request("POST", `${PATHS.verification(id)}/response`, payload),
     },
     request,
   };

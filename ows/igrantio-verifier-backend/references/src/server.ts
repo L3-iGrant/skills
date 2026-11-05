@@ -8,14 +8,15 @@ import { webhookReceiver } from "./webhooks";
 import { sseRouter } from "./sse";
 
 /**
- * VERIFIER backend - least privilege: the proxy only forwards OWS *verification*
- * endpoints. (Register VERIFIER_TOPICS with scripts/register-webhook.ts.)
+ * VERIFIER backend - least privilege: the proxy only forwards the OWS routes of
+ * the verifications that the verifier frontend calls. (Register VERIFIER_TOPICS
+ * with scripts/register-webhook.ts.)
  */
-const VERIFIER_PERMITTED_PREFIXES: Array<string | RegExp> = [
-  "v3/config/digital-wallet/openid/sdjwt/verification/send",
-  "v3/config/digital-wallet/openid/sdjwt/verification/history",
-  // v2: delete a record, and post a Digital Credentials API response back (.../receive)
-  /^v2\/config\/digital-wallet\/openid\/sdjwt\/verification\/history\/[^/]+(\/receive)?$/,
+const VERIFIER_PERMITTED_PATHS: Array<string | RegExp> = [
+  // POST: send a presentation request (GET: the list)
+  /^v4\/config\/ows\/verifier\/verifications$/,
+  // GET and DELETE one verification, and POST a Digital Credentials API response (.../response)
+  /^v4\/config\/ows\/verifier\/verifications\/[^/]+(\/response)?$/,
 ];
 
 const app = express();
@@ -33,7 +34,7 @@ app.use(
 
 app.get("/healthz", (_req, res) => res.json({ ok: true, role: "verifier" }));
 
-app.use(config.proxyPrefix, proxyRouter(tenants, VERIFIER_PERMITTED_PREFIXES));
+app.use(config.proxyPrefix, proxyRouter(tenants, VERIFIER_PERMITTED_PATHS));
 app.use("/webhook", webhookReceiver(store)); // POST /webhook
 app.use("/webhook", sseRouter(store)); // GET /webhook/sse/:id, DELETE /webhook/:id
 

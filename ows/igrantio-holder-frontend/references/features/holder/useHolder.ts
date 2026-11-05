@@ -236,8 +236,8 @@ export function useReceiveCredential(config: HolderConfig) {
   );
 
   const submitTransactionCode = useCallback(
-    async (id: string, userPin: string) => {
-      const ok = await wrap(() => client.credentials.submitTransactionCode(id, userPin));
+    async (id: string, transactionCode: string) => {
+      const ok = await wrap(() => client.credentials.submitTransactionCode(id, transactionCode));
       if (ok !== null) setStatus("done");
       return ok !== null;
     },

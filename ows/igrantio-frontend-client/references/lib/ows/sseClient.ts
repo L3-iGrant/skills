@@ -12,7 +12,7 @@ import type { OwsWebhookEvent } from "./types";
 export interface SseSessionOptions {
   /** The backend webhook base, e.g. `https://host/webhook` (no trailing slash needed). */
   webhookBaseUrl: string;
-  /** CredentialExchangeId or presentationExchangeId. */
+  /** The `subject.id` of the events: the issuance id or the verification id. */
   exchangeId: string;
   onMessage: (event: OwsWebhookEvent) => void;
   onError?: (event: Event) => void;

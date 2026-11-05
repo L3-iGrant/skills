@@ -8,54 +8,123 @@
 
 // ---------------------------------------------------------------- Issuance ---
 
-export type IssuanceMode = "InTime" | "Deferred";
+/** `in_time`: the claims are known now. `deferred`: the claims come later. */
+export type IssuanceMode = "in_time" | "deferred";
 
-/** SD-JWT VC / mdoc credential body (claims can be flat or namespaced). */
-export interface SdJwtCredentialBody {
-  claims: Record<string, unknown>;
-  vct?: string;
-  doctype?: string;
-  id?: string;
+/** The status of an issuance: the step that it reached. */
+export type IssuanceStatus =
+  | "created"
+  | "offer_retrieved"
+  | "token_issued"
+  | "credential_deferred"
+  | "claims_supplied"
+  | "credential_issued"
+  | "credential_accepted"
+  | "credential_deleted"
+  | "denied"
+  | "expired";
+
+/**
+ * The claims of an issuance, in the form of the format of the credential
+ * configuration: the claims as they are for `dc+sd-jwt`; `{"<namespace>": {...}}`
+ * for `mso_mdoc`; `{"credentialSubject": {...}}` for `jwt_vc_json`.
+ */
+export type IssuanceClaims = Record<string, unknown>;
+
+/** The transaction code (tx_code) that the issuer makes for a pre-authorised offer. */
+export interface TransactionCodeRequest {
+  /** 4 to 12. */
+  length: number;
+  /** `numeric`: digits. `text`: upper-case letters and digits. */
+  inputMode: "numeric" | "text";
 }
 
-/** W3C VC credential body. */
-export interface W3cCredentialBody {
-  credentialSubject: Record<string, unknown>;
-  type?: string[];
-  id?: string;
-}
-
-export type CredentialBody = SdJwtCredentialBody | W3cCredentialBody;
-
-/** One entry of `credentials`: `id` names the credential configuration it fills. */
-export type CredentialConfigurationBody = CredentialBody & { id: string };
-
-interface IssueRequestBase {
+/** Body of `POST /v4/config/ows/issuer/issuances`: one issuance of one credential configuration. */
+export interface CreateIssuanceRequest {
+  mode: IssuanceMode;
   credentialDefinitionId: string;
-  /** Claims for a definition with one credential configuration. */
-  credential?: CredentialBody;
-  /** Claims for a definition with more than one credential configuration. */
-  credentials?: CredentialConfigurationBody[];
-  /**
-   * Transaction code (tx_code), 4 to 12 characters. Sending it selects the
-   * pre-authorised code flow. Not with `presentationDefinitionId`.
-   */
-  userPin?: string;
-  /** Pre-authorised code flow without a transaction code. */
-  isPreAuthorised?: boolean;
+  /** Required when the definition has more than one credential configuration. */
+  credentialConfigurationId?: string;
+  /** The pre-authorised code flow (default false: the authorisation code flow). */
+  preAuthorised?: boolean;
+  /** Only with `preAuthorised: true`. Not with `presentationDefinitionId`. */
+  transactionCode?: TransactionCodeRequest;
+  /** Required for `in_time`. A `deferred` issuance gets them later (supplyClaims). */
+  claims?: IssuanceClaims;
+  /** Push the offer to this individual (not with `mapperId`). */
+  individualId?: string;
+  mapperId?: string;
   /** Gate issuance behind a presentation ("dynamic" issuance). */
   presentationDefinitionId?: string;
   /** Only together with `presentationDefinitionId`. */
   transactionData?: TransactionData;
-  /** Deep-link scheme of `credentialOffer`; default "openid-credential-offer://". */
-  urlScheme?: string;
-  /** Push the offer to this individual (not with `mapperId`). */
-  individualId?: string;
-  mapperId?: string;
+  /** Deep-link scheme of `offer.uri`; default "openid-credential-offer://". */
+  urlScheme?: "openid-credential-offer://" | "haip://";
 }
 
-export interface IssueInTimeRequest extends IssueRequestBase {
-  issuanceMode: "InTime";
+/** Answer 201 of the create. The codes are only in this answer. */
+export interface IssuanceCreated {
+  /** The issuance id: the SSE key and the id of the other issuance paths. */
+  id: string;
+  status: IssuanceStatus;
+  offer: {
+    /** `openid-credential-offer://…` URI: render as a QR code or a deep link. */
+    uri: string;
+    offerUri: string;
+    preAuthorisedCode: string | null;
+    /** Give it to the holder out of band. */
+    transactionCode: string | null;
+  };
+  /** RFC 3339, UTC. */
+  createdAt: string;
+}
+
+/** Body of `PUT /v4/config/ows/issuer/issuances/{issuanceId}/claims`. */
+export interface IssuanceClaimsRequest {
+  claims: IssuanceClaims;
+}
+
+/** Answer of `GET /v4/config/ows/issuer/issuances/{issuanceId}` (and of the claims update). */
+export interface IssuanceDetail {
+  id: string;
+  credentialDefinition: { id: string; definitionVersion: number | null };
+  credentialConfigurationId: string | null;
+  format: "jwt_vc_json" | "dc+sd-jwt" | "mso_mdoc" | null;
+  mode: IssuanceMode;
+  status: IssuanceStatus;
+  deniedReason: string | null;
+  offer: {
+    offerId: string | null;
+    reusedOfferId: string | null;
+    preAuthorised: boolean;
+    walletInitiated: boolean;
+    /** The offer URI while a wallet can still use it; else null. */
+    uri: string | null;
+  };
+  holder: { name: string | null; clientId: string | null; trustServiceProvider: Record<string, unknown> | null };
+  revocation: { enabled: boolean; method: string; revokedAt: string | null; reason: string | null };
+  latestCredential: {
+    id: string;
+    version: number;
+    issuedAt: string | null;
+    validUntil: string | null;
+    copies: number;
+  } | null;
+  /** Only with `?include=claims`. */
+  claims?: IssuanceClaims;
+  createdAt: string;
+  updatedAt: string;
+  issuedAt: string | null;
+  [k: string]: unknown;
+}
+
+/** Answer of `POST /v4/config/ows/issuer/issuances/{issuanceId}/revocation`. A revocation is final. */
+export interface IssuanceRevocation {
+  revokedAt: string;
+  reason: string | null;
+  /** At most the 10 newest revoked credentials. */
+  credentials: { id: string; version: number; copy: number }[];
+  credentialCount: number;
 }
 
 // ------------------------------------------------- Transaction data (SCA) ---
@@ -223,54 +292,6 @@ export type TransactionData =
   | { payload: ScaPayload }
   | { qes_data: QesData };
 
-export interface StartDeferredRequest extends IssueRequestBase {
-  issuanceMode: "Deferred";
-}
-
-export type IssueCredentialRequest = IssueInTimeRequest | StartDeferredRequest;
-
-/** Body for supplying claims to complete a deferred issuance (PUT history). */
-export interface UpdateCredentialHistoryPayload {
-  /** `id`: the credential configuration id, `credentialHistory.credential.id` of the offer. */
-  credential: CredentialBody & { id?: string };
-}
-
-export interface CredentialHistoryItem {
-  CredentialExchangeId?: string;
-  credentialOffer?: string;
-  credentialStatus?: "pending" | "ready";
-  status?:
-    | "offer_sent"
-    | "offer_received"
-    | "token_issued"
-    | "credential_issued"
-    | "credential_acked"
-    | "credential_accepted"
-    | "credential_deleted"
-    | "issuance_denied";
-  /** The reason when status is issuance_denied. */
-  issuanceDeniedReason?: string;
-  presentationExchangeId?: string;
-  credential?: { type?: string[]; credentialSubject?: Record<string, unknown>; claims?: Record<string, unknown>; [k: string]: unknown } | null;
-  credentialFormat?: "jwt_vc_json" | "dc+sd-jwt" | "mso_mdoc";
-  revocationStatus?: "Operational" | "Revoked" | "Suspended";
-  holder?: { name: string; [k: string]: unknown };
-  createdAt?: number;
-  updatedAt?: number;
-  [k: string]: unknown;
-}
-
-export interface IssueCredentialResponse {
-  /** An array when the definition has more than one credential configuration. */
-  credentialHistory?: CredentialHistoryItem | CredentialHistoryItem[];
-  [k: string]: unknown;
-}
-
-export interface CredentialHistoryResponse {
-  credentialHistory: CredentialHistoryItem;
-  [k: string]: unknown;
-}
-
 // ------------------------------------------------------------ Verification ---
 
 export interface SendVerificationRequest {
@@ -335,34 +356,77 @@ export type VerificationHistoryResponse = VerificationResponse;
 
 // -------------------------------------------------------------------- SSE ---
 
-/** One webhook event, as re-emitted by the backend over SSE. */
-export interface OwsWebhookEvent<TData = IssuanceSSEData | PresentationSSEData> {
-  id: number;
-  delivery_id: string;
-  webhook_id: string; // the exchange id
-  timestamp: string;
-  created_at: string;
+/**
+ * One webhook event of the wallet, as the backend re-emits it over SSE: the
+ * body that the webhook delivered, plus the time the backend received it.
+ * The body holds no claims and no presentation: read the resource for them.
+ */
+export interface OwsWebhookEvent<TData = IssuanceEventData | VerificationEventData> {
+  /** The event id. */
+  id: string;
+  /** `ows.<role>.<resource>.<event>`, for example `ows.issuer.issuance.credential_issued`. */
   type: string;
+  schemaVersion: number;
+  occurredAt: string;
+  organisationId: string;
+  sandboxOrganisationId: string | null;
+  /** `id` is the SSE key: the issuance id or the verification id. */
+  subject: { type: string; id: string; sequence: number };
   data: TData;
+  receivedAt: string;
 }
 
-export interface IssuanceSSEData {
-  credential: CredentialHistoryItem & {
-    CredentialExchangeId: string;
-    status: NonNullable<CredentialHistoryItem["status"]>;
-  };
-  organisationId?: string;
+/** `{code, description}` of `denied`, `credential_failed`, `revoked` and `declined`. */
+export interface EventReason {
+  code: string;
+  description: string;
 }
 
-export interface PresentationSSEData {
-  presentation: {
-    verified: boolean;
-    vpTokenResponse: string[] | null;
-    presentation: Record<string, unknown>[] | null;
-    presentationExchangeId: string;
-    status: string;
-    holder?: { name: string; [k: string]: unknown };
-    [k: string]: unknown;
+/** `data` of an `ows.issuer.issuance.*` event. */
+export interface IssuanceEventData {
+  issuance: {
+    id: string;
+    credentialDefinitionId: string | null;
+    credentialConfigurationId: string | null;
+    format: string | null;
+    mode: IssuanceMode;
+    origin: "offer" | "wallet_initiated" | "offer_reuse";
+    offerId: string | null;
+    status: IssuanceStatus;
+    revokedAt: string | null;
+    individualId: string | null;
+    holder: { clientId: string | null; name: string | null };
+    reissueCount: number;
+    createdAt: string;
+    updatedAt: string;
+    issuedAt: string | null;
+    lastReissuedAt: string | null;
   };
-  organisationId?: string;
+  credential?: {
+    id: string;
+    version: number;
+    copies: number;
+    issuedAt: string;
+    validUntil: string | null;
+    holderKeyChanged: boolean;
+  } | null;
+  reason?: EventReason;
+}
+
+/** `data` of an `ows.verifier.verification.*` event. */
+export interface VerificationEventData {
+  verification: {
+    /** The `presentationExchangeId` of the verification. */
+    id: string;
+    presentationDefinitionId: string | null;
+    status: "request_sent" | "request_received" | "presentation_acked";
+    isVerified: boolean;
+    responseMode: string | null;
+    credentialExchangeId: string | null;
+    individualId: string | null;
+    dataAgreementId: string | null;
+    createdAt: string;
+    updatedAt: string;
+  };
+  reason?: EventReason;
 }

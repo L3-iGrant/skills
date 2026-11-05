@@ -6,7 +6,7 @@ metadata:
   categories: [frontend]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, holder, wallet portal, OpenID4VCI, OpenID4VP, DCQL, claim sets, credential sets, trust list, notifications, Next.js, TypeScript, Better Auth, passwordless
-  version: 2026.10.01
+  version: 2026.11.01
   api: https://docs.igrant.io/docs/developer-apis
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0, DCQL, SD-JWT-VC, W3C-VC-2.0, mso_mdoc
   auth: none in the browser - the holder backend injects the OWS API key
@@ -55,10 +55,12 @@ Record the answers before you write code.
 6. **Webhooks** - none. The holder runs on the notifications stream.
 
 ## What it provides
-- **`holderClient.ts`** - typed client for every holder endpoint (receive /
-  user-pin / exchange-code / receive-deferred / accept / configure /
-  reissuance / revocation-status / list / delete; v3 presentation
-  receive / read / send / list + v2 filter / delete; wallet-unit status).
+- **`holderClient.ts`** - typed client for every holder route under
+  `/v4/config/ows/holder` (receive / transaction-code /
+  authorisation-code-exchanges / deferred-credential / acceptance /
+  reissuance / revocation-status / list / delete; presentations receive /
+  read / matching-credentials / response / list / delete; wallet-unit
+  status).
 - **`shareSelection.ts`** - the pure DCQL selection engine: pre-flight
   validation ("Requested data is not present in holder"), required-first
   step ordering, OPTION groups with "None", claim-set disclosure profiles
@@ -74,7 +76,7 @@ Record the answers before you write code.
   `useShareFlow`, `useHolderNotifications` (list + live SSE).
 - **`components/`** - working views: `HolderPortal` (full scaffold: status
   bar + bell + drawer inbox + snackbars + deep-link capture),
-  `ReceivedCredentialsView` (stats, active/archived, auto-present, refresh),
+  `ReceivedCredentialsView` (stats, active/archived, status, refresh),
   `SharedCredentialsView` (stats-as-filter, disclosed-claims detail,
   presentation lifecycle), `BaseConfigurationView` (wallet solution settings
   + wallet-unit stepper), `ShareWizard`, `ReceivePanel`,
@@ -89,15 +91,17 @@ Record the answers before you write code.
 
 ## Flow (what happens)
 1. **Receive**: paste an `openid-credential-offer://…` URI →
-   `POST …/credential/receive` → branch on the record: transaction code
-   (`user-pin`), front-channel (open `authorizationRequest`, exchange
-   `?code`/`?state`), deferred (retry until `credential_acked`), then
-   review → accept or reject.
+   `POST …/holder/credentials` → branch on the record: transaction code
+   (`…/transaction-code`), front-channel (open `authorizationRequest`,
+   exchange `?code`/`?state` with `…/authorisation-code-exchanges`), deferred
+   (`…/deferred-credential`, retry until `credential_acked`), then review →
+   accept (`…/acceptance`) or reject.
 2. **Share**: paste/deep-link an `openid4vp://…` request →
-   `verification/receive` → `{id}/filter` → pre-flight → the selection
-   wizard → `{presentationId}/send` → open `responseRedirectUri` when
-   returned. Transaction data (SCA / QES / data agreements) is shown before
-   consent and signed through the send call itself.
+   `POST …/holder/presentations` → `{id}/matching-credentials` → pre-flight
+   → the selection wizard → `{presentationId}/response` → open
+   `responseRedirectUri` when returned. Transaction data (SCA / QES / data
+   agreements) is shown before consent and signed through the response call
+   itself.
 3. **Notifications** drive both flows: the SSE inbox derives each row's next
    action (decision table in `igrantio-holder-notifications`); deleting the
    notification is the "handled" signal.

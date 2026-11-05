@@ -16,12 +16,13 @@ npm run register-webhook -- acme
 | Method | Path | Purpose |
 | --- | --- | --- |
 | GET | `/healthz` | liveness |
-| GET/POST/PUT/DELETE | `/ows/:tenant/*` | proxy to OWS credential endpoints (injects ApiKey) |
+| GET/POST/PUT/PATCH/DELETE | `/ows/:tenant/*` | proxy to the OWS issuance routes (injects ApiKey) |
 | POST | `/webhook` | OWS webhook receiver (HMAC-verified) |
-| GET | `/webhook/sse/:exchangeId` | SSE stream for a CredentialExchangeId |
-| DELETE | `/webhook/:exchangeId` | consume-and-delete |
+| GET | `/webhook/sse/:resourceId` | SSE stream for an issuance id |
+| DELETE | `/webhook/:resourceId` | consume-and-delete |
 
-Allow-listed OWS paths (proxy): `…/credential/issue`, `…/credential/history`.
-Registered topics: `openid.credential.{offer_received,token_issued,credential_acked,credential_accepted,issuance_denied}`.
+Allow-listed OWS paths (proxy): `v4/config/ows/issuer/issuances` and
+`v4/config/ows/issuer/issuances/{issuanceId}[/claims]`.
+Registered event types: `ows.issuer.issuance.{offer_retrieved,token_issued,credential_deferred,credential_issued,credential_accepted,denied,expired}`.
 
 See the parent `SKILL.md` and `igrantio-ows-overview` for the full contract.

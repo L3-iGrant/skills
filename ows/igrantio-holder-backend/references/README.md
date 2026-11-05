@@ -13,17 +13,16 @@ npm run dev               # http://localhost:6003
 | Method | Path | Purpose |
 | --- | --- | --- |
 | GET | `/healthz` | liveness |
-| GET/POST/PUT/DELETE | `/ows/:tenant/*` | proxy to OWS holder endpoints (injects ApiKey) |
-| GET | `/ows/:tenant/v2/config/digital-wallet/openid/notifications/sse` | relayed holder notifications SSE stream |
+| GET/POST/PUT/PATCH/DELETE | `/ows/:tenant/*` | proxy to OWS holder routes (injects ApiKey) |
+| GET | `/ows/:tenant/v4/config/ows/holder/notification-stream` | relayed holder notifications SSE stream |
 
-Allow-listed OWS paths (proxy): `…/sdjwt/credential/receive|exchange-code`,
-`…/sdjwt/credential/{id}` (+ `user-pin`, `receive-deferred`, `accept`,
-`configure`, `request`, `revocation-status`), `…/sdjwt/credentials`,
-`…/sdjwt/verification/receive|{id}|{id}/send`
-(v3) and `{id}/filter` + delete (v2), `…/sdjwt/verifications`, notifications
-REST, `…/holder/global-configuration`, `…/wallet-unit/status`. The issuer's
-`credential/issue|history` and the verifier's `verification/send|history` are
-excluded (least privilege).
+Allow-listed OWS paths (proxy), all under `v4/config/ows/holder/`:
+`credentials` and `credentials/{id}` (+ `transaction-code`,
+`deferred-credential`, `acceptance`, `reissuance`, `revocation-status`),
+`authorisation-code-exchanges`, `presentations` and `presentations/{id}`
+(+ `matching-credentials`, `response`), `notifications` and
+`notifications/{id}`, `configuration`, `wallet-unit/status`. The issuer and
+verifier routes are excluded (least privilege).
 
 No webhooks: holder events arrive on the notifications stream.
 

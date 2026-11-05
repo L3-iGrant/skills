@@ -6,7 +6,7 @@ metadata:
   categories: [frontend]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VCI, credential offer, QR code, verifiable credentials
-  version: 2026.10.01
+  version: 2026.11.01
   api: https://docs.igrant.io/docs/category/openid4vc-api/issuer
   protocols: OpenID4VCI-1.0, SD-JWT-VC, W3C-VC-2.0, mso_mdoc
   auth: none in the browser - the issuer backend injects the OWS API key
@@ -59,34 +59,39 @@ Record the answers before you write code.
 
 ## What it provides
 - **`useIssuance({ proxyBaseUrl, webhookBaseUrl })`** →
-  `{ status, offerUri, credentialExchangeId, error, issueInTime, issueDeferred, reset }`.
-  - `issueInTime(payload)` - claims known now.
-  - `issueDeferred(startRequest, claims)` - create the offer now; the hook pushes
-    the claims automatically when the wallet has the offer.
+  `{ status, offerUri, transactionCode, issuanceId, error, issueInTime, issueDeferred, reset }`.
+  - `issueInTime(payload)` - claims known now (`mode: "in_time"`).
+  - `issueDeferred(payload, claims)` - make the offer now
+    (`mode: "deferred"`); the hook gives the claims automatically when the
+    wallet has the offer.
   - `status`: `idle → offer_ready → scanned → issued` (or `error`).
 - **`IssuerFlow`** - a minimal end-to-end demo component that renders the
-  wallet QR with `WalletQrPanel` (`logoSrc`, optional `txCode`). It sends
-  `txCode` as `userPin` (4 to 12 characters), which selects the
-  pre-authorised code flow, and shows the same code in the panel.
+  wallet QR with `WalletQrPanel` (`logoSrc`, optional `txCodeLength`). It
+  makes a pre-authorised offer (`preAuthorised`, default `true`); with
+  `txCodeLength` (4 to 12) the issuer makes a numeric transaction code, and
+  the panel shows the code of the create answer.
 - **`walletQr/`** - `WalletQrPanel.tsx` + `walletQr.css`, the demonstrator
   QR panel (canonical copy: `igrantio-qr-code`).
 
 ## Flow (what happens)
-1. `POST …/credential/issue` → read `credentialHistory.CredentialExchangeId`
-   (SSE key) and `credentialHistory.credentialOffer` (QR URI).
-2. Open SSE on the exchange id; render the wallet QR panel
+1. `POST /v4/config/ows/issuer/issuances` (HTTP 201) → read `id` (the
+   issuance id, the SSE key), `offer.uri` (QR URI) and
+   `offer.transactionCode` (only in this answer).
+2. Open SSE on the issuance id; render the wallet QR panel
    (`WalletQrPanel`, vendored from `igrantio-qr-code` at
    `features/issuer/walletQr/`): the 240 px code in the rounded frame, the
    logo disc, the refresh pill, the "Open in EUDI Wallet" button, the
    transaction-code box and the hint, at the exact look of the iGrant.io
    demonstrators. `igrantio-qr-code` holds the values and the questions.
-3. SSE `data.credential.status`:
-   - `offer_received` / `token_issued` → scanned; (deferred) push the claims once
-     via `PUT …/credential/history/{id}`. The backend keeps only the latest
-     event, so either status can come first.
-   - `credential_acked` (the wallet has the credential) / `credential_accepted`
+3. SSE issuer event, `data.issuance.status`:
+   - `offer_retrieved` / `token_issued` / `credential_deferred` → scanned;
+     (deferred) give the claims once via
+     `PUT /v4/config/ows/issuer/issuances/{id}/claims` with
+     `{"claims": {...}}`. The backend keeps only the latest event, so any of
+     these statuses can come first.
+   - `credential_issued` (the wallet has the credential) / `credential_accepted`
      (the wallet confirmed it) → **done**, close SSE.
-   - `issuance_denied` → error with `credential.issuanceDeniedReason`.
+   - `denied` (`data.reason`) or `expired` → error.
 
 ## Steps
 1. Vendor `igrantio-frontend-client/references/lib/ows` into `src/lib/ows/`.
@@ -107,17 +112,20 @@ Record the answers before you write code.
    />
    ```
    Replace the demo's hard-coded payload with your form; for namespaced formats
-   (mdoc) nest claims under the namespace, e.g. `{ "org.iso.18013.5.1": { … } }`.
+   (mdoc) nest claims under the namespace, e.g. `{ "org.iso.18013.5.1": { … } }`,
+   and for W3C VC under `credentialSubject`. A definition with more than one
+   credential configuration needs `credentialConfigurationId`.
 
 ## Clean-code notes
 - No `@igrant/*` SDK; OWS specifics live in the client, flow logic in the hook,
   presentation in the component - swap the UI without touching the flow.
-- The QR URI and exchange id are the only two response fields the UI needs.
+- The QR URI, the issuance id and the transaction code are the only response
+  fields the UI needs.
 
 ## Validation / done criteria
 - Scanning the QR with a wallet drives `status` to `issued` within ~1s of accept.
-- Deferred issuance pushes claims exactly once (on the first of
-  `offer_received` and `token_issued`).
+- Deferred issuance gives the claims exactly once (on the first of
+  `offer_retrieved`, `token_issued` and `credential_deferred`).
 - No OWS API key is present anywhere in the browser bundle.
 
 ## Register your certificate in the trust list

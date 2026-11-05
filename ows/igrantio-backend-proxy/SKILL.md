@@ -6,7 +6,7 @@ metadata:
   categories: [backend, education]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, OpenID4VCI, OpenID4VP, reverse proxy, multi-tenant, API key security
-  version: 2026.10.01
+  version: 2026.11.01
   api: https://docs.igrant.io/docs/developer-apis
   auth: OWS API key held server-side; injected per request. Browser sends no key.
   requires-skills: igrantio-ows-overview
@@ -50,7 +50,7 @@ Record the answers before you write code.
 5. **Role** - which allow-list: issuer, verifier or holder paths?
 
 ## What it does
-`GET|POST|PUT|DELETE ${proxyPrefix}/{tenant}/{owsPath...}`:
+`GET|POST|PUT|PATCH|DELETE ${proxyPrefix}/{tenant}/{owsPath...}`:
 1. resolves `{tenant}` → OWS API key via a **TenantStore** (env or pluggable),
 2. rejects any path not on the caller-supplied allow-list (least privilege, 404) -
    a string rule matches as a path prefix, a RegExp rule against the whole path;
@@ -73,9 +73,9 @@ import { proxyRouter } from "./proxy";
 import { EnvTenantStore } from "./tenants";
 import { config } from "./config";
 
-const ISSUER = [
-  "v2/config/digital-wallet/openid/sdjwt/credential/issue",
-  "v2/config/digital-wallet/openid/sdjwt/credential/history",
+const ISSUER: Array<string | RegExp> = [
+  /^v4\/config\/ows\/issuer\/issuances$/,
+  /^v4\/config\/ows\/issuer\/issuances\/[^/]+(\/claims)?$/,
 ];
 app.use(config.proxyPrefix, proxyRouter(new EnvTenantStore(), ISSUER));
 ```
@@ -87,9 +87,10 @@ app.use(config.proxyPrefix, proxyRouter(new EnvTenantStore(), ISSUER));
 
 ## Clean-code notes
 - The allow-list is a parameter, so issuer/verifier/holder scope the proxy to
-  just their endpoints (least privilege) with one array; RegExp rules let the
-  holder share the `sdjwt/credential` namespace with the issuer without
-  exposing `credential/issue`.
+  just their endpoints (least privilege) with one array. Each role has its own
+  path segment (`/v4/config/ows/issuer/...`, `/holder/...`, `/verifier/...`);
+  RegExp rules also keep sub-resources such as `/revocation` out of a
+  browser-facing backend.
 - OWS base URL lives only in `config.ts`; the proxy is transport, not policy.
 
 ## Validation / done criteria

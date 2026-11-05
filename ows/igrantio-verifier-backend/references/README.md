@@ -16,12 +16,14 @@ npm run register-webhook -- acme
 | Method | Path | Purpose |
 | --- | --- | --- |
 | GET | `/healthz` | liveness |
-| GET/POST/PUT/DELETE | `/ows/:tenant/*` | proxy to OWS verification endpoints (injects ApiKey) |
+| GET/POST/PUT/PATCH/DELETE | `/ows/:tenant/*` | proxy to OWS verification endpoints (injects ApiKey) |
 | POST | `/webhook` | OWS webhook receiver (HMAC-verified) |
-| GET | `/webhook/sse/:exchangeId` | SSE stream for a presentationExchangeId |
-| DELETE | `/webhook/:exchangeId` | consume-and-delete |
+| GET | `/webhook/sse/:resourceId` | SSE stream for a presentationExchangeId |
+| DELETE | `/webhook/:resourceId` | consume-and-delete |
 
-Allow-listed OWS paths (proxy): v3 `…/verification/send` and `…/verification/history`; v2 `…/verification/history/{id}` (delete) and `…/verification/history/{id}/receive` (Digital Credentials API).
-Registered topic: `openid.presentation.presentation_acked.v3`.
+Allow-listed OWS paths (proxy): `v4/config/ows/verifier/verifications` and
+`v4/config/ows/verifier/verifications/{verificationId}[/response]` (the
+response is the Digital Credentials API answer).
+Registered event types: `ows.verifier.verification.{presentation_received,declined}`.
 
 See the parent `SKILL.md` and `igrantio-ows-overview` for the full contract.

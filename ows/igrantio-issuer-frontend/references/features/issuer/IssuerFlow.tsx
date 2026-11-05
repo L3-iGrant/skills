@@ -11,34 +11,44 @@ import { useIssuance, type IssuanceConfig } from "./useIssuance";
  */
 export interface IssuerFlowProps extends IssuanceConfig {
   credentialDefinitionId: string;
-  /** Claims for the credential being issued. */
+  /** Required when the definition has more than one credential configuration. */
+  credentialConfigurationId?: string;
+  /** Claims for the credential being issued, in the form of its format. */
   claims: Record<string, unknown>;
   /** The logo on the white disc in the centre of the QR code. */
   logoSrc?: string;
-  /** Transaction code (4 to 12 characters): sent as `userPin`, shown in the panel. */
-  txCode?: string;
+  /** The pre-authorised code flow (default true); false selects the authorisation code flow. */
+  preAuthorised?: boolean;
+  /**
+   * Length of the transaction code (4 to 12), only with `preAuthorised`. The issuer makes the code; the
+   * panel shows the code of the create answer. Leave it out for no code.
+   */
+  txCodeLength?: number;
 }
 
 export function IssuerFlow({
   credentialDefinitionId,
+  credentialConfigurationId,
   claims,
   logoSrc = "/igrant-logo.png",
-  txCode,
+  preAuthorised = true,
+  txCodeLength,
   ...config
 }: IssuerFlowProps) {
-  const { status, offerUri, error, issueInTime, reset } = useIssuance(config);
+  const { status, offerUri, transactionCode, error, issueInTime, reset } = useIssuance(config);
 
-  // A transaction code selects the pre-authorised code flow; the panel shows the same code.
+  // With a length, the issuer also makes a transaction code; the panel shows it.
   const issue = () =>
     issueInTime({
-      issuanceMode: "InTime",
       credentialDefinitionId,
-      credential: { claims },
-      ...(txCode ? { userPin: txCode } : {}),
+      ...(credentialConfigurationId ? { credentialConfigurationId } : {}),
+      preAuthorised,
+      ...(preAuthorised && txCodeLength ? { transactionCode: { length: txCodeLength, inputMode: "numeric" as const } } : {}),
+      claims,
     });
 
-  // Refresh mints a NEW exchange: the hook closes the old SSE session and
-  // opens one on the new exchange id. An expired offer is never re-rendered.
+  // Refresh makes a NEW issuance: the hook closes the old SSE session and
+  // opens one on the new issuance id. An expired offer is never re-rendered.
   const refresh = () => {
     reset();
     issue();
@@ -72,7 +82,7 @@ export function IssuerFlow({
         logoSrc={logoSrc}
         isScanned={status === "scanned"}
         errorMessage={status === "error" ? `Issuance failed: ${error ?? "unknown error"}` : ""}
-        txCode={txCode}
+        txCode={transactionCode ?? undefined}
         onRefresh={refresh}
       />
     </div>

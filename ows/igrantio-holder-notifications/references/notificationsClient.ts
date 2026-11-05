@@ -7,8 +7,8 @@
  * `https://your-backend.example.com/ows/acme`.
  */
 
-const NOTIFICATIONS_PATH = "v2/config/digital-wallet/openid/notifications";
-const NOTIFICATION_PATH = "v2/config/digital-wallet/openid/notification";
+const NOTIFICATIONS_PATH = "v4/config/ows/holder/notifications";
+const NOTIFICATION_STREAM_PATH = "v4/config/ows/holder/notification-stream";
 
 export type NotificationType =
   | "credential_pending"
@@ -54,11 +54,11 @@ export function getNotificationContent(n: HolderNotification): NotificationConte
 
 /** What the holder must do next for a notification. */
 export type NotificationAction =
-  | "transaction_code" // PUT  …/sdjwt/credential/{id}/user-pin
-  | "authorization" // open content.authorizationRequest, then POST …/credential/exchange-code
-  | "deferred_credential" // PUT  …/sdjwt/credential/{id}/receive-deferred
-  | "verification" // POST …/sdjwt/verification/{presentationId}/filter, then v3 …/{presentationId}/send
-  | "review_credential" // PUT  …/sdjwt/credential/{id}/accept (or DELETE to reject)
+  | "transaction_code" // PUT  …/holder/credentials/{id}/transaction-code
+  | "authorization" // open content.authorizationRequest, then POST …/holder/authorisation-code-exchanges
+  | "deferred_credential" // PUT  …/holder/credentials/{id}/deferred-credential
+  | "verification" // POST …/holder/presentations/{presentationId}/matching-credentials, then …/{presentationId}/response
+  | "review_credential" // PUT  …/holder/credentials/{id}/acceptance (or DELETE to reject)
   | "none";
 
 const absent = (v: string | null | undefined) => v == null || v === "";
@@ -146,20 +146,20 @@ export class NotificationsClient {
     return (json?.notification ?? []) as HolderNotification[];
   }
 
-  /** GET …/notification/{id} - read one notification. */
+  /** GET …/notifications/{id} - read one notification. */
   async get(id: string): Promise<HolderNotification> {
-    const json = await this.request("GET", this.url(`${NOTIFICATION_PATH}/${id}`));
+    const json = await this.request("GET", this.url(`${NOTIFICATIONS_PATH}/${id}`));
     return (json?.notification ?? json) as HolderNotification;
   }
 
-  /** PUT …/notification/{id} - update the status; response is `{ notification: … }`. */
+  /** PUT …/notifications/{id} - update the status; response is `{ notification: … }`. */
   async update(id: string, body: { status: string }): Promise<any> {
-    return this.request("PUT", this.url(`${NOTIFICATION_PATH}/${id}`), body);
+    return this.request("PUT", this.url(`${NOTIFICATIONS_PATH}/${id}`), body);
   }
 
-  /** DELETE …/notification/{id}. */
+  /** DELETE …/notifications/{id}. */
   async delete(id: string): Promise<void> {
-    await this.request("DELETE", this.url(`${NOTIFICATION_PATH}/${id}`));
+    await this.request("DELETE", this.url(`${NOTIFICATIONS_PATH}/${id}`));
   }
 
   /** DELETE …/notifications - clears the whole inbox. */
@@ -200,7 +200,7 @@ export function openNotificationsStream(opts: NotificationsStreamOptions): () =>
   let source: EventSource | undefined;
   let retryTimer: ReturnType<typeof setTimeout> | undefined;
 
-  const url = `${opts.baseUrl.replace(/\/$/, "")}/${NOTIFICATIONS_PATH}/sse`;
+  const url = `${opts.baseUrl.replace(/\/$/, "")}/${NOTIFICATION_STREAM_PATH}`;
 
   const deliver = (e: MessageEvent) => {
     if (e.lastEventId) {

@@ -16,9 +16,13 @@ Frontend base = `{backend}/ows/{tenant}` (see `igrantio-backend-proxy`).
 
 ## 1. Issuance (OpenID4VCI)
 
-### 1.1 Issue a credential
+All issuer paths start with `/v4/config/ows/issuer`. The times are RFC 3339 in
+UTC, and the enum values are snake_case. One issuance has one credential
+configuration.
+
+### 1.1 Make an issuance
 ```
-POST {base}/v2/config/digital-wallet/openid/sdjwt/credential/issue
+POST {base}/v4/config/ows/issuer/issuances
 Authorization: ApiKey <issuer-key>
 Content-Type: application/json
 ```
@@ -27,80 +31,77 @@ Request body:
 
 ```jsonc
 {
-  "issuanceMode": "InTime",              // required: "InTime" | "Deferred"
-  "credentialDefinitionId": "<uuid>",    // required - stored issuer config
-  // the claims (format depends on the credential definition), one of:
-  "credential": {
-    "claims": { /* SD-JWT VC / mdoc claims, or namespaced e.g. "org.iso.18013.5.1": {…} */ }
-    // W3C form instead: "credentialSubject": { … }
-  },
-  // for a definition with more than one credential configuration:
-  "credentials": [ { "id": "<credential configuration id>", "claims": { … } } ],  // id required
+  "mode": "in_time",                       // required: "in_time" | "deferred"
+  "credentialDefinitionId": "<uuid>",      // required - stored issuer config
+  "credentialConfigurationId": "<id>",     // required when the definition has more than one configuration
+  // the claims, in the form of the format of the configuration:
+  //   dc+sd-jwt: the claims as they are; mso_mdoc: { "<namespace>": { … } };
+  //   jwt_vc_json: { "credentialSubject": { … } }
+  "claims": { "given_name": "Erika" },     // required for in_time
   // optional fields:
-  "userPin": "1234",                      // transaction code, 4-12 characters; selects the pre-authorised code flow
-  "isPreAuthorised": true,                // pre-authorised code flow without a transaction code
-  "presentationDefinitionId": "<id>",     // "dynamic" issuance: collect a presentation first (not with userPin)
-  "transactionData": { … },               // only with presentationDefinitionId; variants in §2.1
-  "urlScheme": "openid-credential-offer://",  // default; the scheme of credentialOffer
-  "individualId": "<id>"                  // push the offer to this individual (or "mapperId", not both)
+  "preAuthorised": true,                    // pre-authorised code flow (default false: authorisation code flow)
+  "transactionCode": { "length": 6, "inputMode": "numeric" },  // only with preAuthorised; the issuer makes the code
+  "presentationDefinitionId": "<id>",       // "dynamic" issuance: collect a presentation first (not with transactionCode)
+  "transactionData": { … },                 // only with presentationDefinitionId; variants in §2.1
+  "urlScheme": "openid-credential-offer://",  // default; the scheme of offer.uri
+  "individualId": "<id>"                    // push the offer to this individual (or "mapperId", not both)
 }
 ```
 
-Without `userPin` and `isPreAuthorised` the offer uses the authorization code
-flow.
-
-`issuanceMode`:
-- **`InTime`** - claims are known now; provide `credential.claims`. Wallet gets the finished credential.
-- **`Deferred`** - issue the *offer* now, provide the claims later via §1.2. Use when
-  claims are collected after the offer, or gated behind a presentation
+`mode`:
+- **`in_time`** - claims are known now; send `claims`. The wallet gets the
+  finished credential.
+- **`deferred`** - make the *offer* now, give the claims later via §1.2. Use
+  when claims are collected after the offer, or gated behind a presentation
   (`presentationDefinitionId` → "dynamic credential request").
 
-**Response** `200`: `{ "credentialHistory": CredentialHistoryItem }`, or an
-array of items when the definition has more than one credential configuration
-(one record per configuration). Process these fields:
+**Response** `201`. Process these fields:
 
 | Field | Use |
 | --- | --- |
-| `credentialHistory.CredentialExchangeId` | **SSE correlation key** - open SSE on this. |
-| `credentialHistory.credentialOffer` | `openid-credential-offer://…` URI → **render as QR / same-device deep link**. |
-| `credentialHistory.credentialStatus` | `"pending"` \| `"ready"`. |
-| `credentialHistory.status` | `offer_sent` → `offer_received` → `token_issued` → `credential_acked` (the wallet has the credential) → `credential_accepted` (the wallet confirmed it). Deferred: `credential_issued` after §1.2. Failure: `issuance_denied` (reason in `issuanceDeniedReason`). The holder can later send `credential_deleted`. |
-| `credentialHistory.credential.id` | the credential configuration id; send it back in §1.2. |
-| `credentialHistory.presentationExchangeId` | present for dynamic (presentation-gated) issuance. |
+| `id` | The issuance id: **SSE correlation key** (`subject.id` of the issuer events). |
+| `offer.uri` | `openid-credential-offer://…` URI → **render as QR / same-device deep link**. |
+| `offer.transactionCode` | The transaction code that the issuer made: show it to the holder. Only in this answer; `null` without a code. |
+| `offer.preAuthorisedCode` | Only in this answer; `null` without the pre-authorised code flow. |
+| `status` | `created`. The next statuses: `offer_retrieved` → `token_issued` → `credential_issued` (the wallet has the credential) → `credential_accepted` (the wallet confirmed it). Deferred: `credential_deferred` (the wallet waits for the claims) and `claims_supplied` after §1.2. Failure: `denied` or `expired`. The holder can later send `credential_deleted`. |
 
-### 1.2 Deferred issue - supply claims after the offer
+### 1.2 Deferred issue - give the claims after the offer
 ```
-PUT {base}/v2/config/digital-wallet/openid/sdjwt/credential/history/{CredentialExchangeId}
+PUT {base}/v4/config/ows/issuer/issuances/{issuanceId}/claims
 ```
 Body:
 ```jsonc
-{ "credential": { "claims": { … }, "id": "<credentialHistory.credential.id from the offer>" } }
-// W3C form: { "credential": { "credentialSubject": { … }, "id": "<…>" } }
+{ "claims": { … } }   // the form of §1.1
 ```
 Call this when the SSE / webhook reports that the wallet has the offer
-(`offer_received` or `token_issued`) for a `Deferred` issuance. The record
-must still be `credentialStatus: "pending"`. **`credential.id` is required**:
-echo back `credentialHistory.credential.id` from the §1.1 response, or OWS
-returns `400 "Id field is missing in credential"` and the claims are never
-delivered. For dynamic issuance the presentation must be verified first.
-**Response** `200`: `{ "credentialHistory": CredentialHistoryItem }` with
-`status: "credential_issued"`.
+(`offer_retrieved`, `token_issued` or `credential_deferred`) for a `deferred`
+issuance. Only a `deferred` issuance takes it. For dynamic issuance the
+presentation must be verified first. **Response** `200`: the detail of the
+issuance (§1.3) with `status: "claims_supplied"`.
 
-### 1.3 Read credential history
+### 1.3 Read an issuance
 ```
-GET {base}/v2/config/digital-wallet/openid/sdjwt/credential/history/{CredentialExchangeId}
+GET {base}/v4/config/ows/issuer/issuances/{issuanceId}[?include=claims]
 ```
-**Response**: `{ "credentialHistory": CredentialHistoryItem }`. Key fields on the item:
-`status`, `credentialStatus`, `credential.credentialSubject`/`claims`, `holder.name`,
-`credentialFormat` (`jwt_vc_json` | `dc+sd-jwt` | `mso_mdoc`), `revocationStatus`
-(`Operational` | `Revoked` | `Suspended`), `issuanceDeniedReason`, `disclosureMapping`,
-`createdAt`, `updatedAt` (Unix seconds).
+**Response**: the detail of the issuance. Key fields: `status`, `mode`,
+`format` (`jwt_vc_json` | `dc+sd-jwt` | `mso_mdoc`), `deniedReason`,
+`holder.name`, `offer.uri` (while a wallet can still use the offer),
+`revocation` (`enabled`, `method`, `revokedAt`, `reason`), `latestCredential`,
+`createdAt`, `updatedAt`, `issuedAt` (RFC 3339). `?include=claims` adds
+`claims`. The list (`GET …/issuances`) gives cursor pages of summary items.
 
-### 1.4 Delete credential history
+### 1.4 Delete an issuance
 ```
-DELETE {base}/v2/config/digital-wallet/openid/sdjwt/credential/history/{CredentialExchangeId}
+DELETE {base}/v4/config/ows/issuer/issuances/{issuanceId}
 ```
-**Response** `200` with an empty body.
+**Response** `204` with an empty body. The offer stops.
+
+### 1.5 Revoke an issuance
+```
+POST {base}/v4/config/ows/issuer/issuances/{issuanceId}/revocation
+```
+Body `{}` or `{ "reason": "…" }`. It revokes every issued credential of the
+issuance. A revocation is final. See `igrantio-api-issuer`.
 
 ---
 
@@ -108,7 +109,7 @@ DELETE {base}/v2/config/digital-wallet/openid/sdjwt/credential/history/{Credenti
 
 ### 2.1 Send a verification request
 ```
-POST {base}/v3/config/digital-wallet/openid/sdjwt/verification/send
+POST {base}/v4/config/ows/verifier/verifications
 Authorization: ApiKey <verifier-key>
 Content-Type: application/json
 ```
@@ -225,7 +226,7 @@ Transaction data binds only to `dc+sd-jwt` credential queries. Exactly one key:
    ```
 3. **QES document signing** (type `qes_data`) - the wallet signs the linked
    document. Upload the PDF with
-   `POST {base}/v2/config/digital-wallet/openid/verifier/file/upload` and use
+   `POST {base}/v4/config/ows/verifier/files` and use
    its `fileExternalLink`:
    ```jsonc
    { "qes_data": { "type": "pdf", "external_link": "<fileExternalLink>" } }   // optional "hash"
@@ -240,10 +241,11 @@ Transaction data binds only to `dc+sd-jwt` credential queries. Exactly one key:
 | `verificationHistory.status` | `request_sent` → `request_received` → `presentation_acked`. |
 | `verificationHistory.dcApiRequest` / `dcApiProtocol` | present when the presentation definition uses a `dc_api` response mode (same-device **Digital Credentials API**, see `igrantio-verifier-frontend`). `dcApiProtocol`: `openid4vp-v1-signed` \| `openid4vp-v1-unsigned` \| `org-iso-mdoc`. |
 
-### 2.2 Read verification history
+### 2.2 Read a verification
 ```
-GET {base}/v3/config/digital-wallet/openid/sdjwt/verification/history/{presentationExchangeId}
+GET {base}/v4/config/ows/verifier/verifications/{verificationId}
 ```
+`{verificationId}` is the `presentationExchangeId` of §2.1.
 **Response**: `{ "verificationHistory": VerificationHistoryItem }`. Key fields to process:
 
 | Field | Meaning |
@@ -265,18 +267,18 @@ you sent.
 
 ### 2.3 Post a Digital Credentials API response
 ```
-POST {base}/v2/config/digital-wallet/openid/sdjwt/verification/history/{presentationExchangeId}/receive
+POST {base}/v4/config/ows/verifier/verifications/{verificationId}/response
 ```
 Body: `{ "response": "<wallet data>" }` (OpenID4VP: the data as the wallet
 returned it; `org-iso-mdoc`: the base64url EncryptedResponse), or
 `{ "vp_token": { … } }` for an unencrypted OpenID4VP answer. OWS verifies the
-presentation and sends the usual webhook.
+presentation and sends the usual webhook event.
 
-### 2.4 Delete verification history
+### 2.4 Delete a verification
 ```
-DELETE {base}/v2/config/digital-wallet/openid/sdjwt/verification/history/{presentationExchangeId}
+DELETE {base}/v4/config/ows/verifier/verifications/{verificationId}
 ```
-**Response** `200` with an empty body. There is no v3 delete.
+**Response** `200` with an empty body.
 
 ---
 
@@ -288,8 +290,9 @@ setup script; the frontend never calls them.
 - **Credential definition** (issuer config) - defines a credential type/format the
   issuer can issue; yields the `credentialDefinitionId` used in §1.1.
 - **Presentation definition** (verifier config / DCQL) -
-  `POST {base}/v2/config/digital-wallet/openid/sdjwt/presentation-definition`,
-  list via `…/presentation-definitions`, delete via `…/presentation-definition/{id}`.
+  `POST {base}/v4/config/ows/verifier/presentation-definitions`,
+  list via `GET …/presentation-definitions`, delete via
+  `DELETE …/presentation-definitions/{presentationDefinitionId}`.
   Body: `label`, `version: "version_01"`, `cryptographicKeyFormat: "x509"`
   (a key with a certificate chain), and a `dcqlQuery` (`credentials[]` with
   `id`, `format`, `meta.vct_values` or `meta.doctype_value`, `claims[].path`).
@@ -312,15 +315,18 @@ Content-Type: application/json
 {
   "webhook": {
     "payloadUrl": "https://your-backend.example.com/webhook",   // your receiver, http(s)
-    "contentType": "application/json",
+    "contentType": "application/json",                         // the only content type
     "subscribedEvents": {
       "digitalWalletWebhook": [
-        "openid.credential.offer_received",
-        "openid.credential.token_issued",
-        "openid.credential.credential_acked",
-        "openid.credential.credential_accepted",
-        "openid.credential.issuance_denied",
-        "openid.presentation.presentation_acked.v3"
+        "ows.issuer.issuance.offer_retrieved",
+        "ows.issuer.issuance.token_issued",
+        "ows.issuer.issuance.credential_deferred",
+        "ows.issuer.issuance.credential_issued",
+        "ows.issuer.issuance.credential_accepted",
+        "ows.issuer.issuance.denied",
+        "ows.issuer.issuance.expired",
+        "ows.verifier.verification.presentation_received",
+        "ows.verifier.verification.declined"
       ]
     },
     "disabled": false,
@@ -332,7 +338,7 @@ Content-Type: application/json
 **Response** `200`: `{ "webhook": { … } }`, the created webhook with `id`,
 `orgId` and `timestamp`. OWS answers `400` for an unknown event type and for a
 `payloadUrl` that already has a webhook. `GET {base}/v2/config/webhooks/event-types`
-lists every event type.
+lists every event type with its description.
 
 ### 4.2 List webhooks (for idempotency - "don't create if exists")
 ```
@@ -348,70 +354,77 @@ OWS `POST`s to your `payloadUrl`:
 
 Headers:
 ```
-X-iGrant-Signature: t=<time>,sig=<hex hmac-sha256>
 Content-Type: application/json
+X-IGrant-Event-Id: <id of the body>
+X-IGrant-Event-Type: <type of the body>
+X-IGrant-Delivery-Attempt: <1 to 7>
+X-IGrant-Signature: t=<Unix seconds>,v1=<hex hmac-sha256>
 ```
-`t` is the UTC delivery time in ISO 8601 (for example `2026-10-27T10:15:00Z`).
-Signature: `sig = HMAC_SHA256(secretKey, "<t>.<raw-body>")`, hex-encoded; compare in
-constant time. (`t` comes from the header, not the body.)
+Signature: `v1 = HMAC_SHA256(secretKey, "<t>." + <the exact body bytes>)`,
+hex-encoded; compare in constant time, over the raw bytes (do not encode the
+JSON again). Refuse a `t` more than 5 minutes from your clock.
 
-Body:
+Body (the event; the same for each attempt):
 ```jsonc
 {
-  "deliveryID": "…",
-  "webhookID": "…",
-  "timestamp": "…",
-  "type": "openid.presentation.presentation_acked.v3",   // the topic
-  "data": { "organisationId": "…", /* "credential": {…}  OR  "presentation": {…} */ }
+  "id": "<event id>",                            // remove duplicates with it
+  "type": "ows.issuer.issuance.credential_issued",
+  "schemaVersion": 1,
+  "occurredAt": "2026-11-05T08:00:00Z",
+  "organisationId": "…",
+  "sandboxOrganisationId": null,
+  "subject": { "type": "issuance", "id": "<issuance id>", "sequence": 4 },
+  "data": { "issuance": { "id": "…", "status": "credential_issued", … }, "credential": { … } }
 }
 ```
-`data.credential` is the issuance record (§1.3 fields); `data.presentation` is
-the verification record (§2.2 fields).
+`data.issuance` is the summary of the issuance (the issuance list item);
+`data.verification` is the summary of the verification (`id`, `status`,
+`isVerified`, …). The body holds no claims, tokens or presentation content.
+Answer 2xx in 10 seconds: any other answer makes OWS try again after 1 min,
+5 min, 30 min, 2 h, 6 h and 24 h. For one resource, the events come in the
+order of `subject.sequence`.
 
-### 4.4 Topic → exchange-id correlation
-Extract the **exchange id** from each topic's payload; it is the SSE key that
-you store the event under:
+### 4.4 Event type → resource id
+The **resource id** of each event is `subject.id`; it is the SSE key that you
+store the event under:
 
-| Topic (`type`) | Path into `data` | Flow |
+| Event type (`type`) | `subject.id` | Flow |
 | --- | --- | --- |
-| `openid.credential.offer_received` | `credential.CredentialExchangeId` | issuance: the wallet has the offer (deferred: supply claims now) |
-| `openid.credential.token_issued` | `credential.CredentialExchangeId` | issuance: access token issued (deferred: supply claims now) |
-| `openid.credential.credential_acked` | `credential.CredentialExchangeId` | issuance (complete: the wallet has the credential) |
-| `openid.credential.credential_accepted` | `credential.CredentialExchangeId` | issuance (complete: the wallet confirmed it) |
-| `openid.credential.issuance_denied` | `credential.CredentialExchangeId` | issuance (failed) |
-| `openid.presentation.presentation_acked.v3` | `presentation.presentationExchangeId` | verification (complete) |
+| `ows.issuer.issuance.offer_retrieved` | issuance id | issuance: the wallet has the offer (deferred: give the claims now) |
+| `ows.issuer.issuance.token_issued` | issuance id | issuance: access token issued (deferred: give the claims now) |
+| `ows.issuer.issuance.credential_deferred` | issuance id | issuance: the wallet waits for the claims of a deferred issuance |
+| `ows.issuer.issuance.credential_issued` | issuance id | issuance (complete: the wallet has the credential) |
+| `ows.issuer.issuance.credential_accepted` | issuance id | issuance (complete: the wallet confirmed it) |
+| `ows.issuer.issuance.denied` / `expired` | issuance id | issuance (failed; `data.reason` on `denied`) |
+| `ows.verifier.verification.presentation_received` | verification id (`presentationExchangeId`) | verification (complete; `data.verification.isVerified`) |
+| `ows.verifier.verification.declined` | verification id | verification (the holder declined; `data.reason`) |
 
 ### 4.5 SSE event shape (what the browser receives)
 The backend re-emits the stored event to the browser as one SSE `data:` line
-(JSON). The frontend parses it as:
+(JSON): the webhook event body plus `receivedAt`:
 
 ```jsonc
 {
-  "id": 123, "delivery_id": "…", "webhook_id": "<exchange-id>",
-  "timestamp": "…", "created_at": "…",
-  "type": "openid.presentation.presentation_acked.v3",
+  "id": "<event id>",
+  "type": "ows.verifier.verification.presentation_received",
+  "subject": { "type": "verification", "id": "<presentationExchangeId>", "sequence": 3 },
   "data": {
     // verification:
-    "presentation": {
-      "verified": true,
-      "vpTokenResponse": ["…"],          // non-empty = wallet responded
-      "presentation": [ { /* disclosed claims */ } ],
-      "presentationExchangeId": "…",
-      "status": "presentation_acked",
-      "holder": { "name": "…" }
-    }
+    "verification": { "id": "…", "status": "presentation_acked", "isVerified": true, … }
     // OR issuance:
-    // "credential": { "status": "credential_acked" | "offer_received" | …, "CredentialExchangeId": "…", "credentialOffer": "…" }
-  }
+    // "issuance": { "id": "…", "status": "credential_issued" | "offer_retrieved" | …, … }
+  },
+  "receivedAt": "…"
 }
 ```
 
 Frontend processing:
-- **Issuance done** when `data.credential.status ∈ { "credential_acked", "credential_accepted" }`;
-  **failed** when it is `issuance_denied`.
-- **Verification done** when `data.presentation.vpTokenResponse` is non-empty; read
-  disclosed claims from `data.presentation.presentation[0]` and the decision from
-  `data.presentation.verified`.
+- **Issuance done** when `data.issuance.status ∈ { "credential_issued", "credential_accepted" }`;
+  **failed** when it is `denied` or `expired`.
+- **Verification done** on `ows.verifier.verification.presentation_received`:
+  read the verification (§2.2) for the disclosed claims
+  (`presentation[0]`) and the decision (`verified`). **Rejected** on
+  `ows.verifier.verification.declined`.
 
 ---
 
@@ -421,12 +434,12 @@ Using `createOwsClient({ baseUrl })` from `igrantio-frontend-client`, where
 `baseUrl = {backend}/ows/{tenant}` and no API key is set (the proxy injects it):
 
 ```ts
-client.issuance.issueInTime(payload)                    // POST …/credential/issue
-client.issuance.startDeferred(payload)                  // POST …/credential/issue
-client.issuance.completeDeferred(exId, body)            // PUT  …/credential/history/{exId}
-client.issuance.readHistory(exId)                       // GET  …/credential/history/{exId}
-client.verification.sendRequest(payload)                // POST v3 …/verification/send
-client.verification.readHistory(exId)                   // GET  v3 …/verification/history/{exId}
-client.verification.receiveDcApiResponse(exId, body)    // POST v2 …/verification/history/{exId}/receive
-client.verification.deleteHistory(exId)                 // DELETE v2 …/verification/history/{exId}
+client.issuance.create(payload)                         // POST   …/issuer/issuances
+client.issuance.supplyClaims(id, { claims })            // PUT    …/issuer/issuances/{id}/claims
+client.issuance.read(id)                                // GET    …/issuer/issuances/{id}
+client.issuance.delete(id)                              // DELETE …/issuer/issuances/{id}
+client.verification.sendRequest(payload)                // POST   …/verifier/verifications
+client.verification.readHistory(exId)                   // GET    …/verifier/verifications/{exId}
+client.verification.receiveDcApiResponse(exId, body)    // POST   …/verifier/verifications/{exId}/response
+client.verification.deleteHistory(exId)                 // DELETE …/verifier/verifications/{exId}
 ```

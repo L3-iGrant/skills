@@ -6,7 +6,7 @@ metadata:
   categories: [overview, education]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VCI, OpenID4VP, DCQL, verifiable credentials, digital identity wallet, transaction data, SCA
-  version: 2026.10.01
+  version: 2026.11.01
   api: https://docs.igrant.io/docs/developer-apis
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0, DCQL, SD-JWT-VC, W3C-VC-2.0, mso_mdoc
   auth: OWS API key (Authorization "ApiKey <key>") - held only by the tenant backend, never the browser
@@ -57,7 +57,7 @@ the integrator. Record the answers; every later choice hangs off them.
    repo is empty or ambiguous._
 6. **Webhook reachability** - what public URL will receive OWS webhooks?
    _Local dev needs a tunnel (e.g. an ngrok-style forwarder) or the SSE
-   fallback of polling history endpoints. The holder role needs none._
+   fallback of polling the read endpoints. The holder role needs none._
 7. **Frontend** - which framework, and the default iGrant.io look
    (`igrantio-usecase-ui`) or the integrator's own design system? The
    wallet QR is always the demonstrator panel (`igrantio-qr-code`); it asks
@@ -74,38 +74,48 @@ discovered fact.
 The browser never holds an OWS API key. A **tenant backend** proxies a small
 allow-list of OWS endpoints, injecting the organisation's `ApiKey`. When a wallet
 completes a flow, OWS delivers a **signed webhook** to the tenant backend; the
-backend verifies the HMAC signature, extracts the **exchange id** (the correlation
-key) from the webhook, and stores the event. The browser holds an **SSE**
-connection keyed by that exchange id and updates the moment the event arrives.
+backend verifies the HMAC signature over the raw body, and stores the event
+under its **resource id** (`subject.id`: the issuance id or the verification
+id, the correlation key). The browser holds an **SSE** connection keyed by that
+resource id and updates the moment the event arrives.
+
+All wallet paths have the form `/v4/{group}/ows/{role}/...` (for example
+`/v4/config/ows/issuer/issuances`). The roles are `issuer`, `holder`,
+`verifier`, `wallet-provider`, `key-management`, `trust` and `wallet`.
 
 See [`references/architecture.md`](./references/architecture.md) for the full
-data-flow, path allow-list, HMAC scheme, and the exchange-id correlation table.
+data-flow, path allow-list, HMAC scheme, and the correlation table.
 
 ## The two flows
 
 ### Issuance (OpenID4VCI) - you are the issuer
-1. `POST …/credential/issue` with `credentialDefinitionId` + claims → response
-   carries `credentialHistory.CredentialExchangeId` (correlation key) and
-   `credentialHistory.credentialOffer` (the `openid-credential-offer://` URI → render as QR / deep link).
-2. Open SSE on the `CredentialExchangeId`.
-3. Wallet scans and takes the credential → webhook
-   `openid.credential.credential_acked` (then `credential_accepted` when the
-   wallet confirms) → SSE fires → mark issued. `openid.credential.issuance_denied`
-   → show the failure.
-4. **Deferred** variant: issue with `issuanceMode: "Deferred"`, then on
-   `openid.credential.offer_received` or `token_issued` (the first that arrives)
-   `PUT …/credential/history/{CredentialExchangeId}` with the collected claims.
+1. `POST /v4/config/ows/issuer/issuances` with `credentialDefinitionId`,
+   `mode` and `claims` → HTTP 201 with `id` (the issuance id, the correlation
+   key) and `offer.uri` (the `openid-credential-offer://` URI → render as QR /
+   deep link). With `transactionCode: {length, inputMode}` the issuer makes the
+   code and gives it one time in `offer.transactionCode`.
+2. Open SSE on the issuance id.
+3. Wallet scans and takes the credential → event
+   `ows.issuer.issuance.credential_issued` (then `credential_accepted` when the
+   wallet confirms) → SSE fires → mark issued. `ows.issuer.issuance.denied` or
+   `expired` → show the failure.
+4. **Deferred** variant: make the issuance with `mode: "deferred"`, then on
+   `ows.issuer.issuance.offer_retrieved`, `token_issued` or
+   `credential_deferred` (the first that arrives)
+   `PUT /v4/config/ows/issuer/issuances/{issuanceId}/claims` with
+   `{"claims": {...}}`.
 
 ### Verification (OpenID4VP + DCQL) - you are the verifier / relying party
-1. `POST …/verification/send` with `presentationDefinitionId` (a stored DCQL query)
+1. `POST /v4/config/ows/verifier/verifications` with `presentationDefinitionId` (a stored DCQL query)
    → response carries `verificationHistory.presentationExchangeId` (correlation key)
    and `verificationHistory.vpTokenQrCode` (the `openid4vp://` URI → render as QR),
    or `verificationHistory.dcApiRequest` for the same-device Digital Credentials API.
 2. Open SSE on the `presentationExchangeId`.
-3. Wallet presents → webhook `openid.presentation.presentation_acked.v3` → SSE fires with
-   `data.presentation.vpTokenResponse` (non-empty = responded),
-   `data.presentation.presentation[0]` (the disclosed claims), and
-   `data.presentation.verified`.
+3. Wallet presents → event `ows.verifier.verification.presentation_received`
+   → SSE fires with `data.verification.isVerified`. The event holds no claims:
+   read `GET /v4/config/ows/verifier/verifications/{presentationExchangeId}`
+   for `presentation[0]` (the disclosed claims) and `verified`.
+   `ows.verifier.verification.declined` → the holder declined.
 
 Exact methods, paths, payloads, and full response schemas:
 [`references/api-reference.md`](./references/api-reference.md).
@@ -126,16 +136,20 @@ never these directly.
 - **OWS** - Organisation Wallet Suite (the iGrant.io API surface).
 - **credentialDefinitionId** - a stored issuer credential configuration.
 - **presentationDefinitionId** - a stored verifier DCQL query / presentation definition.
-- **CredentialExchangeId / presentationExchangeId** - per-transaction id; the **SSE correlation key**, also in the webhook payload (`data.credential.CredentialExchangeId` / `data.presentation.presentationExchangeId`).
-- **credentialOffer / vpTokenQrCode** - the wallet-facing URI you render as a QR code or open as a same-device deep link.
-- **exchange id** - umbrella term for the two above.
+- **issuance** - the record of one credential offer of one credential configuration; its `id` is the issuance id.
+- **issuance id / presentationExchangeId** - per-transaction id; the **SSE correlation key**, also `subject.id` of the webhook event (`data.issuance.id` / `data.verification.id`).
+- **offer.uri / vpTokenQrCode** - the wallet-facing URI you render as a QR code or open as a same-device deep link.
+- **resource id** - umbrella term for the two ids above.
+- **webhook event** - `ows.<role>.<resource>.<event>`, one at each step of a resource, signed over the exact body bytes.
 
 ## Validation / done criteria
-- You can name the exact OWS path, method, and payload for issue, deferred-issue,
-  read-history, verification-send, and read-verification-history without guessing.
+- You can name the exact OWS path, method, and payload for create issuance,
+  deferred claims, read issuance, verification send, and read verification
+  without guessing.
 - You know which response field is the QR URI and which is the SSE correlation key
   for both flows.
-- You know which webhook topics to subscribe to and how each maps to an exchange id.
+- You know which webhook event types to subscribe to and that `subject.id` is
+  the resource id of each.
 
 ## Register your certificate in the trust list
 Wallets show your organisation as verified only when your certificate is in

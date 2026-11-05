@@ -2,8 +2,8 @@ import { useCallback, useState } from "react";
 import { useOwsClient, useSSE } from "../../lib/ows";
 import type {
   OwsWebhookEvent,
-  PresentationSSEData,
   SendVerificationRequest,
+  VerificationEventData,
   VerificationHistoryItem,
 } from "../../lib/ows";
 
@@ -25,10 +25,15 @@ export interface VerificationResult {
   presentations: Record<string, unknown>[];
 }
 
+/** The verifier events that end the flow. */
+const PRESENTATION_RECEIVED = "ows.verifier.verification.presentation_received";
+const DECLINED = "ows.verifier.verification.declined";
+
 /**
  * Verifier flow (OpenID4VP + DCQL): send a presentation request, expose the QR
- * (or same-device DC API request), and resolve the disclosed claims + `verified`
- * decision over SSE.
+ * (or same-device DC API request), wait for the verifier event over SSE, then
+ * read the verification for the disclosed claims + `verified` decision. The
+ * event body holds no presented claims.
  */
 export function useVerification({ proxyBaseUrl, webhookBaseUrl }: VerificationConfig) {
   const client = useOwsClient(proxyBaseUrl);
@@ -42,20 +47,34 @@ export function useVerification({ proxyBaseUrl, webhookBaseUrl }: VerificationCo
 
   const handleEvent = useCallback(
     (event: OwsWebhookEvent) => {
-      const presentation = (event.data as PresentationSSEData).presentation;
-      // Wait until the wallet has actually responded.
-      if (!presentation?.vpTokenResponse?.length) return;
+      const verification = (event.data as VerificationEventData).verification;
+      if (!verification) return;
 
-      const presentations = presentation.presentation ?? [];
-      setResult({
-        verified: !!presentation.verified,
-        claims: presentations[0] ?? null,
-        presentations,
-      });
-      setStatus(presentation.verified ? "verified" : "rejected");
+      if (event.type === DECLINED) {
+        setResult({ verified: false, claims: null, presentations: [] });
+        setStatus("rejected");
+        close();
+        return;
+      }
+      // Wait until the wallet has actually responded.
+      if (event.type !== PRESENTATION_RECEIVED) return;
       close();
+
+      // The event has the decision only; the record has the disclosed claims.
+      client.verification
+        .readHistory(verification.id)
+        .then(({ verificationHistory }) => {
+          const presentations = verificationHistory?.presentation ?? [];
+          const verified = !!verificationHistory?.verified;
+          setResult({ verified, claims: presentations[0] ?? null, presentations });
+          setStatus(verified ? "verified" : "rejected");
+        })
+        .catch((e) => {
+          setError(e instanceof Error ? e.message : String(e));
+          setStatus("error");
+        });
     },
-    [close],
+    [client, close],
   );
 
   /**

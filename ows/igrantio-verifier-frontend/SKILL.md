@@ -6,7 +6,7 @@ metadata:
   categories: [frontend]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VP, DCQL, Digital Credentials API, credential verification, QR code, transaction data, SCA
-  version: 2026.10.01
+  version: 2026.11.01
   api: https://docs.igrant.io/docs/category/openid4vc-api/verifier
   protocols: OpenID4VP-1.0, DCQL, SD-JWT-VC, Digital-Credentials-API
   auth: none in the browser - the verifier backend injects the OWS API key
@@ -76,7 +76,7 @@ Record the answers before you write code.
   QR panel (canonical copy: `igrantio-qr-code`).
 
 ## Flow (what happens)
-1. `POST …/verification/send` with `presentationDefinitionId` → read
+1. `POST /v4/config/ows/verifier/verifications` with `presentationDefinitionId` → read
    `verificationHistory.presentationExchangeId` (SSE key) and
    `verificationHistory.vpTokenQrCode` (QR URI). Include `transactionData`
    (SCA payment, e-mandate, login/risk, account access, or QES signing - typed
@@ -84,15 +84,18 @@ Record the answers before you write code.
    `igrantio-ows-overview` api-reference §2.1) when the presentation
    definition sets `transactionDataDefinitionType`; the wallet displays and
    signs over the transaction details.
-2. Open SSE on the exchange id; render the wallet QR panel
+2. Open SSE on the `presentationExchangeId`; render the wallet QR panel
    (`WalletQrPanel`, vendored from `igrantio-qr-code` at
    `features/verifier/walletQr/`): the 240 px code in the rounded frame, the
    logo disc, the refresh pill, the "Open in EUDI Wallet" button and the
    hint, at the exact look of the iGrant.io demonstrators.
    `igrantio-qr-code` holds the values and the questions.
-3. SSE `data.presentation`: once `vpTokenResponse.length > 0`, read
-   `presentation[0]` (disclosed claims) and `verified` (decision). Accept only
-   when `verified === true` (plus your trust rules).
+3. SSE verifier event: on `ows.verifier.verification.presentation_received`,
+   read the verification (`GET /v4/config/ows/verifier/verifications/{id}`):
+   `presentation[0]` (disclosed claims) and `verified` (decision). The event
+   holds no claims. Accept only when `verified === true` (plus your trust
+   rules). On `ows.verifier.verification.declined` the holder declined or the
+   wallet answered with an error: the result is rejected.
 
 ## Steps
 1. Vendor `igrantio-frontend-client/references/lib/ows` into `src/lib/ows/`.
@@ -119,9 +122,9 @@ When the presentation definition uses a `dc_api` response mode,
 `invokeWallet(dcApiRequest)` from `dcApi.ts`, then post
 `buildReceivePayload(data, dcApiProtocol)` back with
 `client.verification.receiveDcApiResponse(presentationExchangeId, payload)`
-(`POST /v2/config/digital-wallet/openid/sdjwt/verification/history/{id}/receive`
-through the proxy). The SSE stream still delivers the final verified result,
-so the render path is unchanged.
+(`POST /v4/config/ows/verifier/verifications/{verificationId}/response`
+through the proxy). The SSE stream then delivers the verifier event of the
+result, so the render path is the same as for the QR.
 Platform-specific end-to-end recipes: `igrantio-dcapi-android` (OpenID4VP) and
 `igrantio-dcapi-ios` (ISO 18013-7 Annex C, signed).
 

@@ -1,12 +1,12 @@
 ---
 name: igrantio-frontend-client
-description: 'Generic, dependency-free browser client for the iGrant.io Organisation Wallet Suite (OWS): a typed fetch client for EUDI Wallet (EUDIW) credential issuance (OpenID4VCI) and verification (OpenID4VP) via your tenant backend proxy, a Server-Sent-Events consumer (EventSource + consume-and-delete + reconnect), and optional React hooks (useSSE, useOwsClient, credential/ verification history) plus QR/deep-link helpers. No @igrant/* SDK. Use as the shared frontend foundation for igrantio-issuer-frontend and igrantio-verifier-frontend.'
+description: 'Generic, dependency-free browser client for the iGrant.io Organisation Wallet Suite (OWS): a typed fetch client for EUDI Wallet (EUDIW) credential issuance (OpenID4VCI) and verification (OpenID4VP) via your tenant backend proxy, a Server-Sent-Events consumer (EventSource + consume-and-delete + reconnect), and optional React hooks (useSSE, useOwsClient, issuance detail, verification history) plus QR/deep-link helpers. No @igrant/* SDK. Use as the shared frontend foundation for igrantio-issuer-frontend and igrantio-verifier-frontend.'
 license: Apache-2.0
 metadata:
   categories: [frontend, education]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VCI, OpenID4VP, React hooks, SSE, browser client
-  version: 2026.10.01
+  version: 2026.11.01
   api: https://docs.igrant.io/docs/developer-apis
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0, DCQL, SD-JWT-VC
   auth: none in the browser - the tenant backend injects the OWS API key
@@ -49,21 +49,28 @@ Record the answers before you write code.
 ## What it provides
 Framework-agnostic core (only `fetch` + `EventSource`):
 - **`createOwsClient({ baseUrl, apiKey? })`** - typed methods:
-  - `issuance.issueInTime`, `issuance.startDeferred`, `issuance.completeDeferred`,
-    `issuance.readHistory`, `issuance.deleteHistory`
+  - `issuance.create` (`POST /v4/config/ows/issuer/issuances`, `mode`
+    `in_time` or `deferred`), `issuance.supplyClaims` (the claims of a
+    deferred issuance), `issuance.read` (optional `includeClaims`),
+    `issuance.delete`, `issuance.revoke` (final)
   - `verification.sendRequest`, `verification.readHistory`, `verification.deleteHistory`,
     `verification.receiveDcApiResponse` (posts a same-device Digital Credentials
     API answer back)
   - `baseUrl` = your backend proxy (`https://host/ows/<tenant>`); leave `apiKey` empty (the backend injects it).
 - **`openSseSession({ webhookBaseUrl, exchangeId, onMessage })`** - EventSource
   session with consume-and-delete and reconnect; returns `{ close }`.
+  `exchangeId` is the `subject.id` of the webhook events: the issuance id or
+  the `presentationExchangeId`.
 - **`types.ts`** - request/response + SSE event types. The request types are
-  exact: OWS answers `400` for a body member that it does not know.
+  exact: OWS answers `400` for a body member that it does not know. An SSE
+  event (`OwsWebhookEvent`) is the webhook event body (`id`, `type`,
+  `subject`, `data.issuance` or `data.verification`) plus `receivedAt`; it
+  holds no claims.
 
 React layer (peer deps: `react`, and `qrcode` for `QrCode`):
 - **`useSSE()`** → `{ open, close }`
 - **`useOwsClient(baseUrl, apiKey?)`** - memoised client
-- **`useCredentialHistory` / `useVerificationHistory`** - optional polling reads
+- **`useIssuanceDetail` / `useVerificationHistory`** - optional polling reads
 - **`QrCode`** component + **`openInWallet(uri)`** deep-link helper - minimal
   URI-to-image only, for tests and tools. Any QR a user sees is the
   demonstrator panel from `igrantio-qr-code` (rounded frame, logo disc,
@@ -76,7 +83,7 @@ from `../../lib/ows`.
 ```
 lib/ows/
   owsClient.ts     types.ts     sseClient.ts     index.ts
-  react/ useSSE.ts  useOwsClient.ts  useCredentialHistory.ts
+  react/ useSSE.ts  useOwsClient.ts  useIssuanceDetail.ts
          useVerificationHistory.ts  usePolledResource.ts  QrCode.tsx  index.ts
 ```
 
@@ -94,15 +101,28 @@ const { verificationHistory } = await client.verification.sendRequest({
 const exchangeId = verificationHistory!.presentationExchangeId;
 const qr = verificationHistory!.vpTokenQrCode;
 
-// Live update: SSE keyed by exchange id
+// Live update: SSE keyed by the verification id (presentationExchangeId)
 const session = openSseSession({
   webhookBaseUrl: "https://host/webhook",
   exchangeId,
-  onMessage: (event) => {
-    // event.data.presentation.verified / .vpTokenResponse / .presentation[0]
+  onMessage: async (event) => {
+    if (event.type !== "ows.verifier.verification.presentation_received") return;
     session.close();
+    // The event has no claims: read the verification for them.
+    const { verificationHistory: result } = await client.verification.readHistory(exchangeId);
+    // result.verified / result.presentation[0]
   },
 });
+
+// Issuance: make the offer → QR + issuance id (the SSE key)
+const created = await client.issuance.create({
+  credentialDefinitionId: "<cd-id>",
+  mode: "in_time",
+  preAuthorised: true,
+  transactionCode: { length: 6, inputMode: "numeric" },
+  claims: { given_name: "Erika" },
+});
+// created.id, created.offer.uri, created.offer.transactionCode (one time)
 ```
 
 ## React usage
@@ -111,7 +131,7 @@ import { useOwsClient, useSSE, QrCode } from "./lib/ows";
 
 const client = useOwsClient("https://host/ows/acme");
 const { open, close } = useSSE();
-// after sendRequest/issue: open(exchangeId, "https://host/webhook", onMessage)
+// after sendRequest/create: open(id, "https://host/webhook", onMessage)
 // render: <QrCode value={qrUri} />
 ```
 

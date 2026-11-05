@@ -6,7 +6,7 @@ metadata:
   categories: [backend]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, holder, wallet, OpenID4VCI, OpenID4VP, DCQL, receive credential, present credential, notifications, wallet unit
-  version: 2026.10.01
+  version: 2026.11.01
   api: https://docs.igrant.io/docs/developer-apis
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0, DCQL, SD-JWT-VC, W3C-VC-2.0, mso_mdoc
   auth: OWS API key (Authorization "ApiKey <key>") injected by the proxy; browser sends no key
@@ -55,11 +55,11 @@ Record the answers before you write code.
    no webhook work is planned.
 
 ## What it does
-- **Proxy** `GET|POST|PUT|DELETE ${PROXY_PREFIX}/{tenant}/...` → OWS, injecting
-  the tenant's `ApiKey`. Allow-lists only OWS **holder** endpoints; RegExp
-  rules keep the issuer's `credential/issue|history` and the verifier's
-  `verification/send|history` out (least privilege).
-- **Relay** `GET ${PROXY_PREFIX}/{tenant}/v2/config/digital-wallet/openid/notifications/sse`
+- **Proxy** `GET|POST|PUT|PATCH|DELETE ${PROXY_PREFIX}/{tenant}/...` → OWS, injecting
+  the tenant's `ApiKey`. Allow-lists only OWS **holder** routes
+  (`/v4/config/ows/holder/...`); the issuer and verifier routes stay out
+  (least privilege).
+- **Relay** `GET ${PROXY_PREFIX}/{tenant}/v4/config/ows/holder/notification-stream`
   streams OWS holder notifications. It sends the key in the `Authorization`
   header (EventSource cannot send headers) and passes `Last-Event-ID` on as
   `lastEventId`, so a reconnect replays the missed frames.
@@ -86,38 +86,40 @@ references/
    / verifier `:6002`).
 3. Point the holder frontend (`igrantio-holder-frontend`) base URL at
    `${PROXY_PREFIX}/<tenant>`; open the notifications stream on
-   `…/<tenant>/v2/config/digital-wallet/openid/notifications/sse`.
+   `…/<tenant>/v4/config/ows/holder/notification-stream`.
 
 ## Holder contract (what the frontend drives through this backend)
 
 ### Receive a credential (OpenID4VCI)
-1. `POST …/sdjwt/credential/receive` with `{ credentialOffer, autoPresent }`
+1. `POST /v4/config/ows/holder/credentials` with `{ credentialOffer }`
    → `credential` (object **or array**; each record's `id` keys the
    follow-ups). The wallet uses the organisation default key. The body is
    strict: an unknown field answers 400.
 2. Branch on the record (§1.1 of the API reference):
-   **transaction code** → `PUT …/credential/{id}/user-pin`;
+   **transaction code** → `PUT /v4/config/ows/holder/credentials/{id}/transaction-code` with
+   `{ transactionCode }`;
    **front-channel** → open `authorizationRequest`, then
-   `POST …/credential/exchange-code` with `{ code, state, iss? }` from the
-   redirect;
-   **deferred** → `PUT …/credential/{id}/receive-deferred` until
+   `POST /v4/config/ows/holder/authorisation-code-exchanges` with `{ code, state, iss? }` from
+   the redirect;
+   **deferred** → `PUT /v4/config/ows/holder/credentials/{id}/deferred-credential` until
    `credential_acked`.
-3. Review: `PUT …/credential/{id}/accept`, or `DELETE …/credential/{id}` to
-   reject. List with `GET …/sdjwt/credentials` (response keys `credential` +
-   `pagination`).
-4. Lifecycle: `PUT …/credential/{id}/request` requests reissuance of an
-   expired or near-expiry credential; `GET …/credential/{id}/revocation-status`
-   checks the IETF Token Status List.
+3. Review: `PUT /v4/config/ows/holder/credentials/{id}/acceptance`, or
+   `DELETE /v4/config/ows/holder/credentials/{id}` to reject. List with `GET /v4/config/ows/holder/credentials`
+   (response keys `credential` + `pagination`).
+4. Lifecycle: `PUT /v4/config/ows/holder/credentials/{id}/reissuance` requests reissuance of
+   an expired or near-expiry credential;
+   `GET /v4/config/ows/holder/credentials/{id}/revocation-status` checks the IETF Token Status
+   List.
 
 ### Present credentials (OpenID4VP + DCQL)
-1. `POST …/sdjwt/verification/receive` (v3) with
-   `{ vpTokenQrCode, autoPresent }` → `presentation.presentationId`,
+1. `POST /v4/config/ows/holder/presentations` with
+   `{ vpTokenQrCode }` → `presentation.presentationId`,
    `presentation.dcqlQuery`, `presentation.transactionDataDecoded` (show
    before consent).
-2. `POST …/sdjwt/verification/{presentationId}/filter` (v2, empty body) →
+2. `POST /v4/config/ows/holder/presentations/{presentationId}/matching-credentials` (empty body) →
    `credentials[].matchedCredentials` (DCQL) or
    `inputDescriptors[].matchedCredentials` (Presentation Exchange).
-3. `POST …/sdjwt/verification/{presentationId}/send` (v3) with
+3. `POST /v4/config/ows/holder/presentations/{presentationId}/response` with
    `{ credentials: [{ id, credentialId | credentialIds, claimIds? }] }`
    (`inputDescriptors` for legacy PEX) → open
    `presentation.responseRedirectUri` when non-empty. Transaction-data
@@ -137,17 +139,18 @@ status vocabularies: [`references/holder-api-reference.md`](./references/holder-
 - **Key storage**: replace `EnvTenantStore` with a DB/secret-manager `TenantStore`.
 - **Path scope**: `HOLDER_PERMITTED_PATHS` in `server.ts` is the allow-list
   (strings match as prefixes, RegExps against the whole path).
-- **Sandbox**: the v2 holder routes (credential receive and actions, the
-  credential list, filter, presentation delete) answer 400 for an API key
-  that is bound to a sandbox organisation. Use a key of the main
-  organisation for the holder role.
+- **Sandbox**: the held credential routes (receive and actions, the
+  credential list, the matching credentials, the presentation delete) answer
+  400 for an API key that is bound to a sandbox organisation. Use a key of
+  the main organisation for the holder role.
 
 ## Validation / done criteria
 - `npm run typecheck` passes.
-- `…/sdjwt/credential/receive` proxies through; the issuer's
-  `…/sdjwt/credential/issue` and the verifier's `…/sdjwt/verification/send`
-  yield 404 (least privilege).
-- `DELETE …/sdjwt/credential/{id}` reaches OWS (the proxy forwards DELETE).
+- `/v4/config/ows/holder/credentials` proxies through; the issuer's
+  `/v4/config/ows/issuer/issuances` and the verifier's
+  `/v4/config/ows/verifier/verifications` yield 404 (least privilege).
+- `DELETE /v4/config/ows/holder/credentials/{id}` reaches OWS (the proxy forwards DELETE).
+- `PATCH /v4/config/ows/holder/configuration` reaches OWS (the proxy forwards PATCH).
 - The notifications SSE relay streams `text/event-stream` for a known tenant
   and 404s for an unknown one; the API key never appears in the browser.
 

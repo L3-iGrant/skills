@@ -55,7 +55,7 @@ export function proxyRouter(
       res.status(404).json({ detail: "Path not found" });
       return;
     }
-    if (!["GET", "POST", "PUT", "DELETE"].includes(req.method)) {
+    if (!["GET", "POST", "PUT", "PATCH", "DELETE"].includes(req.method)) {
       res.status(405).json({ detail: "Method not allowed" });
       return;
     }
@@ -73,7 +73,7 @@ export function proxyRouter(
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), config.upstreamTimeoutMs);
     try {
-      const hasBody = req.method === "POST" || req.method === "PUT";
+      const hasBody = req.method === "POST" || req.method === "PUT" || req.method === "PATCH";
       const upstream = await fetch(url, {
         method: req.method,
         headers,

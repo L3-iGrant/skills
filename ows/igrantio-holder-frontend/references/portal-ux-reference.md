@@ -13,8 +13,8 @@ Three views (plus a base-configuration page in the reference wallet):
 
 | View | Data | Notes |
 | --- | --- | --- |
-| Received credentials | `GET …/sdjwt/credentials` with `credentialStatus=credential_accepted` | Two tables from the SAME endpoint: Active (`expired=false`) and Archived (`expired=true`). There is no separate expired route. |
-| Shared credentials | `GET …/sdjwt/verifications` | Stats double as status filters. |
+| Received credentials | `GET …/holder/credentials` with `credentialStatus=credential_accepted` | Two tables from the SAME endpoint: Active (`expired=false`) and Archived (`expired=true`). There is no separate expired route. |
+| Shared credentials | `GET …/holder/presentations` | Stats double as status filters. |
 | Notifications | list + SSE stream | The holder's action centre; a badge with the count sits on the wallet menu/tab. |
 
 Default sort: received by `createdAt` desc (send `sortBy=createdAt`; the
@@ -53,8 +53,8 @@ When a title is an http(s) URL, fetch it and use `data.name ?? data.display.name
 `vc.credentialSubject` → W3C, `vct`/`dataAgreement` → SD-JWT.
 
 **Row actions**:
-- Auto-present toggle → `PUT …/credential/{credentialId}/configure`
-  `{autoPresent}`; disabled while `credential_pending`.
+- Status column: "Active" in the Active table; "Revoked" or "Expired" in the
+  Archived table.
 - Refresh (Active only) → fire revocation-status check AND reissuance request
   together, swallow "does not support revocation/reissuance" errors, then
   refetch. Disabled when `revocationStatus === "Revoked"` or still pending.
@@ -99,8 +99,8 @@ Service Provider" / "This organisation is not verified".
 
 ## 5. Sharing - filtered credentials (the selection engine)
 
-Flow: `verification/receive` (v3) → `verification/{id}/filter` (v2) →
-pre-flight → selection UI → `verification/{presentationId}/send` (v3).
+Flow: `POST …/holder/presentations` → `…/presentations/{id}/matching-credentials` →
+pre-flight → selection UI → `…/presentations/{presentationId}/response`.
 
 **Pre-flight** (before any UI): with `credential_sets`, every `required` set
 must have at least one option whose descriptors ALL have matches, and not all
@@ -189,7 +189,7 @@ expired grey.
 | informational | type `credential_revoked` / `credential_expired` | "Credential revoked by issuer." / "Credential expired and cannot be used." | none |
 | `transaction_code` | pending + `userPinRequired` + no `userPin` | "Click to enter transaction code to continue." | PIN input sized/typed by `txCode` |
 | `authorization` | pending + no `acceptanceToken` + `oAuthFlow=="frontchannel"` + `authorizationRequest` | "Authorise credential issuance" | open URL; exchange `?code`/`?state` (and `?iss`) on return |
-| `deferred_credential` | pending + `acceptanceToken` present | "Get the credential issued" | `receive-deferred`; delete the notification ONLY when the response is `credential_acked` |
+| `deferred_credential` | pending + `acceptanceToken` present | "Get the credential issued" | `deferred-credential`; delete the notification ONLY when the response is `credential_acked` |
 | `verification` | pending + `presentationId` + no `acceptanceToken` | "Provide additional details to continue" | filter → share wizard |
 | `review_credential` | `credential_acked` | "Get the credential issued" | detail view in review mode |
 

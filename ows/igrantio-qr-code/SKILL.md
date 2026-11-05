@@ -6,7 +6,7 @@ metadata:
   categories: [frontend, education]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, QR code, credential offer, OpenID4VCI, OpenID4VP, deep link, open in wallet, logo disc, refresh, transaction code, EUDI Wallet
-  version: 2026.10.01
+  version: 2026.11.01
   design-source: iGrant.io demonstrators (sme-business-wallet WalletInvite, piggy-bank-demo and infogreffe-ebwoid-issuer WalletQr, webuild-shop-demo CheckoutFlow) and the OWS passwordless-login QR panel
   auth: none
   requires-skills: igrantio-ows-overview
@@ -15,7 +15,7 @@ metadata:
 # iGrant.io wallet QR panel
 
 ## When to use
-Any time a frontend renders a wallet QR: the issuance `credentialOffer` or
+Any time a frontend renders a wallet QR: the issuance `offer.uri` or
 the verification `vpTokenQrCode` URI. This skill is the single QR pattern
 for `igrantio-issuer-frontend` and `igrantio-verifier-frontend`; both vendor
 it. Use it instead of a hand-rolled QR component, so every QR code a user
@@ -58,8 +58,8 @@ Record the answers before you write code.
    wallet.") or replace it? _Recommend the standard hint; change only the
    download link if you ship your own wallet._
 6. **Transaction code** - does the issuance use a pre-authorised code the
-   user types into the wallet? _Only for issuance with a user PIN; pass it
-   as `txCode`._
+   user types into the wallet? _Only for issuance with a transaction code;
+   pass `offer.transactionCode` of the create issuance answer as `txCode`._
 7. **Same-device** - does the page also run on the phone that holds the
    wallet? _The "Open in EUDI Wallet" button handles it; no separate
    same-device view is needed._
@@ -116,12 +116,13 @@ default black). Everything else is fixed.
      onRefresh={recreateExchange}
    />
    ```
-5. For issuance, pass `credentialHistory.credentialOffer` as `uri`. When the
-   issue request sent a `userPin` (the transaction code of the pre-authorised
-   code flow), pass the same value as `txCode`.
+5. For issuance, pass `offer.uri` of the create issuance answer as `uri`.
+   When the request asked for a transaction code (`transactionCode: {length,
+   inputMode}`), the issuer makes the code: pass `offer.transactionCode` of
+   the same answer as `txCode`.
 
 ## Behaviour rules (from the demonstrators)
-- `onRefresh` mints a **new** exchange: re-call issue or send through the
+- `onRefresh` mints a **new** exchange: make a new issuance or verification through the
   backend proxy, close the old SSE session, open SSE on the new exchange id.
   Never re-render an expired URI. The wallet link carries `key={uri}` so a
   stale `href` is never kept.

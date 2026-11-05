@@ -6,7 +6,7 @@ metadata:
   categories: [backend, education]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VCI, credential issuance, verifiable credentials, SD-JWT VC, mso_mdoc
-  version: 2026.10.01
+  version: 2026.11.01
   api: https://docs.igrant.io/docs/category/openid4vc-api/issuer
   protocols: OpenID4VCI-1.0, SD-JWT-VC, W3C-VC-2.0, mso_mdoc
   auth: OWS API key (Authorization "ApiKey <key>") injected by the proxy; browser sends no key
@@ -58,13 +58,14 @@ Record the answers before you write code.
    wallets show your credentials as unverified.
 
 ## What it does
-- **Proxy** `GET|POST|PUT|DELETE ${PROXY_PREFIX}/{tenant}/...` → OWS, injecting the tenant's
-  `ApiKey`. Allow-lists only OWS **credential** endpoints (issue, history).
+- **Proxy** `GET|POST|PUT|PATCH|DELETE ${PROXY_PREFIX}/{tenant}/...` → OWS, injecting the tenant's
+  `ApiKey`. Allow-lists only the OWS **issuance** routes that the issuer
+  frontend calls: create (and list), read, delete, and the deferred claims.
 - **Register** the issuer webhook idempotently (`ISSUER_TOPICS`) via
   `scripts/register-webhook.ts`.
-- **Receive** `POST /webhook`, verify the `X-iGrant-Signature` HMAC, extract the
-  `CredentialExchangeId`, store the event.
-- **SSE** `GET /webhook/sse/{CredentialExchangeId}` streams the event to the browser;
+- **Receive** `POST /webhook`, verify the `X-IGrant-Signature` HMAC over the
+  raw body, store the event under its `subject.id` (the issuance id).
+- **SSE** `GET /webhook/sse/{issuanceId}` streams the event to the browser;
   `DELETE /webhook/{id}` lets it consume-and-delete.
 
 ## Reference implementation
@@ -74,11 +75,11 @@ references/
   src/config.ts          env config
   src/tenants.ts         TenantStore - per-tenant API-key resolution (env or pluggable)
   src/eventStore.ts      in-memory event store (swap for Redis/Postgres)
-  src/topics.ts          ISSUER_TOPICS + topic→exchangeId extraction
+  src/topics.ts          ISSUER_TOPICS (the issuer event types)
   src/proxy.ts           API-key-injecting reverse proxy (allow-list param)
   src/webhooks.ts        HMAC verify + receiver
   src/sse.ts             SSE stream + consume-and-delete
-  src/server.ts          composition (issuer allow-list = credential/* only)
+  src/server.ts          composition (issuer allow-list = issuances only)
   src/registerWebhook.ts idempotent register helper
   scripts/register-webhook.ts   CLI
   .env.example  Dockerfile  package.json  tsconfig.json
@@ -95,27 +96,30 @@ references/
    and the webhook base at `${PUBLIC_BASE_URL}/webhook`.
 
 ## Issuance contract (what the frontend drives through this backend)
-- `POST …/credential/issue` → response `credentialHistory.CredentialExchangeId`
-  (SSE key) + `credentialHistory.credentialOffer` (QR URI).
-- Deferred: on the first webhook `openid.credential.offer_received` or
-  `token_issued`, `PUT …/credential/history/{CredentialExchangeId}` with the
-  claims.
-- Done on webhook `openid.credential.credential_acked` (the wallet has the
+- `POST /v4/config/ows/issuer/issuances` (HTTP 201) → `id` (the issuance id,
+  the SSE key) + `offer.uri` (QR URI) + `offer.transactionCode` (one time,
+  for a pre-authorised offer with a transaction code).
+- Deferred (`mode: "deferred"`): on the first event
+  `ows.issuer.issuance.offer_retrieved`, `token_issued` or
+  `credential_deferred`, `PUT /v4/config/ows/issuer/issuances/{issuanceId}/claims`
+  with `{"claims": {...}}`.
+- Done on `ows.issuer.issuance.credential_issued` (the wallet has the
   credential) or `credential_accepted` (the wallet confirmed it). Failed on
-  `openid.credential.issuance_denied` (`credential.issuanceDeniedReason`).
+  `ows.issuer.issuance.denied` (`data.reason`) or `expired`.
 See `igrantio-ows-overview/references/api-reference.md` §1 and §4.
 
 ## Adapting
 - **Multi-instance**: replace `InMemoryEventStore` with a shared store (Redis/Postgres)
   implementing `EventStore`.
 - **Key storage**: replace `EnvTenantStore` with a DB/secret-manager `TenantStore`.
-- **Path scope**: `ISSUER_PERMITTED_PREFIXES` in `server.ts` is the allow-list.
+- **Path scope**: `ISSUER_PERMITTED_PATHS` in `server.ts` is the allow-list.
+  Add `/revocation` only for a trusted admin frontend: a revocation is final.
 
 ## Validation / done criteria
 - `npm run typecheck` passes.
-- A wrong/absent `X-iGrant-Signature` yields 401; a valid one stores the event.
-- Hitting a non-credential OWS path through the proxy yields 404 (least privilege).
-- The browser SSE fires within ~1s of the webhook arriving, keyed by `CredentialExchangeId`.
+- A wrong/absent `X-IGrant-Signature` yields 401; a valid one stores the event.
+- Hitting an OWS path outside the allow-list through the proxy yields 404 (least privilege).
+- The browser SSE fires within ~1s of the webhook arriving, keyed by the issuance id.
 
 ## Register your certificate in the trust list
 Wallets show your organisation as verified only when your certificate is in

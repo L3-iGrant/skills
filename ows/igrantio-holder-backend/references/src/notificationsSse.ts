@@ -6,7 +6,7 @@ import { Router } from "express";
  * `EventSource` cannot send an Authorization header, and the browser must
  * never hold the OWS API key, so the tenant backend relays the stream:
  *
- *   GET /:tenant/v2/config/digital-wallet/openid/notifications/sse
+ *   GET /:tenant/v4/config/ows/holder/notification-stream
  *
  * The relay resolves the tenant's authorization value, opens the upstream OWS
  * stream with it in the `Authorization` header, and pipes the bytes through
@@ -33,7 +33,7 @@ export interface NotificationsSseOptions {
 export function notificationsSseRouter(opts: NotificationsSseOptions): Router {
   const r = Router();
 
-  r.get("/:tenant/v2/config/digital-wallet/openid/notifications/sse", async (req, res) => {
+  r.get("/:tenant/v4/config/ows/holder/notification-stream", async (req, res) => {
     const authorization = await opts.getAuthorization(req.params.tenant);
     if (!authorization) {
       res.status(404).json({ detail: "Unknown tenant" });
@@ -42,7 +42,7 @@ export function notificationsSseRouter(opts: NotificationsSseOptions): Router {
 
     const lastEventId = String(req.header("last-event-id") ?? req.query.lastEventId ?? "");
     const qs = /^\d+$/.test(lastEventId) ? `?${new URLSearchParams({ lastEventId })}` : "";
-    const url = `${opts.owsBaseUrl}/v2/config/digital-wallet/openid/notifications/sse${qs}`;
+    const url = `${opts.owsBaseUrl}/v4/config/ows/holder/notification-stream${qs}`;
 
     const controller = new AbortController();
     const connectTimer = setTimeout(() => controller.abort(), opts.connectTimeoutMs ?? 15_000);

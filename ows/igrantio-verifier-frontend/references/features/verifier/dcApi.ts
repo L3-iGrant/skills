@@ -5,7 +5,7 @@
  * `verificationHistory.dcApiRequest` is present, invoke the wallet on THIS device
  * with `navigator.credentials.get`, then post the response back to OWS (through
  * your backend proxy, `client.verification.receiveDcApiResponse`) to complete the
- * exchange. The SSE stream still delivers the final verified result, so the UI
+ * exchange. The SSE stream still delivers the verifier event of the result, so the UI
  * code path is unchanged.
  *
  * Dependency-free.

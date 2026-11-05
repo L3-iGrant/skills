@@ -6,7 +6,7 @@ metadata:
   categories: [backend, education]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VP, DCQL, relying party, credential verification, verifiable presentations, transaction data, SCA, e-mandate, QES
-  version: 2026.10.01
+  version: 2026.11.01
   api: https://docs.igrant.io/docs/category/openid4vc-api/verifier
   protocols: OpenID4VP-1.0, DCQL, SD-JWT-VC
   auth: OWS API key (Authorization "ApiKey <key>") injected by the proxy; browser sends no key
@@ -60,14 +60,15 @@ Record the answers before you write code.
    the wallet shows an unverified warning for your request.
 
 ## What it does
-- **Proxy** `GET|POST|PUT|DELETE ${PROXY_PREFIX}/{tenant}/...` → OWS, injecting the tenant's
-  `ApiKey`. Allow-lists only OWS **verification** endpoints: v3 send and
-  history, and the v2 history record (delete, Digital Credentials API
-  receive).
+- **Proxy** `GET|POST|PUT|PATCH|DELETE ${PROXY_PREFIX}/{tenant}/...` → OWS, injecting the tenant's
+  `ApiKey`. Allow-lists only the OWS **verification** routes: send (and
+  list), read and delete one verification, and the Digital Credentials API
+  response.
 - **Register** the verifier webhook idempotently (`VERIFIER_TOPICS`) via
   `scripts/register-webhook.ts`.
-- **Receive** `POST /webhook`, verify the `X-iGrant-Signature` HMAC, extract the
-  `presentationExchangeId`, store the event.
+- **Receive** `POST /webhook`, verify the `X-IGrant-Signature` HMAC over the
+  raw body, store the event under its `subject.id` (the verification id, equal
+  to `presentationExchangeId`).
 - **SSE** `GET /webhook/sse/{presentationExchangeId}` streams the event to the
   browser; `DELETE /webhook/{id}` consume-and-delete.
 
@@ -88,8 +89,9 @@ Default `PORT=6002` so it can run alongside an issuer backend.
    and the webhook base at `${PUBLIC_BASE_URL}/webhook`.
 
 ## Verification contract (what the frontend drives through this backend)
-- `POST …/verification/send` → response `verificationHistory.presentationExchangeId`
-  (SSE key) + `verificationHistory.vpTokenQrCode` (QR URI).
+- `POST /v4/config/ows/verifier/verifications` → response
+  `verificationHistory.presentationExchangeId` (SSE key) +
+  `verificationHistory.vpTokenQrCode` (QR URI).
 - The send body may carry `transactionData` - wallet-displayed and
   wallet-signed transaction data (SCA): simple `payment_data`, an EUDI SCA
   rulebook (TS12) `payload` (payment / e-mandate / login-risk / account
@@ -99,9 +101,11 @@ Default `PORT=6002` so it can run alongside an issuer backend.
   unchanged; see `igrantio-ows-overview/references/api-reference.md` §2.1 for
   the exact shapes and §2.2 for verifying the returned
   `transaction_data_hashes`.
-- Done on webhook `openid.presentation.presentation_acked.v3`; the SSE event
-  carries `data.presentation.verified` and `data.presentation.presentation[0]`
-  (claims).
+- Done on `ows.verifier.verification.presentation_received`; the SSE event
+  carries `data.verification.isVerified`, but no claims: the frontend then
+  reads `GET /v4/config/ows/verifier/verifications/{presentationExchangeId}`
+  for `verified` and the disclosed claims (`presentation[0]`). Rejected on
+  `ows.verifier.verification.declined` (`data.reason`).
 See `igrantio-ows-overview/references/api-reference.md` §2 and §4.
 
 ## Adapting
@@ -110,11 +114,11 @@ See `igrantio-ows-overview/references/api-reference.md` §2 and §4.
   matching) live in the `igrantio-dcql-*` workflow skills.
 - **Multi-instance**: replace `InMemoryEventStore` with a shared store.
 - **Key storage**: replace `EnvTenantStore` with a DB/secret-manager `TenantStore`.
-- **Path scope**: `VERIFIER_PERMITTED_PREFIXES` in `server.ts` is the allow-list.
+- **Path scope**: `VERIFIER_PERMITTED_PATHS` in `server.ts` is the allow-list.
 
 ## Validation / done criteria
 - `npm run typecheck` passes.
-- A wrong/absent `X-iGrant-Signature` yields 401; a valid one stores the event.
+- A wrong/absent `X-IGrant-Signature` yields 401; a valid one stores the event.
 - Hitting a non-verification OWS path through the proxy yields 404 (least privilege).
 - The browser SSE fires within ~1s of the webhook, keyed by `presentationExchangeId`.
 

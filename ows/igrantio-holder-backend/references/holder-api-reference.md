@@ -12,10 +12,10 @@ Legend: `{base}` = OWS base URL. Frontend base = `{backend}/ows/{tenant}`
 (sometimes `detail`) - surface that string. Request bodies are strict: an
 unknown field or a value of the wrong JSON type answers 400.
 
-The v2 holder routes in §1 and §2 (all except §1.11, §2.1, §2.3, §2.4 and
-§2.5) answer 400 "Holder functionalities for sandbox organisation is
-disabled" for an API key that is bound to a sandbox organisation. Use a key
-of the main organisation.
+Every holder path starts with `/v4/config/ows/holder`. The held credential
+routes in §1 and §2 (all except §1.10, §2.1, §2.3, §2.4 and §2.5) answer 400
+"Holder functionalities for sandbox organisation is disabled" for an API key
+that is bound to a sandbox organisation. Use a key of the main organisation.
 
 ---
 
@@ -23,12 +23,11 @@ of the main organisation.
 
 ### 1.1 Receive a credential offer
 ```
-POST {base}/v2/config/digital-wallet/openid/sdjwt/credential/receive
+POST {base}/v4/config/ows/holder/credentials
 ```
 ```jsonc
 {
-  "credentialOffer": "openid-credential-offer://…",  // the scanned/pasted offer URI (or offer JSON)
-  "autoPresent": true                                 // default false
+  "credentialOffer": "openid-credential-offer://…"   // the scanned/pasted offer URI (or offer JSON)
 }
 ```
 The wallet receives with the organisation default key; there is no key
@@ -56,12 +55,12 @@ offers); normalise to an array. Fields that drive the next step:
 (`acceptanceToken` is `""` in this response but `null` in notifications -
 treat empty and null alike.)
 
-### 1.2 Submit the transaction code (user PIN)
+### 1.2 Submit the transaction code
 ```
-PUT {base}/v2/config/digital-wallet/openid/sdjwt/credential/{id}/user-pin
+PUT {base}/v4/config/ows/holder/credentials/{credentialId}/transaction-code
 ```
 ```jsonc
-{ "userPin": "1234" }   // a JSON string, 4 to 12 characters
+{ "transactionCode": "1234" }   // a JSON string, 4 to 12 characters
 ```
 On a wrong code OWS answers 400; show its `errorDescription`. **Response**:
 `{ "credential": CredentialRecord }`.
@@ -70,7 +69,7 @@ On a wrong code OWS answers 400; show its `errorDescription`. **Response**:
 Open `authorizationRequest` in the browser; the issuer redirects back with
 `?code=…&state=…`. Then:
 ```
-POST {base}/v2/config/digital-wallet/openid/sdjwt/credential/exchange-code
+POST {base}/v4/config/ows/holder/authorisation-code-exchanges
 ```
 ```jsonc
 { "code": "<from ?code>", "state": "<from ?state>", "iss": "<from ?iss, when present>" }
@@ -82,7 +81,7 @@ credential list and notifications as well.
 
 ### 1.4 Retrieve a deferred credential
 ```
-PUT {base}/v2/config/digital-wallet/openid/sdjwt/credential/{id}/receive-deferred
+PUT {base}/v4/config/ows/holder/credentials/{credentialId}/deferred-credential
 ```
 Empty body. **Response**: `credential.credentialStatus` -
 `credential_acked` means the credential is now in the wallet; anything else
@@ -90,7 +89,7 @@ means the issuer is not ready yet - retry later.
 
 ### 1.5 Accept a received credential
 ```
-PUT {base}/v2/config/digital-wallet/openid/sdjwt/credential/{id}/accept
+PUT {base}/v4/config/ows/holder/credentials/{credentialId}/acceptance
 ```
 Empty body. Accepts a `credential_acked` credential into the wallet
 (**response** `{ "credential": … }`). To reject instead, `DELETE` the
@@ -98,7 +97,7 @@ credential (§1.8).
 
 ### 1.6 Read one credential
 ```
-GET {base}/v2/config/digital-wallet/openid/sdjwt/credential/{id}
+GET {base}/v4/config/ows/holder/credentials/{credentialId}
 ```
 **Response**: `{ "credential": CredentialRecord }`. Key fields:
 `credentialFormat` (`dc+sd-jwt` \| `vc+sd-jwt` \| `vp+sd-jwt` \| `jwt_vc` \|
@@ -109,12 +108,12 @@ GET {base}/v2/config/digital-wallet/openid/sdjwt/credential/{id}
 `credentialConfigurations.display[0]` (or
 `credentialConfigurations.credential_metadata.display[0]`) with `.name`,
 `.logo.uri`, `.background_image.uri`, `isVerifiedWithTrustList`,
-`trustServiceProvider`, `autoPresent`, `revocationStatus`, `createdAt` and
+`trustServiceProvider`, `revocationStatus`, `createdAt` and
 `updatedAt` (Unix seconds).
 
 ### 1.7 List credentials held in the wallet
 ```
-GET {base}/v2/config/digital-wallet/openid/sdjwt/credentials?limit=&offset=[&expired=true|false][&vct=][&doctype=][&credentialStatus=credential_accepted][&search=][&sortBy=createdAt|updatedAt][&sortOrder=asc|desc]
+GET {base}/v4/config/ows/holder/credentials?limit=&offset=[&expired=true|false][&vct=][&doctype=][&credentialStatus=credential_accepted][&search=][&sortBy=createdAt|updatedAt][&sortOrder=asc|desc]
 ```
 Omit `expired` for both (revoked and archived count as expired).
 `credentialStatus` takes one value or a comma list. The list sorts on
@@ -131,28 +130,20 @@ anything else descending.
 
 ### 1.8 Delete (or reject) a credential
 ```
-DELETE {base}/v2/config/digital-wallet/openid/sdjwt/credential/{id}
+DELETE {base}/v4/config/ows/holder/credentials/{credentialId}
 ```
 **Response**: 204, no body.
 
-### 1.9 Configure a held credential
+### 1.9 Request reissuance
 ```
-PUT {base}/v2/config/digital-wallet/openid/sdjwt/credential/{credentialId}/configure
-```
-```jsonc
-{ "autoPresent": true }   // required JSON boolean: present this credential without a manual consent step
-```
-
-### 1.10 Request reissuance
-```
-PUT {base}/v2/config/digital-wallet/openid/sdjwt/credential/{credentialId}/request
+PUT {base}/v4/config/ows/holder/credentials/{credentialId}/reissuance
 ```
 Empty body. Requests reissuance of an expired or near-expiry credential via
 OID4VCI. **Response**: `{ "credential": … }`.
 
-### 1.11 Check revocation status
+### 1.10 Check revocation status
 ```
-GET {base}/v2/config/digital-wallet/openid/sdjwt/credential/{credentialId}/revocation-status
+GET {base}/v4/config/ows/holder/credentials/{credentialId}/revocation-status
 ```
 Queries the IETF Token Status List for the credential's current revocation
 status. **Response**: `{ "credential": … }` with `revocationStatus` updated.
@@ -165,12 +156,11 @@ issuer status list that cannot be read answers 502.
 
 ### 2.1 Receive a presentation request
 ```
-POST {base}/v3/config/digital-wallet/openid/sdjwt/verification/receive
+POST {base}/v4/config/ows/holder/presentations
 ```
 ```jsonc
 {
-  "vpTokenQrCode": "openid4vp://…",   // the scanned/pasted request - URI or https request URL, verbatim
-  "autoPresent": true                  // the wallet answers at once when it can select the credentials
+  "vpTokenQrCode": "openid4vp://…"    // the scanned/pasted request - URI or https request URL, verbatim
 }
 ```
 
@@ -178,8 +168,8 @@ POST {base}/v3/config/digital-wallet/openid/sdjwt/verification/receive
 
 | Field | Use |
 | --- | --- |
-| `presentation.presentationId` | the `{id}` for §2.2 filter and §2.3 send. |
-| `presentation.status` | `presentation_pending` → continue; `presentation_acked` → already answered (also when `autoPresent` answered in this call). |
+| `presentation.presentationId` | the `{id}` for §2.2 matching credentials and §2.3 response. |
+| `presentation.status` | `presentation_pending` → continue; `presentation_acked` → already answered. |
 | `presentation.dcqlQuery` | the verifier's DCQL query: `credentials[]` (each `id`, `multiple`, `claims[].id`, `claim_sets`, `meta.vct_values`) and `credential_sets` (alternative groups). |
 | `presentation.transactionDataDecoded[]` | wallet-displayed transaction data (SCA/QES): entries may carry `data_agreement_record`, `data_disclosure_agreement_record`, or `qes_data.external_link` - show before consent. |
 | `presentation.clientMetadata` | verifier display: `clientName`, `logoUri`, `coverUri`, `location`. |
@@ -189,7 +179,7 @@ POST {base}/v3/config/digital-wallet/openid/sdjwt/verification/receive
 
 ### 2.2 Match held credentials against the request
 ```
-POST {base}/v2/config/digital-wallet/openid/sdjwt/verification/{presentationId}/filter
+POST {base}/v4/config/ows/holder/presentations/{presentationId}/matching-credentials
 ```
 Empty body. **Response**: `credentials` for a DCQL request,
 `inputDescriptors` for a Presentation Exchange request - one entry per
@@ -202,9 +192,9 @@ requested credential:
 An empty `matchedCredentials` on a mandatory descriptor means the holder
 cannot satisfy the request.
 
-### 2.3 Send the presentation (consent)
+### 2.3 Send the presentation response (consent)
 ```
-POST {base}/v3/config/digital-wallet/openid/sdjwt/verification/{presentationId}/send
+POST {base}/v4/config/ows/holder/presentations/{presentationId}/response
 ```
 Top-level key by query type: `credentials` when the record has a `dcqlQuery`,
 `inputDescriptors` for legacy Presentation Exchange. One uniform item shape
@@ -228,7 +218,7 @@ transaction data happens through this call - there is no separate holder
 
 ### 2.4 List presentations
 ```
-GET {base}/v3/config/digital-wallet/openid/sdjwt/verifications?limit=&offset=[&search=][&sortOrder=][&status=presentation_acked|presentation_pending]
+GET {base}/v4/config/ows/holder/presentations?limit=&offset=[&search=][&sortOrder=][&status=presentation_acked|presentation_pending]
 ```
 **Response**:
 ```jsonc
@@ -242,7 +232,7 @@ The list sorts on `updatedAt` (`sortOrder=asc` ascending, else descending).
 
 ### 2.5 Read one presentation
 ```
-GET {base}/v3/config/digital-wallet/openid/sdjwt/verification/{presentationId}
+GET {base}/v4/config/ows/holder/presentations/{presentationId}
 ```
 **Response**: `{ "presentation": PresentationRecord }`; after sharing,
 `presentation.presentation[]` holds the disclosed credentials and
@@ -250,10 +240,9 @@ GET {base}/v3/config/digital-wallet/openid/sdjwt/verification/{presentationId}
 
 ### 2.6 Delete a presentation record
 ```
-DELETE {base}/v2/config/digital-wallet/openid/sdjwt/verification/{presentationId}
+DELETE {base}/v4/config/ows/holder/presentations/{presentationId}
 ```
-(v2 path - the delete endpoint has no v3 variant.) **Response**: 204, no
-body.
+**Response**: 204, no body.
 
 ---
 
@@ -265,23 +254,23 @@ SSE stream, and the notification→action decision table:
 
 | Method | Path |
 | --- | --- |
-| GET | `{base}/v2/config/digital-wallet/openid/notifications?limit=&offset=&search=&notificationType=&status=&sortOrder=` |
-| GET / PUT / DELETE | `{base}/v2/config/digital-wallet/openid/notification/{id}` |
-| DELETE | `{base}/v2/config/digital-wallet/openid/notifications` (delete all, 204) |
-| GET (SSE) | `{base}/v2/config/digital-wallet/openid/notifications/sse[?lastEventId=]` (the backend relay sends the `Authorization` header) |
+| GET | `{base}/v4/config/ows/holder/notifications?limit=&offset=&search=&notificationType=&status=&sortOrder=` |
+| GET / PUT / DELETE | `{base}/v4/config/ows/holder/notifications/{notificationId}` |
+| DELETE | `{base}/v4/config/ows/holder/notifications` (delete all, 204) |
+| GET (SSE) | `{base}/v4/config/ows/holder/notification-stream[?lastEventId=]` (the backend relay sends the `Authorization` header) |
 
 The PUT body is `{ "status": "<string>" }`; the response wraps the record as
 `{ "notification": … }`.
 
 ---
 
-## 4. Holder global configuration
+## 4. Holder configuration
 
 ```
-GET    {base}/v2/config/digital-wallet/openid/holder/global-configuration
-PUT    {base}/v2/config/digital-wallet/openid/holder/global-configuration
+GET    {base}/v4/config/ows/holder/configuration
+PATCH  {base}/v4/config/ows/holder/configuration
 ```
-An organisation has one holder global configuration. The wallet makes it with
+An organisation has one holder configuration. The wallet makes it with
 the default values when it deploys the organisation wallet: there is no create,
 list or delete, and no id in the path. The update is partial (a field that you
 leave out keeps its stored value).
@@ -295,7 +284,7 @@ Update body:
   "requirePushedAuthorizationRequests": false   // true = use a Pushed Authorization Request in the authorization code flow
 }
 ```
-Read and update response: the record is under **`globalConfiguration`**
+Read and update response: the record is under the envelope key **`globalConfiguration`**
 (`{ "globalConfiguration": { … } }`); it carries `holderGlobalConfigurationId`
 plus the fields above.
 
@@ -304,7 +293,7 @@ plus the fields above.
 ## 5. Wallet unit
 
 ```
-GET {base}/v2/config/digital-wallet/openid/wallet-unit/status
+GET {base}/v4/config/ows/holder/wallet-unit/status
 ```
 **Response**: `{ "status": "not_installed" | "installed" | "operational" | "valid" }`
 (no wallet → wallet deployed without a valid Wallet Unit Attestation → valid

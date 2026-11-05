@@ -6,7 +6,7 @@ metadata:
   categories: [backend]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, holder, wallet, notifications, Server-Sent Events, SSE, OpenID4VCI, OpenID4VP
-  version: 2026.10.01
+  version: 2026.11.01
   api: https://docs.igrant.io/docs/developer-apis
   auth: OWS API key (Authorization "ApiKey <key>") injected by the backend relay and proxy; the browser sends no key
   requires-skills: igrantio-ows-overview
@@ -56,12 +56,12 @@ tenant backend proxy (`{backend}/ows/{tenant}/…`).
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| GET | `v2/config/digital-wallet/openid/notifications?limit=&offset=&search=&notificationType=&status=&sortOrder=` | list; the array is under the response's **`notification`** key, with `pagination` |
-| GET | `v2/config/digital-wallet/openid/notification/{id}` | read one |
-| PUT | `v2/config/digital-wallet/openid/notification/{id}` | update one - body `{ "status": "<string>" }`, response `{ "notification": … }` |
-| DELETE | `v2/config/digital-wallet/openid/notification/{id}` | delete one (the usual "handled" signal, 204) |
-| DELETE | `v2/config/digital-wallet/openid/notifications` | delete all (204) |
-| GET (SSE) | `v2/config/digital-wallet/openid/notifications/sse[?lastEventId=]` | live stream |
+| GET | `v4/config/ows/holder/notifications?limit=&offset=&search=&notificationType=&status=&sortOrder=` | list; the array is under the response's **`notification`** key, with `pagination` |
+| GET | `v4/config/ows/holder/notifications/{notificationId}` | read one |
+| PUT | `v4/config/ows/holder/notifications/{notificationId}` | update one - body `{ "status": "<string>" }`, response `{ "notification": … }` |
+| DELETE | `v4/config/ows/holder/notifications/{notificationId}` | delete one (the usual "handled" signal, 204) |
+| DELETE | `v4/config/ows/holder/notifications` | delete all (204) |
+| GET (SSE) | `v4/config/ows/holder/notification-stream[?lastEventId=]` | live stream |
 
 **Notification item**: `id`, `notificationType`, `notificationTypeRelatedId`
 (the credential record id), `notificationContent` (object **or** array - take
@@ -75,11 +75,11 @@ tenant backend proxy (`{backend}/ows/{tenant}/…`).
 
 | Action | Condition | Follow-up call |
 | --- | --- | --- |
-| `transaction_code` | `credentialStatus == "credential_pending"` and `userPinRequired` and `userPin` absent | `PUT …/sdjwt/credential/{id}/user-pin` |
-| `authorization` | pending, `acceptanceToken` absent, `oAuthFlow == "frontchannel"`, `authorizationRequest` set | open `authorizationRequest`, then `POST …/sdjwt/credential/exchange-code` |
-| `deferred_credential` | pending and `acceptanceToken` present | `PUT …/sdjwt/credential/{id}/receive-deferred` |
-| `verification` | pending, `presentationId` present, `acceptanceToken` absent | `POST …/sdjwt/verification/{presentationId}/filter`, then v3 `…/{presentationId}/send` |
-| `review_credential` | `credentialStatus == "credential_acked"` | `PUT …/sdjwt/credential/{id}/accept` (or `DELETE` to reject) |
+| `transaction_code` | `credentialStatus == "credential_pending"` and `userPinRequired` and `userPin` absent | `PUT …/holder/credentials/{id}/transaction-code` |
+| `authorization` | pending, `acceptanceToken` absent, `oAuthFlow == "frontchannel"`, `authorizationRequest` set | open `authorizationRequest`, then `POST …/holder/authorisation-code-exchanges` |
+| `deferred_credential` | pending and `acceptanceToken` present | `PUT …/holder/credentials/{id}/deferred-credential` |
+| `verification` | pending, `presentationId` present, `acceptanceToken` absent | `POST …/holder/presentations/{presentationId}/matching-credentials`, then `…/{presentationId}/response` |
+| `review_credential` | `credentialStatus == "credential_acked"` | `PUT …/holder/credentials/{id}/acceptance` (or `DELETE` to reject) |
 
 **SSE specifics**:
 - `EventSource` cannot send headers and the key must not reach the browser,
@@ -105,7 +105,7 @@ tenant backend proxy (`{backend}/ows/{tenant}/…`).
 ## Reference
 [`./references`](./references):
 - `notificationsSse.ts` - `notificationsSseRouter({ owsBaseUrl, getAuthorization })`
-  Express relay; streams `GET /:tenant/v2/config/digital-wallet/openid/notifications/sse`.
+  Express relay; streams `GET /:tenant/v4/config/ows/holder/notification-stream`.
   **Canonical copy** - `igrantio-holder-backend` vendors it byte-for-byte.
 - `notificationsClient.ts` - browser types + `NotificationsClient` (list /
   update / delete / deleteAll), `openNotificationsStream` (backoff, replay,

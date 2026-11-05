@@ -11,9 +11,7 @@ export interface OwsRequester {
   request<T>(method: string, path: string, body?: unknown): Promise<T>;
 }
 
-const DW = "/v2/config/digital-wallet/openid";
-const SD = `${DW}/sdjwt`;
-const SD3 = "/v3/config/digital-wallet/openid/sdjwt";
+const HOLDER = "/v4/config/ows/holder";
 
 export interface CredentialRecord {
   /** Record id - the `{id}` of every follow-up call. */
@@ -34,7 +32,6 @@ export interface CredentialRecord {
   issuer?: { name?: string; logo?: string; cover?: string };
   isVerifiedWithTrustList?: boolean;
   trustServiceProvider?: unknown;
-  autoPresent?: boolean;
   revocationStatus?: string;
   /** Unix time in seconds. */
   createdAt?: number;
@@ -76,13 +73,11 @@ export interface Pagination {
 export interface ReceiveOfferPayload {
   /** The scanned/pasted `openid-credential-offer://…` URI (or offer JSON). */
   credentialOffer: string;
-  autoPresent?: boolean;
 }
 
 export interface ReceiveRequestPayload {
   /** The pasted verification request - `openid4vp://…` URI or https URL, verbatim. */
   vpTokenQrCode: string;
-  autoPresent?: boolean;
 }
 
 /** The `?code`, `?state` and (RFC 9207) `?iss` of the issuer redirect. */
@@ -144,41 +139,38 @@ export function createHolderClient(ows: OwsRequester) {
       receiveOffer: (payload: ReceiveOfferPayload) =>
         ows.request<{ credential: CredentialRecord | CredentialRecord[] }>(
           "POST",
-          `${SD}/credential/receive`,
-          { autoPresent: true, ...payload },
+          `${HOLDER}/credentials`,
+          payload,
         ),
       /** Pre-authorised-code flow: submit the transaction code. */
-      submitTransactionCode: (id: string, userPin: string) =>
-        ows.request<unknown>("PUT", `${SD}/credential/${id}/user-pin`, { userPin }),
+      submitTransactionCode: (id: string, transactionCode: string) =>
+        ows.request<unknown>("PUT", `${HOLDER}/credentials/${id}/transaction-code`, { transactionCode }),
       /** Front-channel flow: exchange the code of the issuer redirect (`state` is required). */
       exchangeCode: (response: AuthorizationResponse) =>
         ows.request<{ credential: CredentialRecord | CredentialRecord[] | null }>(
           "POST",
-          `${SD}/credential/exchange-code`,
+          `${HOLDER}/authorisation-code-exchanges`,
           response,
         ),
       /** Deferred issuance: retry until `credential.credentialStatus === "credential_acked"`. */
       receiveDeferred: (id: string) =>
-        ows.request<{ credential?: CredentialRecord }>("PUT", `${SD}/credential/${id}/receive-deferred`),
+        ows.request<{ credential?: CredentialRecord }>("PUT", `${HOLDER}/credentials/${id}/deferred-credential`),
       /** Accept a `credential_acked` credential into the wallet. */
-      accept: (id: string) => ows.request<unknown>("PUT", `${SD}/credential/${id}/accept`),
+      accept: (id: string) => ows.request<unknown>("PUT", `${HOLDER}/credentials/${id}/acceptance`),
       /** Reject / remove a credential. */
-      delete: (id: string) => ows.request<void>("DELETE", `${SD}/credential/${id}`),
-      /** Toggle presenting without a manual consent step. */
-      configure: (credentialId: string, autoPresent: boolean) =>
-        ows.request<unknown>("PUT", `${SD}/credential/${credentialId}/configure`, { autoPresent }),
+      delete: (id: string) => ows.request<void>("DELETE", `${HOLDER}/credentials/${id}`),
       /** Request reissuance of an expired or near-expiry credential. */
       requestReissuance: (id: string) =>
-        ows.request<unknown>("PUT", `${SD}/credential/${id}/request`),
+        ows.request<unknown>("PUT", `${HOLDER}/credentials/${id}/reissuance`),
       /** Check the IETF Token Status List revocation status. */
       revocationStatus: (id: string) =>
-        ows.request<unknown>("GET", `${SD}/credential/${id}/revocation-status`),
+        ows.request<unknown>("GET", `${HOLDER}/credentials/${id}/revocation-status`),
       read: (id: string) =>
-        ows.request<{ credential: CredentialRecord }>("GET", `${SD}/credential/${id}`),
+        ows.request<{ credential: CredentialRecord }>("GET", `${HOLDER}/credentials/${id}`),
       list: (params: ListCredentialsParams = {}) =>
         ows.request<{ credential?: CredentialRecord[]; pagination?: Pagination }>(
           "GET",
-          `${SD}/credentials${query({
+          `${HOLDER}/credentials${query({
             limit: params.limit ?? 10,
             offset: params.offset ?? 0,
             expired: params.expired,
@@ -191,29 +183,29 @@ export function createHolderClient(ows: OwsRequester) {
     },
 
     presentations: {
-      /** Resolve an incoming verification request (OpenID4VP, v3). */
+      /** Resolve an incoming verification request (OpenID4VP). */
       receiveRequest: (payload: ReceiveRequestPayload) =>
         ows.request<{ presentation: PresentationRecord }>(
           "POST",
-          `${SD3}/verification/receive`,
-          { autoPresent: true, ...payload },
+          `${HOLDER}/presentations`,
+          payload,
         ),
-      /** Match held credentials against the request (v2; empty body). Use `pickDescriptors`. */
+      /** Match held credentials against the request (empty body). Use `pickDescriptors`. */
       filter: (presentationId: string) =>
-        ows.request<Record<string, unknown>>("POST", `${DW}/sdjwt/verification/${presentationId}/filter`),
+        ows.request<Record<string, unknown>>("POST", `${HOLDER}/presentations/${presentationId}/matching-credentials`),
       /**
-       * Send the selected credentials as a presentation (v3). Wraps the items
+       * Send the selected credentials as a presentation. Wraps the items
        * as `{credentials}` for DCQL or `{inputDescriptors}` for legacy PEX.
        * Open `presentation.responseRedirectUri` when it comes back non-empty.
        */
       send: (presentationId: string, items: SubmissionItem[], hasDcqlQuery: boolean) =>
         ows.request<{ presentation?: PresentationRecord }>(
           "POST",
-          `${SD3}/verification/${presentationId}/send`,
+          `${HOLDER}/presentations/${presentationId}/response`,
           hasDcqlQuery ? { credentials: items } : { inputDescriptors: items },
         ),
       read: (presentationId: string) =>
-        ows.request<{ presentation: PresentationRecord }>("GET", `${SD3}/verification/${presentationId}`),
+        ows.request<{ presentation: PresentationRecord }>("GET", `${HOLDER}/presentations/${presentationId}`),
       list: (params: ListPresentationsParams = {}) =>
         ows.request<{
           presentation?: PresentationRecord[];
@@ -221,7 +213,7 @@ export function createHolderClient(ows: OwsRequester) {
           presentationStats?: PresentationStats;
         }>(
           "GET",
-          `${SD3}/verifications${query({
+          `${HOLDER}/presentations${query({
             limit: params.limit ?? 10,
             offset: params.offset ?? 0,
             search: params.search,
@@ -229,14 +221,14 @@ export function createHolderClient(ows: OwsRequester) {
             status: params.status,
           })}`,
         ),
-      /** Delete a presentation record (v2 path - there is no v3 delete). */
+      /** Delete a presentation record. */
       delete: (presentationId: string) =>
-        ows.request<void>("DELETE", `${DW}/sdjwt/verification/${presentationId}`),
+        ows.request<void>("DELETE", `${HOLDER}/presentations/${presentationId}`),
     },
 
     /** Wallet unit status: not_installed | installed | operational | valid. */
     walletUnitStatus: () =>
-      ows.request<{ status?: string }>("GET", `${DW}/wallet-unit/status`),
+      ows.request<{ status?: string }>("GET", `${HOLDER}/wallet-unit/status`),
   };
 }
 

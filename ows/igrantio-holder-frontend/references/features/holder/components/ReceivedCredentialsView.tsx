@@ -1,8 +1,8 @@
 /**
  * Received credentials: stats row (Total / Active / Archived), search, an
  * Active and an Archived table (both list credential_accepted records; the
- * archived table filters expired=true and shows Revoked/Expired instead of
- * the auto-present toggle), per-row view/refresh/delete actions.
+ * archived table filters expired=true and shows Revoked/Expired), per-row
+ * view/refresh/delete actions.
  */
 
 import { useState } from "react";
@@ -57,7 +57,7 @@ function CredentialsTable({
             <th style={thStyle}>Credential Type</th>
             <th style={thStyle}>Issuer</th>
             <th style={thStyle}>Credential Format</th>
-            <th style={thStyle}>{expired ? "Status" : "Auto Present"}</th>
+            <th style={thStyle}>Status</th>
             <th style={thStyle}>Date Received</th>
             <th style={thStyle} />
           </tr>
@@ -74,25 +74,9 @@ function CredentialsTable({
                 </td>
                 <td style={tdStyle}>{formatLabel(r)}</td>
                 <td style={tdStyle}>
-                  {expired ? (
-                    <span style={{ color: revoked ? COLORS.red : COLORS.secondary }}>
-                      {revoked ? "Revoked" : "Expired"}
-                    </span>
-                  ) : (
-                    <label style={{ fontSize: 13 }}>
-                      <input
-                        type="checkbox"
-                        checked={r.autoPresent === true}
-                        disabled={r.credentialStatus === "credential_pending"}
-                        onChange={(e) =>
-                          void client.credentials
-                            .configure(String(r.credentialId ?? r.id), e.target.checked)
-                            .then(list.refresh, list.refresh)
-                        }
-                      />{" "}
-                      {r.autoPresent ? "Enabled" : "Disabled"}
-                    </label>
-                  )}
+                  <span style={{ color: revoked ? COLORS.red : COLORS.secondary }}>
+                    {revoked ? "Revoked" : expired ? "Expired" : "Active"}
+                  </span>
                 </td>
                 <td style={tdStyle}>{formatDate(r.createdAt)}</td>
                 <td style={{ ...tdStyle, whiteSpace: "nowrap" }}>
