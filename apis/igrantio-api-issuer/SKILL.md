@@ -132,8 +132,8 @@ create, list or delete operation, and the path has no identifier.
 | `PUT` | `/v4/config/ows/issuer/credential-definitions/{definitionId}` | Replace a credential definition. Each change makes a new definition version. | [Update credential definition](https://docs.igrant.io/docs/openid4vc-api/config-update-digital-wallet-open-id-credential-definition/) |
 | `DELETE` | `/v4/config/ows/issuer/credential-definitions/{definitionId}` | Delete a credential definition. | [Delete credential definition](https://docs.igrant.io/docs/openid4vc-api/config-delete-digital-wallet-open-id-credential-definition/) |
 | `GET` | `/v4/config/ows/issuer/credential-definitions` | List the credential definitions in cursor pages, newest first. Each item has `issuanceCount`. | [List credential definitions](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-credential-definition/) |
-| `GET` | `/v4/config/ows/issuer/credential-definitions/{definitionId}/versions/{version}` | Read the credential definition as it was in one definition version. | - |
-| `GET` | `/v4/config/ows/issuer/credential-definitions/{definitionId}/statistics` | Read the issuance buckets of one credential definition. | - |
+| `GET` | `/v4/config/ows/issuer/credential-definitions/{definitionId}/versions/{version}` | Read the credential definition as it was in one definition version. | [Read credential definition version](https://docs.igrant.io/docs/openid4vc-api/config-read-credential-definition-version/) |
+| `GET` | `/v4/config/ows/issuer/credential-definitions/{definitionId}/statistics` | Read the issuance buckets of one credential definition. | [Read credential definition statistics](https://docs.igrant.io/docs/openid4vc-api/config-read-credential-definition-statistics/) |
 | `POST` | `/v4/config/ows/issuer/credential-definitions/preview` | Fetch a claims schema from a URI and show it before you use the URI. | [Preview credential definition from URI](https://docs.igrant.io/docs/openid4vc-api/config-preview-digital-wallet-open-id-credential-definition/) |
 | `GET` | `/v4/config/ows/issuer/credential-definition-templates` | List the ready-made credential definition templates. | [List credential definition templates](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-credential-definition-templates/) |
 | `GET` | `/v4/config/ows/issuer/credential-categories` | List the credential categories and the certificate rules of each, plus the mDL rule. | [List credential categories](https://docs.igrant.io/docs/openid4vc-api/config-digital-wallet-open-id-list-credential-categories/) |
@@ -158,9 +158,9 @@ issuer signed for it.
 | `DELETE` | `/v4/config/ows/issuer/issuances/{issuanceId}` | Delete one issuance and stop its offer (HTTP 204). | [Delete issuance](https://docs.igrant.io/docs/openid4vc-api/config-delete-digital-wallet-open-id-credential-history/) |
 | `PUT` | `/v4/config/ows/issuer/issuances/{issuanceId}/claims` | Give the claims of a deferred issuance. | [Give deferred claims](https://docs.igrant.io/docs/openid4vc-api/config-update-digital-wallet-open-id-credential-history/) |
 | `POST` | `/v4/config/ows/issuer/issuances/{issuanceId}/revocation` | Revoke every issued credential of the issuance. Final. | [Revoke issuance](https://docs.igrant.io/docs/openid4vc-api/config-update-digital-wallet-open-id-credential-revocation-status/) |
-| `GET` | `/v4/config/ows/issuer/issuances/{issuanceId}/credentials` | List the issued credentials of the issuance in cursor pages, newest first, with no token. | - |
-| `GET` | `/v4/config/ows/issuer/issuances/{issuanceId}/credentials/{credentialId}` | Read one issued credential, with its token while the issuer keeps it. | - |
-| `GET` | `/v4/config/ows/issuer/statistics` | Read the issuance buckets of the organisation. | - |
+| `GET` | `/v4/config/ows/issuer/issuances/{issuanceId}/credentials` | List the issued credentials of the issuance in cursor pages, newest first, with no token. | [List issued credentials](https://docs.igrant.io/docs/openid4vc-api/config-list-issued-credentials/) |
+| `GET` | `/v4/config/ows/issuer/issuances/{issuanceId}/credentials/{credentialId}` | Read one issued credential, with its token while the issuer keeps it. | [Read issued credential](https://docs.igrant.io/docs/openid4vc-api/config-read-issued-credential/) |
+| `GET` | `/v4/config/ows/issuer/statistics` | Read the issuance buckets of the organisation. | [Read issuer statistics](https://docs.igrant.io/docs/openid4vc-api/config-read-issuer-statistics/) |
 
 ### Scopes, transaction data and OpenID providers
 
@@ -677,4 +677,5 @@ updates. Follow the documentation and report the drift so this skill can be
 corrected.
 
 - Issuer API index: <https://docs.igrant.io/docs/developer-apis/>
+- Migrate to the wallet API paths and the issuance bodies: <https://docs.igrant.io/docs/developer-apis/migration-wallet-routes/>
 - Workflow, issue a credential (OID4VCI): <https://docs.igrant.io/docs/openID4vci-issue-credential-intime/>

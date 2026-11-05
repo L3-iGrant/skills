@@ -82,6 +82,9 @@ resource id and updates the moment the event arrives.
 All wallet paths have the form `/v4/{group}/ows/{role}/...` (for example
 `/v4/config/ows/issuer/issuances`). The roles are `issuer`, `holder`,
 `verifier`, `wallet-provider`, `key-management`, `trust` and `wallet`.
+Code that calls a path with `digital-wallet/openid` or `sdjwt` must move to
+these paths: <https://docs.igrant.io/docs/developer-apis/migration-wallet-routes/>
+gives the new path of each one and the changes of the bodies and events.
 
 See [`references/architecture.md`](./references/architecture.md) for the full
 data-flow, path allow-list, HMAC scheme, and the correlation table.

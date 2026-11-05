@@ -397,6 +397,9 @@ Fetch the linked page, or the raw specification at
 <https://docs.igrant.io/openapispecifications/oid4vc.yaml>, to check for
 updates before you build. Report the drift so the skill can be corrected.
 
+- Webhooks guide (event types, body, signature, retries): <https://docs.igrant.io/docs/openid4vc-webhooks/>
+- Migrate to the wallet API paths and the webhook events: <https://docs.igrant.io/docs/developer-apis/migration-wallet-routes/>
+
 ## Cross-references
 - `igrantio-ows-overview` - architecture, glossary, exchange-id correlation.
 - `igrantio-backend-webhooks` - a runnable receiver with HMAC verification.

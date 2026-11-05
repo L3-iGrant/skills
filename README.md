@@ -91,7 +91,8 @@ its page on [docs.igrant.io](https://docs.igrant.io/docs/developer-apis/). The
 documentation is the source of truth: when a skill and the linked page
 disagree, the agent must follow the page and check it for updates.
 Every wallet path has the form `/v4/{group}/ows/{role}/...`, for example
-`/v4/config/ows/issuer/issuances`.
+`/v4/config/ows/issuer/issuances`. To move code to these paths, read
+[Migrate to the wallet API paths](https://docs.igrant.io/docs/developer-apis/migration-wallet-routes/).
 
 | Skill | API group |
 | --- | --- |
