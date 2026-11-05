@@ -90,13 +90,15 @@ field reference from the OpenAPI specification and links every operation to
 its page on [docs.igrant.io](https://docs.igrant.io/docs/developer-apis/). The
 documentation is the source of truth: when a skill and the linked page
 disagree, the agent must follow the page and check it for updates.
+Every wallet path has the form `/v4/{group}/ows/{role}/...`, for example
+`/v4/config/ows/issuer/issuances`.
 
 | Skill | API group |
 | --- | --- |
-| [`igrantio-api-issuer`](./apis/igrantio-api-issuer) | Issuer: credential definitions (claim path pointers, `credentialDefinitions[]`, credential categories), issuance, history, revocation |
-| [`igrantio-api-holder`](./apis/igrantio-api-holder) | Holder: receive and hold credentials (also wallet-initiated), present, notifications with SSE stream |
-| [`igrantio-api-verifier`](./apis/igrantio-api-verifier) | Verifier: DCQL presentation definitions, transaction data, v3 verification, DC API |
-| [`igrantio-api-webhooks`](./apis/igrantio-api-webhooks) | Webhook configuration, event types, ping, deliveries |
+| [`igrantio-api-issuer`](./apis/igrantio-api-issuer) | Issuer: issuer configuration, credential definitions (claim path pointers, `credentialDefinitions[]`, credential categories, definition versions), issuances, issued credentials, revocation, statistics |
+| [`igrantio-api-holder`](./apis/igrantio-api-holder) | Holder: receive and hold credentials (also wallet-initiated), present, notifications with SSE stream, holder events |
+| [`igrantio-api-verifier`](./apis/igrantio-api-verifier) | Verifier: DCQL presentation definitions, transaction data, verifications, DC API, verifier events |
+| [`igrantio-api-webhooks`](./apis/igrantio-api-webhooks) | Webhook configuration, the wallet event types (`ows.<role>.<resource>.<event>`), the signature over the exact body, retries, ping, deliveries |
 | [`igrantio-api-trust-anchor`](./apis/igrantio-api-trust-anchor) | Trust authorities the wallet accepts: ETSI trusted lists, lists of trusted entities, X.509 CAs |
 | [`igrantio-api-wallet-provider`](./apis/igrantio-api-wallet-provider) | Wallet units, WUA, statistics, wallet deployment |
 | [`igrantio-api-key-management`](./apis/igrantio-api-key-management) | Key stores, signing keys, CSR and certificate presets, certificate chains, test certificates, trust lookup |
@@ -208,7 +210,7 @@ agent adapts working code rather than generating an integration from scratch.
 Each skill is versioned individually through the `metadata.version` field in
 its `SKILL.md`, following the `yyyy.mm.NN` scheme, where `yyyy.mm` is the year
 and month of the release and `NN` is the release number within that month. The
-current release is `2026.10.01`. Versions are bumped whenever a skill's
+current release is `2026.11.01`. Versions are bumped whenever a skill's
 contract changes.
 
 To update installed skills to the latest release:
