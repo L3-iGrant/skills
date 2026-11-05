@@ -6,7 +6,7 @@ metadata:
   categories: [ows-api, education]
   provider: iGrant.io
   keywords: key management, key store, signing key, JWK, ES256, P-256, CSR, certificate preset, X.509, x5c, certificate chain, test certificate, test CA, PKCS#12, QTSP, CSC API, OpenBao, HashiCorp Vault, Cloud KMS, AWS KMS, Azure Key Vault, HSM, eIDAS2
-  version: 2026.10.02
+  version: 2026.11.01
   source-doc: https://docs.igrant.io/docs/developer-apis/
   protocols: JWK (RFC 7517), ECDSA P-256 / ES256, PKCS#10 CSR, PKCS#12, X.509, CSC API 1.0.4.0 / 2.2.0.0
   auth: OWS API key (Authorization "ApiKey <YOUR_API_KEY>")
@@ -71,7 +71,7 @@ Record the answers before you write code.
 
 ## Endpoint reference
 
-Every path starts with `/v2/config/digital-wallet/openid/key-management`.
+Every path starts with `/v4/config/ows/key-management`.
 
 | Method | Path | Purpose | Docs |
 | --- | --- | --- | --- |

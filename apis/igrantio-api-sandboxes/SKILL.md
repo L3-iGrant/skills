@@ -6,7 +6,7 @@ metadata:
   categories: [ows-api, education]
   provider: iGrant.io
   keywords: sandbox organisation, sandbox org, test wallet, multi-wallet, OpenID4VCI, OpenID4VP, EUDIW, EUBW, eIDAS2, sandbox-bound API key
-  version: 2026.10.02
+  version: 2026.11.01
   source-doc: https://docs.igrant.io/docs/developer-apis/
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0
   auth: OWS API key (Authorization "ApiKey <YOUR_API_KEY>"); a key that is bound to a sandbox organisation works in that sandbox organisation; the key is held only by the tenant backend, never the browser
@@ -98,9 +98,9 @@ one key for each.
 
 ### What belongs to the sandbox organisation
 A bound key works in its sandbox organisation across the OID4VC configuration
-surface: credential definitions, issuance history, presentation definitions,
-verifications, transaction data, trust authorities, files, scopes, global
-configurations, notifications, and webhooks.
+surface: credential definitions, issuances, presentation definitions,
+verifications, transaction data, trust authorities, files, scopes, the role
+configurations (issuer, verifier and holder), notifications, and webhooks.
 
 Exceptions:
 
@@ -114,20 +114,20 @@ Exceptions:
   organisation. A bound key works on the same ones as a key of the main wallet.
 - The eight sandbox operations in the table above work on the sandbox
   collection of the whole organisation, whatever the key. The wallet deploy,
-  the deployment read (`POST` and `GET /v2/config/digital-wallet/openid`), and
-  the performance statistics (`GET /v2/config/performance-statistics`) always
+  the deployment read (`POST` and `GET /v4/config/ows/wallet/deployment`), and
+  the performance statistics (`GET /v4/config/ows/wallet/performance-statistics`) always
   work on the main wallet.
 - A sandbox organisation **cannot be a wallet provider**. The wallet unit
   operations give HTTP 400. See `igrantio-api-wallet-provider`.
-- **The v2 holder operations reject a sandbox context** with HTTP 400 and the
-  error "Holder functionalities for sandbox organisation is disabled". This
-  covers receive, receive-deferred, user PIN, exchange-code, accept,
-  auto-present, request (re-issue), list, read, and delete of held
-  credentials, the issuer metadata read, and the v2 presentation operations
-  (filter, read, list, send, receive, delete). The revocation status read of
-  a held credential, the V3 presentation operations, the holder global
-  configuration, and the notifications support the sandbox context. See
-  `igrantio-api-holder`.
+- **The held credential operations reject a sandbox context** with HTTP 400
+  and the error "Holder functionalities for sandbox organisation is
+  disabled". This covers receive, deferred credential, transaction code,
+  authorisation code exchange, acceptance, reissuance, list, read, and delete
+  of held credentials, the issuer metadata read, and the matching credentials
+  and the delete of a presentation. The revocation status read of a held
+  credential, the other presentation operations (receive, read, list,
+  response), the holder configuration, and the notifications support the
+  sandbox context. See `igrantio-api-holder`.
 
 ### After a delete
 When you delete a sandbox organisation, an API key that is bound to it no

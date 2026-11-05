@@ -1,12 +1,12 @@
 ---
 name: igrantio-api-verifier
-description: 'Verifier group of the iGrant.io OpenID4VC API: create presentation definitions that hold a DCQL query (credential queries, claim sets, credential sets, trusted authorities, transaction data templates), send an OpenID4VP 1.0 Authorization Request with the V3 send operation, read and list the verification history, receive a Digital Credentials API response, revalidate a finished exchange, and delete a verification record. Use this skill when you build the relying-party side of an EUDI Wallet (EUDIW) or European Business Wallet (EUBW) integration, or whenever you need the exact verifier path, DCQL field, or enum value.'
+description: 'Verifier group of the iGrant.io OpenID4VC API: create presentation definitions that hold a DCQL query (credential queries, claim sets, credential sets, trusted authorities, transaction data templates), send an OpenID4VP 1.0 Authorization Request, read and list the verifications, receive a Digital Credentials API response, revalidate a finished exchange, delete a verification record, change the verifier configuration, and read the verifier webhook events. Use this skill when you build the relying-party side of an EUDI Wallet (EUDIW) or European Business Wallet (EUBW) integration, or whenever you need the exact verifier path, DCQL field, or enum value.'
 license: Apache-2.0
 metadata:
   categories: [ows-api, education]
   provider: iGrant.io
   keywords: OpenID4VP, DCQL, presentation definition, verification, relying party, transaction data, Digital Credentials API, dc_api, direct_post.jwt, mso_mdoc, SD-JWT VC, ISO 18013-7, EUDIW, EUBW, eIDAS2
-  version: 2026.10.01
+  version: 2026.11.01
   source-doc: https://docs.igrant.io/docs/developer-apis/
   protocols: OpenID4VP-1.0, DCQL, SD-JWT-VC, mso_mdoc, ISO-18013-7-Annex-C, W3C-Digital-Credentials-API
   auth: Organisation Wallet Suite API key (Authorization "ApiKey <YOUR_API_KEY>")
@@ -17,10 +17,10 @@ metadata:
 
 ## When to use
 Use this skill when your organisation asks a holder for credentials. It covers
-the 15 operations of the **Verifier** group: the verifier global configuration,
-presentation definitions, transaction data templates, the V3 verification
-request, the verification history, the Digital Credentials API response, and
-revalidation.
+the **Verifier** group: the verifier configuration, presentation definitions,
+transaction data templates, the verification request, the verifications, the
+Digital Credentials API response, and revalidation. Every path starts with
+`/v4/config/ows/verifier`.
 
 Use it when you must:
 - write a DCQL query and store it as a presentation definition;
@@ -77,10 +77,11 @@ Record the answers before you write code.
   Exchange is not a supported surface. A DCQL query cannot be sent inline with
   the verification request: store it in a presentation definition and reference
   it with `presentationDefinitionId`.
-- Send a verification request with the **V3** operation
-  (`POST /v3/config/digital-wallet/openid/sdjwt/verification/send`). Read the
-  history with the V3 operations. Draft protocol versions are not a supported
-  surface.
+- Send a verification request with
+  `POST /v4/config/ows/verifier/verifications`, and read the verifications
+  with the `GET` operations of the same path. Draft protocol versions are not
+  a supported surface. `{verificationId}` in a path is the
+  `presentationExchangeId` of the record.
 
 ## Authentication
 Send the API key in the `Authorization` header with the `ApiKey` prefix and a
@@ -100,36 +101,37 @@ The API key stays on your server. The browser never holds it.
 
 | Method | Path | Purpose | Documentation |
 | --- | --- | --- | --- |
-| `POST` | `/v2/config/digital-wallet/openid/sdjwt/presentation-definition` | Create a presentation definition that holds a DCQL query and the transport settings. | [Create presentation definition](https://docs.igrant.io/docs/openid4vc-api/config-digital-wallet-open-id-presentation-definition/) |
-| `GET` | `/v2/config/digital-wallet/openid/sdjwt/presentation-definition/{presentationDefinitionId}` | Read one presentation definition. | [Read presentation definition](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-presentation-definition/) |
-| `PUT` | `/v2/config/digital-wallet/openid/sdjwt/presentation-definition/{presentationDefinitionId}` | Update a presentation definition. | [Update presentation definition](https://docs.igrant.io/docs/openid4vc-api/config-update-digital-wallet-open-id-presentation-definition/) |
-| `DELETE` | `/v2/config/digital-wallet/openid/sdjwt/presentation-definition/{presentationDefinitionId}` | Delete a presentation definition. | [Delete presentation definition](https://docs.igrant.io/docs/openid4vc-api/config-delete-digital-wallet-open-id-presentation-definition/) |
-| `GET` | `/v2/config/digital-wallet/openid/sdjwt/presentation-definitions` | List presentation definitions. Filter with `search`, `sortOrder`, `transactionDataType`, `skipCounts`, `offset` and `limit`. | [List presentation definition](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-presentation-definition/) |
-| `GET` | `/v2/config/digital-wallet/openid/sdjwt/presentation-definition/templates` | List the ready-made presentation definition templates. | [List presentation definition templates](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-presentation-definition-templates/) |
-| `GET` | `/v2/config/digital-wallet/openid/sdjwt/transaction-data-definitions` | List the transaction data templates and the JSON Schema of each type. | [List transaction data templates](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-transaction-data-templates/) |
+| `POST` | `/v4/config/ows/verifier/presentation-definitions` | Create a presentation definition that holds a DCQL query and the transport settings. | [Create presentation definition](https://docs.igrant.io/docs/openid4vc-api/config-digital-wallet-open-id-presentation-definition/) |
+| `GET` | `/v4/config/ows/verifier/presentation-definitions/{presentationDefinitionId}` | Read one presentation definition. | [Read presentation definition](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-presentation-definition/) |
+| `PUT` | `/v4/config/ows/verifier/presentation-definitions/{presentationDefinitionId}` | Update a presentation definition. | [Update presentation definition](https://docs.igrant.io/docs/openid4vc-api/config-update-digital-wallet-open-id-presentation-definition/) |
+| `DELETE` | `/v4/config/ows/verifier/presentation-definitions/{presentationDefinitionId}` | Delete a presentation definition. | [Delete presentation definition](https://docs.igrant.io/docs/openid4vc-api/config-delete-digital-wallet-open-id-presentation-definition/) |
+| `GET` | `/v4/config/ows/verifier/presentation-definitions` | List presentation definitions. Filter with `search`, `sortOrder`, `transactionDataType`, `skipCounts`, `offset` and `limit`. | [List presentation definition](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-presentation-definition/) |
+| `GET` | `/v4/config/ows/verifier/presentation-definition-templates` | List the ready-made presentation definition templates. | [List presentation definition templates](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-presentation-definition-templates/) |
+| `GET` | `/v4/config/ows/verifier/transaction-data-templates` | List the transaction data templates and the JSON Schema of each type. | [List transaction data templates](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-transaction-data-templates/) |
 
 ### Verification
 
 | Method | Path | Purpose | Documentation |
 | --- | --- | --- | --- |
-| `POST` | `/v3/config/digital-wallet/openid/sdjwt/verification/send` | Send an OpenID4VP Authorization Request from a stored presentation definition. | [Send verification request](https://docs.igrant.io/docs/openid4vc-api/config-create-digital-wallet-open-id-verification-request-v-3/) |
-| `GET` | `/v3/config/digital-wallet/openid/sdjwt/verification/history` | List the verification history. Filter with `status` (comma-separated), `presentationDefinitionId`, `individualId`, `mapperId`, `holderDid`, `responseCode`, `presentationReceived`, `requestPending`, `verificationFailed`, `search`, `sortOrder`, `offset` and `limit`. | [List verification history](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-verification-history-v-3/) |
-| `GET` | `/v3/config/digital-wallet/openid/sdjwt/verification/history/{presentationExchangeId}` | Read one verification exchange record. | [Read verification history](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-verification-history-v-3/) |
-| `POST` | `/v2/config/digital-wallet/openid/sdjwt/verification/history/{presentationExchangeId}/receive` | Take a Digital Credentials API response from the browser. | [Receive DC API verification response](https://docs.igrant.io/docs/openid4vc-api/config-receive-digital-wallet-open-id-dc-api-response/) |
-| `POST` | `/v2/config/digital-wallet/openid/sdjwt/verification/history/{presentationExchangeId}/revalidate` | Check the signatures, the revocation status, and the trust chain again. | [Revalidate verification](https://docs.igrant.io/docs/openid4vc-api/config-revalidate-digital-wallet-open-id-verification/) |
-| `DELETE` | `/v2/config/digital-wallet/openid/sdjwt/verification/history/{presentationExchangeId}` | Delete one verification exchange record. | [Delete verification history](https://docs.igrant.io/docs/openid4vc-api/config-delete-digital-wallet-open-id-verification-history/) |
+| `POST` | `/v4/config/ows/verifier/verifications` | Send an OpenID4VP Authorization Request from a stored presentation definition. | [Send verification request](https://docs.igrant.io/docs/openid4vc-api/config-create-digital-wallet-open-id-verification-request-v-3/) |
+| `GET` | `/v4/config/ows/verifier/verifications` | List the verifications. Filter with `status` (comma-separated), `presentationDefinitionId`, `individualId`, `mapperId`, `holderDid`, `responseCode`, `presentationReceived`, `requestPending`, `verificationFailed`, `search`, `sortOrder`, `offset` and `limit`. | [List verifications](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-verification-history-v-3/) |
+| `GET` | `/v4/config/ows/verifier/verifications/{verificationId}` | Read one verification exchange record. | [Read verification](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-verification-history-v-3/) |
+| `POST` | `/v4/config/ows/verifier/verifications/{verificationId}/response` | Take a Digital Credentials API response from the browser. | [Receive DC API verification response](https://docs.igrant.io/docs/openid4vc-api/config-receive-digital-wallet-open-id-dc-api-response/) |
+| `POST` | `/v4/config/ows/verifier/verifications/{verificationId}/revalidation` | Check the signatures, the revocation status, and the trust chain again. | [Revalidate verification](https://docs.igrant.io/docs/openid4vc-api/config-revalidate-digital-wallet-open-id-verification/) |
+| `DELETE` | `/v4/config/ows/verifier/verifications/{verificationId}` | Delete one verification exchange record. | [Delete verification](https://docs.igrant.io/docs/openid4vc-api/config-delete-digital-wallet-open-id-verification-history/) |
 
-### Verifier global configuration
-An organisation has one verifier global configuration. The wallet makes it with
+### Verifier configuration
+An organisation has one verifier configuration. The wallet makes it with
 the default values when it deploys the organisation wallet, so there is no
 create, list or delete operation and the path has no identifier.
 
 | Method | Path | Purpose | Documentation |
 | --- | --- | --- | --- |
-| `GET` | `/v2/config/digital-wallet/openid/verifier/global-configuration` | Read the verifier global configuration. | [Read verifier global configuration](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-verifier-global-configuration/) |
-| `PUT` | `/v2/config/digital-wallet/openid/verifier/global-configuration` | Update the verifier global configuration. | [Update verifier global configuration](https://docs.igrant.io/docs/openid4vc-api/config-update-digital-wallet-open-id-verifier-global-configuration/) |
+| `GET` | `/v4/config/ows/verifier/configuration` | Read the verifier configuration. | [Read verifier configuration](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-verifier-global-configuration/) |
+| `PATCH` | `/v4/config/ows/verifier/configuration` | Change the verifier configuration (partial update). | [Update verifier configuration](https://docs.igrant.io/docs/openid4vc-api/config-update-digital-wallet-open-id-verifier-global-configuration/) |
 
-Both operations answer `{"globalConfiguration": {...}}`.
+Both operations answer `{"globalConfiguration": {...}}` (the envelope key of
+the verifier configuration).
 `supportCredentialEncryption` is `false` by default. Set it to `true` before
 you use the `direct_post.jwt` response mode. `presentationRequestExpiresIn` is
 the request lifetime in seconds, with a smallest value and a default of 3600.
@@ -139,7 +141,7 @@ value.
 ## Key fields
 
 ### Create presentation definition
-`POST /v2/config/digital-wallet/openid/sdjwt/presentation-definition`
+`POST /v4/config/ows/verifier/presentation-definitions`
 
 The answer is HTTP 200 with `{"presentationDefinition": {...}}`; read the
 identifier from `presentationDefinitionId`.
@@ -162,7 +164,7 @@ Transport fields:
 | `cryptographicKeyIdentifier` | string | The signing key of the verifier. The default key of the organisation is used when you send no value. |
 | `dcApiRequestType` | `signed`, `unsigned` | Only with `dc_api` or `dc_api.jwt`. A missing value means `unsigned` for `dc_api` and `signed` for `dc_api.jwt`. Use `signed` for live use. |
 | `expectedOrigins` | array of strings | Mandatory when the effective `dcApiRequestType` is `signed`. The server refuses it for an unsigned request and outside the DC API modes. `iso18013_7_annex_c` needs exactly one origin. |
-| `encryptedResponseEncValuesSupported` | `A128CBC-HS256`, `A128GCM`, `A256GCM` | Mandatory for `direct_post.jwt`, and `supportCredentialEncryption` must be `true` in the verifier global configuration. `dc_api.jwt` ignores this field. |
+| `encryptedResponseEncValuesSupported` | `A128CBC-HS256`, `A128GCM`, `A256GCM` | Mandatory for `direct_post.jwt`, and `supportCredentialEncryption` must be `true` in the verifier configuration. `dc_api.jwt` ignores this field. |
 | `directPostRedirectUri` | absolute URI | For `direct_post` and `direct_post.jwt`: the URI that the wallet opens after the presentation. It has no meaning for the DC API modes. |
 | `scope` | string | For a scope-based presentation request. One presentation definition per scope in the organisation. |
 | `excludeVerifierDisplayMetadata` | boolean | Default `false`. `true` leaves the display metadata of the verifier (name, logo, description) out of the request. |
@@ -265,7 +267,7 @@ HTTP 204. The server refuses to update or delete a presentation definition that
 an extension uses, and to delete one that the system manages.
 
 ### Send a verification request
-`POST /v3/config/digital-wallet/openid/sdjwt/verification/send`
+`POST /v4/config/ows/verifier/verifications`
 
 `presentationDefinitionId` is the only mandatory field. The server reads the DCQL
 query, the response mode, the transaction data template, and the DC API settings
@@ -277,11 +279,11 @@ identifier also gives HTTP 400. A successful send answers HTTP 200.
 | --- | --- |
 | `requestByReference` | Default `false`. `true` passes the Authorization Request with the `request_uri` parameter. Use it for a large request. |
 | `transactionData` | Send it when, and only when, the presentation definition sets a `transactionDataDefinitionType`. The server answers HTTP 400 in both mismatched cases. The structure must follow the JSON Schema of that type. |
-| `nonce` | The server makes one when you send no value. V3 only. |
-| `urlPrefix` | Scheme prefix of the deep link in `vpTokenQrCode`. Default `openid4vp://`. V3 only. |
-| `individualId` / `mapperId` | Send the request as a push notification to the device of that individual. Do not send both. V3 only. |
-| `signatureStamp` / `signatureCoordinate` | Signed PDF options. `signatureCoordinate` holds exactly four integers, `[x1, y1, x2, y2]`, in points. V3 only. |
-| `dataAgreement` | The terms of this verification exchange. V3 only. |
+| `nonce` | The server makes one when you send no value. |
+| `urlPrefix` | Scheme prefix of the deep link in `vpTokenQrCode`. Default `openid4vp://`. |
+| `individualId` / `mapperId` | Send the request as a push notification to the device of that individual. Do not send both. |
+| `signatureStamp` / `signatureCoordinate` | Signed PDF options. `signatureCoordinate` holds exactly four integers, `[x1, y1, x2, y2]`, in points. |
+| `dataAgreement` | The terms of this verification exchange. |
 
 The response holds `verificationHistory`. Fields to read:
 
@@ -304,12 +306,12 @@ The response holds `verificationHistory`. Fields to read:
   with `credentialId`, `signedFile`, `unsignedFile`, `error`,
   `errorDescription`).
 
-The read verification history operation returns the same record shape. The
+The read verification operation returns the same record shape. The
 record has no expiry flag: the request lifetime is `presentationRequestExpiresIn`
-of the verifier global configuration, counted from `createdAt`.
+of the verifier configuration, counted from `createdAt`.
 
 ### Receive a Digital Credentials API response
-`POST /v2/config/digital-wallet/openid/sdjwt/verification/history/{presentationExchangeId}/receive`
+`POST /v4/config/ows/verifier/verifications/{verificationId}/response`
 
 The body takes one of two shapes:
 
@@ -327,24 +329,38 @@ encoded response of the wallet.
 
 The server answers HTTP 404 when it has no such exchange, and HTTP 400 when the
 response does not decrypt or does not match the DCQL query. A successful
-answer holds the updated record in a different shape from the verification
-history; read the exchange with the V3 read operation to get the documented
-record.
+answer holds the updated record in a different shape from the read
+operation; read the verification to get the documented record.
 
 ### Revalidate a verification
-`POST /v2/config/digital-wallet/openid/sdjwt/verification/history/{presentationExchangeId}/revalidate`
+`POST /v4/config/ows/verifier/verifications/{verificationId}/revalidation`
 has no request body; the server discards one if you send it. It checks the
 credential signatures, the revocation status, and the trust chain again, writes
 the new `presentationValidity` and `verified` values, and returns the full
 record. Every other property stays the same.
 
-The path is `/v2`, but the response holds the **V3** record shape:
-`vpTokenResponse` and `presentation` are arrays, and the V3-only properties are
-present.
+The response holds the record shape of the read operation:
+`vpTokenResponse` and `presentation` are arrays.
 
 ### Delete a verification record
-`DELETE /v2/config/digital-wallet/openid/sdjwt/verification/history/{presentationExchangeId}`
+`DELETE /v4/config/ows/verifier/verifications/{verificationId}`
 answers HTTP 200 with an empty body.
+
+### Verifier webhook events
+A webhook can subscribe to the verifier events (see `igrantio-api-webhooks`).
+`subject.id` and `data.verification.id` are the `presentationExchangeId`. The
+body holds the summary of the verification (`status`, `isVerified`,
+`responseMode`, `presentationDefinitionId`, ...), never the presented claims:
+read the verification for them.
+
+| Event type | Step |
+| --- | --- |
+| `ows.verifier.verification.created` | The verifier made a presentation request. |
+| `ows.verifier.verification.request_retrieved` | The wallet fetched the request object, the first time only. |
+| `ows.verifier.verification.presentation_received` | The wallet sent a presentation and the verifier checked it; `isVerified` tells the result. |
+| `ows.verifier.verification.declined` | The wallet answered with an error, for example the holder declined (`data.reason`). |
+| `ows.verifier.verification.revalidated` | You revalidated the presentation; `isVerified` tells the result. |
+| `ows.verifier.verification.deleted` | You deleted the verification. |
 
 ## Sandbox call style
 To run the Verifier operations in a sandbox organisation, call the API with an
@@ -369,8 +385,8 @@ call style.
   `cryptographicKeyIdentifier` names, and the X.509 certificate chain for
   `x509_san_dns`, `x509_hash` and `iso18013_7_annex_c`.
 - `igrantio-api-trust-anchor` - the trusted lists behind `trusted_authorities`.
-- `igrantio-api-webhooks` - the presentation events that tell you when the
-  holder answered.
+- `igrantio-api-webhooks` - the verifier events (`ows.verifier.verification.<event>`)
+  that tell you when the holder answered.
 - `igrantio-api-sandboxes` - the sandbox organisation lifecycle.
 
 ## Register your certificate in the trust list

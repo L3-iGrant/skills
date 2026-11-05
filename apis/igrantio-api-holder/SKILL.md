@@ -1,12 +1,12 @@
 ---
 name: igrantio-api-holder
-description: 'Holder group of the iGrant.io OpenID4VC API: take a credential offer into the organisation wallet or start a wallet-initiated issuance (receive, user PIN, deferred, authorization-code exchange), list, read, accept, configure auto-present, re-issue and delete held credentials, read credential issuer metadata and wallet unit status, and answer an OpenID4VP request with the V3 receive, filter and send operations, plus the wallet notification list and the Server-Sent Events stream. Use this skill when your organisation acts as the holder wallet, or whenever you need the exact holder path, correlation id, or enum value.'
+description: 'Holder group of the iGrant.io OpenID4VC API: take a credential offer into the organisation wallet or start a wallet-initiated issuance (receive, transaction code, deferred credential, authorisation code exchange), list, read, accept, re-issue and delete held credentials, read credential issuer metadata and wallet unit status, change the holder configuration, and answer an OpenID4VP request (receive, matching credentials, response), plus the wallet notification list, the notification stream (Server-Sent Events) and the holder webhook events. Use this skill when your organisation acts as the holder wallet, or whenever you need the exact holder path, correlation id, or enum value.'
 license: Apache-2.0
 metadata:
   categories: [ows-api]
   provider: iGrant.io
-  keywords: OpenID4VCI, OpenID4VP, holder wallet, organisation wallet, credential offer, wallet-initiated issuance, deferred credential, tx_code, auto present, DCQL selection, claim sets, notifications, SSE, Wallet Unit Attestation, EUDIW, EUBW
-  version: 2026.10.01
+  keywords: OpenID4VCI, OpenID4VP, holder wallet, organisation wallet, credential offer, wallet-initiated issuance, deferred credential, tx_code, transaction code, DCQL selection, claim sets, notifications, SSE, holder events, Wallet Unit Attestation, EUDIW, EUBW
+  version: 2026.11.01
   source-doc: https://docs.igrant.io/docs/developer-apis/
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0, DCQL, SD-JWT-VC, mso_mdoc, Server-Sent-Events
   auth: Organisation Wallet Suite API key (Authorization "ApiKey <YOUR_API_KEY>")
@@ -17,9 +17,9 @@ metadata:
 
 ## When to use
 Use this skill when your organisation holds credentials in its own wallet. It
-covers the 28 operations of the **Holder** group: the holder global
-configuration, credential receipt and lifecycle, issuer metadata, wallet unit
-status, the presentation flow, and the wallet notifications.
+covers the **Holder** group: the holder configuration, credential receipt and
+lifecycle, issuer metadata, wallet unit status, the presentation flow, and the
+wallet notifications. Every path starts with `/v4/config/ows/holder`.
 
 Use it when you must:
 - take an `openid-credential-offer://` URI into the wallet, and finish a flow
@@ -27,8 +27,7 @@ Use it when you must:
 - start an issuance from the wallet side, with the issuer and the credential
   configurations that you want;
 - list, read, accept, or delete the credentials of the wallet;
-- turn automatic presentation on or off for a credential type;
-- answer an `openid4vp://` request: receive it, filter the matching credentials,
+- answer an `openid4vp://` request: receive it, read the matching credentials,
   and send the selection;
 - watch credential lifecycle events over the notification stream.
 
@@ -65,10 +64,10 @@ Record the answers before you write code.
 
 ## Protocol scope
 - The wallet implements **OpenID4VCI 1.0** for issuance and **OpenID4VP 1.0**
-  with **DCQL** for presentation. Send a presentation with the **V3** operations.
-  A credential record has the `version` `version_01`.
+  with **DCQL** for presentation. A credential record has the `version`
+  `version_01`.
 - Presentation Exchange is not a supported surface of an iGrant.io verifier. The
-  filter and send operations still hold an `inputDescriptors` shape, and it
+  matching-credentials and response operations also hold an `inputDescriptors` shape, and it
   applies only to a request from an outside verifier that still sends a DIF
   Presentation Exchange definition. Use the DCQL shape for every iGrant.io
   request.
@@ -100,23 +99,23 @@ The API key stays on your server. The browser never holds it.
 ## Correlation ids
 | Id | Where it comes from | What it names |
 | --- | --- | --- |
-| `credentialId` | receive credential response (`credentialId`, and `id` holds the same value) | the credential record in this wallet. Every `/credential/{credentialId}/...` path uses it. |
-| `credentialExchangeId` | receive credential response | the OID4VCI exchange on the issuer side. Use it to line the record up with the issuance history of the issuer. |
-| `presentationId` | V3 receive verification response (`presentationId`, and `id` holds the same value) | the presentation record in this wallet. The filter, send, read and delete paths use it. |
-| `presentationExchangeId` | V3 receive verification response | the OpenID4VP exchange on the verifier side. |
+| `credentialId` | receive credential response (`credentialId`, and `id` holds the same value) | the credential record in this wallet. Every `/credentials/{credentialId}/...` path uses it, and it is the `subject.id` of the `ows.holder.credential.*` events. |
+| `credentialExchangeId` | receive credential response | the OID4VCI exchange on the issuer side. Use it to line the record up with the issuances of the issuer. |
+| `presentationId` | receive presentation request response (`presentationId`, and `id` holds the same value) | the presentation record in this wallet. The matching-credentials, response, read and delete paths use it, and it is the `subject.id` of the `ows.holder.presentation.*` events. |
+| `presentationExchangeId` | receive presentation request response | the OpenID4VP exchange on the verifier side. |
 | `credential.presentationId` | receive credential response | the presentation that a dynamic credential request asks for during issuance. |
 
 ## Endpoint reference
 
-### Holder global configuration
-An organisation has one holder global configuration. The wallet makes it with
-the default values when it deploys the organisation wallet, so there is no
-create, list or delete operation and the path has no identifier.
+### Holder configuration
+An organisation has one holder configuration. The wallet makes it with the
+default values when it deploys the organisation wallet, so there is no create,
+list or delete operation and the path has no identifier.
 
 | Method | Path | Purpose | Documentation |
 | --- | --- | --- | --- |
-| `GET` | `/v2/config/digital-wallet/openid/holder/global-configuration` | Read the holder global configuration. | [Read holder global configuration](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-holder-global-configuration/) |
-| `PUT` | `/v2/config/digital-wallet/openid/holder/global-configuration` | Update the holder global configuration. | [Update holder global configuration](https://docs.igrant.io/docs/openid4vc-api/config-update-digital-wallet-open-id-holder-global-configuration/) |
+| `GET` | `/v4/config/ows/holder/configuration` | Read the holder configuration. | [Read holder configuration](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-holder-global-configuration/) |
+| `PATCH` | `/v4/config/ows/holder/configuration` | Change the holder configuration (partial update). | [Update holder configuration](https://docs.igrant.io/docs/openid4vc-api/config-update-digital-wallet-open-id-holder-global-configuration/) |
 
 Both operations answer `{"globalConfiguration": {...}}`. The fields are
 `supportCredentialEncryption` (default `false`),
@@ -125,24 +124,24 @@ default `86400`; `0` stops the automatic checks), `redirectUrl` (an absolute
 URL; when it is empty, the wallet uses its own callback URL, and the answer
 shows that URL), and `requirePushedAuthorizationRequests` (default `false`, and
 `true` makes the wallet use a Pushed Authorization Request in the Authorization
-Code Flow). The update operation is partial: a field that you leave out keeps
-its stored value. `supportCredentialEncryption` cannot be `null`.
+Code Flow). The update operation (`PATCH`) is partial: a field that you leave
+out keeps its stored value. `supportCredentialEncryption` cannot be `null`. The
+envelope key of the body stays `globalConfiguration`.
 
 ### Receive and hold credentials
 
 | Method | Path | Purpose | Documentation |
 | --- | --- | --- | --- |
-| `POST` | `/v2/config/digital-wallet/openid/sdjwt/credential/receive` | Take a Credential Offer into the wallet, or start a wallet-initiated issuance, and start the OID4VCI flow. | [Receive credential](https://docs.igrant.io/docs/openid4vc-api/config-receive-digital-wallet-open-id-credential/) |
-| `PUT` | `/v2/config/digital-wallet/openid/sdjwt/credential/{credentialId}/user-pin` | Supply the transaction code of a Pre-Authorized Code Flow. | [Receive credential with user PIN](https://docs.igrant.io/docs/openid4vc-api/config-receive-user-pin-for-digital-wallet-open-id-credential/) |
-| `PUT` | `/v2/config/digital-wallet/openid/sdjwt/credential/{credentialId}/receive-deferred` | Fetch a credential from the Deferred Credential Endpoint. No request body. | [Receive deferred credential](https://docs.igrant.io/docs/openid4vc-api/config-receive-deferred-digital-wallet-open-id-credential/) |
-| `POST` | `/v2/config/digital-wallet/openid/sdjwt/credential/exchange-code` | Exchange an authorization code for the token and the credential. | [Exchange code and receive credential](https://docs.igrant.io/docs/openid4vc-api/config-digital-wallet-open-id-exchange-code-and-receive-credential/) |
-| `PUT` | `/v2/config/digital-wallet/openid/sdjwt/credential/{credentialId}/accept` | Accept a received credential and send the OID4VCI notification to the issuer. No request body. | [Accept credential](https://docs.igrant.io/docs/openid4vc-api/config-accept-digital-wallet-open-id-credential/) |
-| `PUT` | `/v2/config/digital-wallet/openid/sdjwt/credential/{credentialId}/configure` | Turn automatic presentation on or off for an accepted credential and the other credentials of the same type. | [Configure auto presentation](https://docs.igrant.io/docs/openid4vc-api/config-configure-auto-present-for-digital-wallet-open-id-credential/) |
-| `PUT` | `/v2/config/digital-wallet/openid/sdjwt/credential/{credentialId}/request` | Ask the issuer for a new credential when the held one expires. No request body. | [Request credential re-issuance](https://docs.igrant.io/docs/openid4vc-api/config-request-digital-wallet-open-id-credential-reissuance/) |
-| `GET` | `/v2/config/digital-wallet/openid/sdjwt/credential/{credentialId}` | Read one credential record. | [Read credential](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-credential/) |
-| `GET` | `/v2/config/digital-wallet/openid/sdjwt/credential/{credentialId}/revocation-status` | Check the revocation status of a held credential with the issuer. | [Read credential revocation status](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-credential-revocation-status/) |
-| `DELETE` | `/v2/config/digital-wallet/openid/sdjwt/credential/{credentialId}` | Remove a credential, with every copy of its batch, from the wallet. | [Delete credential](https://docs.igrant.io/docs/openid4vc-api/config-delete-digital-wallet-open-id-credential/) |
-| `GET` | `/v2/config/digital-wallet/openid/sdjwt/credentials` | List the credentials of the wallet. Filter with `expired`, `credentialStatus` (comma-separated), `vct`, `doctype`, `type`, `ids` (comma-separated), `search`, `sortBy` (`updatedAt` default, or `createdAt`), `sortOrder`, `groupBatches`, `offset` and `limit`. | [List credential](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-credential/) |
+| `POST` | `/v4/config/ows/holder/credentials` | Take a Credential Offer into the wallet, or start a wallet-initiated issuance, and start the OID4VCI flow. | [Receive credential](https://docs.igrant.io/docs/openid4vc-api/config-receive-digital-wallet-open-id-credential/) |
+| `PUT` | `/v4/config/ows/holder/credentials/{credentialId}/transaction-code` | Supply the transaction code of a Pre-Authorized Code Flow. | [Receive credential with transaction code](https://docs.igrant.io/docs/openid4vc-api/config-receive-user-pin-for-digital-wallet-open-id-credential/) |
+| `PUT` | `/v4/config/ows/holder/credentials/{credentialId}/deferred-credential` | Fetch a credential from the Deferred Credential Endpoint. No request body. | [Receive deferred credential](https://docs.igrant.io/docs/openid4vc-api/config-receive-deferred-digital-wallet-open-id-credential/) |
+| `POST` | `/v4/config/ows/holder/authorisation-code-exchanges` | Exchange an authorisation code for the token and the credential. | [Exchange code and receive credential](https://docs.igrant.io/docs/openid4vc-api/config-digital-wallet-open-id-exchange-code-and-receive-credential/) |
+| `PUT` | `/v4/config/ows/holder/credentials/{credentialId}/acceptance` | Accept a received credential and send the OID4VCI notification to the issuer. No request body. | [Accept credential](https://docs.igrant.io/docs/openid4vc-api/config-accept-digital-wallet-open-id-credential/) |
+| `PUT` | `/v4/config/ows/holder/credentials/{credentialId}/reissuance` | Ask the issuer for a new credential when the held one expires. No request body. | [Request credential re-issuance](https://docs.igrant.io/docs/openid4vc-api/config-request-digital-wallet-open-id-credential-reissuance/) |
+| `GET` | `/v4/config/ows/holder/credentials/{credentialId}` | Read one credential record. | [Read credential](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-credential/) |
+| `GET` | `/v4/config/ows/holder/credentials/{credentialId}/revocation-status` | Check the revocation status of a held credential with the issuer. | [Read credential revocation status](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-credential-revocation-status/) |
+| `DELETE` | `/v4/config/ows/holder/credentials/{credentialId}` | Remove a credential, with every copy of its batch, from the wallet. | [Delete credential](https://docs.igrant.io/docs/openid4vc-api/config-delete-digital-wallet-open-id-credential/) |
+| `GET` | `/v4/config/ows/holder/credentials` | List the credentials of the wallet. Filter with `expired`, `credentialStatus` (comma-separated), `vct`, `doctype`, `type`, `ids` (comma-separated), `search`, `sortBy` (`updatedAt` default, or `createdAt`), `sortOrder`, `groupBatches`, `offset` and `limit`. | [List credential](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-credential/) |
 
 The wallet has no separate deny operation. To refuse an offer, delete the
 credential record, or delete its `credential_acked` notification (see
@@ -156,39 +155,37 @@ Wallet Unit Attestation.
 
 | Method | Path | Purpose | Documentation |
 | --- | --- | --- | --- |
-| `GET` | `/v2/config/digital-wallet/openid/credential-issuer` | Read and check the Credential Issuer Metadata of an issuer. | [Read credential issuer metadata](https://docs.igrant.io/docs/openid4vc-api/config-digital-wallet-open-id-read-issuer-metadata/) |
-| `GET` | `/v2/config/digital-wallet/openid/wallet-unit/status` | Read the wallet unit status of this organisation. | [Read wallet unit status](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-wallet-unit-status/) |
+| `GET` | `/v4/config/ows/holder/credential-issuer-metadata` | Read and check the Credential Issuer Metadata of an issuer. | [Read credential issuer metadata](https://docs.igrant.io/docs/openid4vc-api/config-digital-wallet-open-id-read-issuer-metadata/) |
+| `GET` | `/v4/config/ows/holder/wallet-unit/status` | Read the wallet unit status of this organisation. | [Read wallet unit status](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-wallet-unit-status/) |
 
 ### Presentations
 
 | Method | Path | Purpose | Documentation |
 | --- | --- | --- | --- |
-| `POST` | `/v3/config/digital-wallet/openid/sdjwt/verification/receive` | Take an Authorization Request URI and make a presentation record. | [Receive verification](https://docs.igrant.io/docs/openid4vc-api/config-receive-digital-wallet-open-id-verification-v-3/) |
-| `POST` | `/v2/config/digital-wallet/openid/sdjwt/verification/{presentationId}/filter` | List the credentials of the wallet that answer each credential query. No request body. | [Filter verification](https://docs.igrant.io/docs/openid4vc-api/config-filter-digital-wallet-open-id-verification/) |
-| `POST` | `/v3/config/digital-wallet/openid/sdjwt/verification/{presentationId}/send` | Send the selected credentials as the Verifiable Presentation. | [Send verification](https://docs.igrant.io/docs/openid4vc-api/config-send-digital-wallet-open-id-verification-presentation-v-3/) |
-| `GET` | `/v3/config/digital-wallet/openid/sdjwt/verification/{presentationId}` | Read one presentation record. | [Read verification](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-verification-v-3/) |
-| `GET` | `/v3/config/digital-wallet/openid/sdjwt/verifications` | List the presentation records. Filter with `status`, `search`, `sortOrder`, `offset` and `limit`. | [List verification](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-verification-v-3/) |
-| `DELETE` | `/v2/config/digital-wallet/openid/sdjwt/verification/{presentationId}` | Delete a presentation record. The answer is HTTP 204 with no body. | [Delete verification](https://docs.igrant.io/docs/openid4vc-api/config-delete-digital-wallet-open-id-verification/) |
+| `POST` | `/v4/config/ows/holder/presentations` | Take an Authorization Request URI and make a presentation record. | [Receive presentation request](https://docs.igrant.io/docs/openid4vc-api/config-receive-digital-wallet-open-id-verification-v-3/) |
+| `POST` | `/v4/config/ows/holder/presentations/{presentationId}/matching-credentials` | List the credentials of the wallet that answer each credential query. No request body. | [Read matching credentials](https://docs.igrant.io/docs/openid4vc-api/config-filter-digital-wallet-open-id-verification/) |
+| `POST` | `/v4/config/ows/holder/presentations/{presentationId}/response` | Send the selected credentials as the Verifiable Presentation. | [Send presentation response](https://docs.igrant.io/docs/openid4vc-api/config-send-digital-wallet-open-id-verification-presentation-v-3/) |
+| `GET` | `/v4/config/ows/holder/presentations/{presentationId}` | Read one presentation record. | [Read presentation](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-verification-v-3/) |
+| `GET` | `/v4/config/ows/holder/presentations` | List the presentation records. Filter with `status`, `search`, `sortOrder`, `offset` and `limit`. | [List presentations](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-verification-v-3/) |
+| `DELETE` | `/v4/config/ows/holder/presentations/{presentationId}` | Delete a presentation record. The answer is HTTP 204 with no body. | [Delete presentation](https://docs.igrant.io/docs/openid4vc-api/config-delete-digital-wallet-open-id-verification/) |
 
-The filter and delete operations have no V3 version. Use them also for a record
-that the V3 receive operation made.
 
 ### Notifications
 
 | Method | Path | Purpose | Documentation |
 | --- | --- | --- | --- |
-| `GET` | `/v2/config/digital-wallet/openid/notifications` | List the wallet notifications. Filter with `status`, `notificationType`, `search`, `sortOrder`, `offset` and `limit`. | [List notification](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-notification/) |
-| `GET` | `/v2/config/digital-wallet/openid/notifications/sse` | Stream new notifications over Server-Sent Events. | [Stream notifications (SSE)](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-notification-sse/) |
+| `GET` | `/v4/config/ows/holder/notifications` | List the wallet notifications. Filter with `status`, `notificationType`, `search`, `sortOrder`, `offset` and `limit`. | [List notification](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-notification/) |
+| `GET` | `/v4/config/ows/holder/notification-stream` | Stream new notifications over Server-Sent Events. | [Stream notifications (SSE)](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-notification-sse/) |
 | `POST` | `/v2/config/sse-ticket` | Get a one-time ticket that opens the SSE stream from a browser. | [Create SSE ticket](https://docs.igrant.io/docs/openid4vc-api/config-create-sse-ticket/) |
-| `GET` | `/v2/config/digital-wallet/openid/notification/{notificationId}` | Read one notification. | [Read notification](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-notification/) |
-| `PUT` | `/v2/config/digital-wallet/openid/notification/{notificationId}` | Mark one notification as read. | [Update notification](https://docs.igrant.io/docs/openid4vc-api/config-update-digital-wallet-open-id-notification/) |
-| `DELETE` | `/v2/config/digital-wallet/openid/notification/{notificationId}` | Delete one notification. | [Delete notification](https://docs.igrant.io/docs/openid4vc-api/config-delete-digital-wallet-open-id-notification/) |
-| `DELETE` | `/v2/config/digital-wallet/openid/notifications` | Delete every notification. | [Delete all notifications](https://docs.igrant.io/docs/openid4vc-api/config-delete-all-digital-wallet-open-id-notification/) |
+| `GET` | `/v4/config/ows/holder/notifications/{notificationId}` | Read one notification. | [Read notification](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-notification/) |
+| `PUT` | `/v4/config/ows/holder/notifications/{notificationId}` | Mark one notification as read. | [Update notification](https://docs.igrant.io/docs/openid4vc-api/config-update-digital-wallet-open-id-notification/) |
+| `DELETE` | `/v4/config/ows/holder/notifications/{notificationId}` | Delete one notification. | [Delete notification](https://docs.igrant.io/docs/openid4vc-api/config-delete-digital-wallet-open-id-notification/) |
+| `DELETE` | `/v4/config/ows/holder/notifications` | Delete every notification. | [Delete all notifications](https://docs.igrant.io/docs/openid4vc-api/config-delete-all-digital-wallet-open-id-notification/) |
 
 ## Key fields
 
 ### Receive a credential
-`POST /v2/config/digital-wallet/openid/sdjwt/credential/receive` takes one of
+`POST /v4/config/ows/holder/credentials` takes one of
 two bodies:
 
 - **An offer from an issuer.** `credentialOffer`: the full
@@ -201,9 +198,7 @@ two bodies:
   `credential_configurations_supported`; read them with the issuer metadata
   operation). The wallet makes the offer itself and starts the Authorization
   Code Flow: open `authorizationRequest` of the answer in the browser of the
-  user, then call the exchange-code operation.
-
-`autoPresent` (default `false`) is optional in both bodies.
+  user, then call the authorisation code exchange operation.
 
 The response holds `credential`: one object, an array when the offer carries
 more than one credential configuration, or `null`. Fields to read:
@@ -215,7 +210,7 @@ more than one credential configuration, or `null`. Fields to read:
   holds the credential), `credential_accepted`, or `credential_archived` (a
   Wallet Unit Attestation that a newer one replaced).
 - `userPinRequired` and `txCode` (`length`, `input_mode`, `description`) - read
-  them to know whether you must call the user PIN operation, and which length and
+  them to know whether you must call the transaction code operation, and which length and
   character set the issuer expects.
 - `deferredEndpoint`, `acceptanceToken` and `deferredInterval` (the wait in
   seconds that the issuer asks for) - set for a deferred issuance.
@@ -230,7 +225,7 @@ more than one credential configuration, or `null`. Fields to read:
   that the credential is bound to. `trustAnchor` and `kid` repeat them.
 - `issuer` (`name`, `location`, `cover`, `logo`, `description`),
   `credentialIssuer`, `credentialConfigurations`, `credential`,
-  `credentialToken`, `issuedAt`, `autoPresent`, `presentationId`,
+  `credentialToken`, `issuedAt`, `presentationId`,
   `isWalletUnitAttestation`, `isVerifiedWithTrustList`, `trustServiceProvider`,
   `requiresEncryption`, `expiredCredentials`, `expiredCredentialTokens`,
   `legalPidAttestation`, `legalPidAttestationPop`, `legalPidVerified`.
@@ -241,16 +236,16 @@ A field with no value comes back with its empty value: `""`, `0`, `false`, or
 
 ### Finish a flow that needs more input
 - **Transaction code.**
-  `PUT /v2/config/digital-wallet/openid/sdjwt/credential/{credentialId}/user-pin`
-  takes the mandatory `userPin` as a JSON string. The wallet strips the leading
+  `PUT /v4/config/ows/holder/credentials/{credentialId}/transaction-code`
+  takes the mandatory `transactionCode` as a JSON string. The wallet strips the leading
   and trailing spaces, and the remaining value must hold 4 to 12 characters.
 - **Deferred credential.**
-  `PUT /v2/config/digital-wallet/openid/sdjwt/credential/{credentialId}/receive-deferred`
+  `PUT /v4/config/ows/holder/credentials/{credentialId}/deferred-credential`
   has no request body. When the issuer is not ready, the answer is the record
   with `credentialStatus` `credential_pending`: call again after
   `deferredInterval` seconds.
 - **Authorization code.**
-  `POST /v2/config/digital-wallet/openid/sdjwt/credential/exchange-code` takes
+  `POST /v4/config/ows/holder/authorisation-code-exchanges` takes
   the mandatory `code` and `state` from the redirect of the authorization
   server. `credentialIds` names the credential records to complete, and each
   must belong to that `state`; without it, the wallet finds the records by
@@ -259,12 +254,6 @@ A field with no value comes back with its empty value: `""`, `0`, `false`, or
   of that server.
 - **Accept.** The record must be in `credential_acked`. The wallet sends the
   `credential_accepted` notification to the issuer, once for a batch.
-- **Auto present.**
-  `PUT /v2/config/digital-wallet/openid/sdjwt/credential/{credentialId}/configure`
-  takes the mandatory boolean `autoPresent`. The record must be in
-  `credential_accepted`. The wallet sets the same value on every active
-  credential of the same type (the same `vct`, doctype or W3C `type`). `false`
-  makes the holder approve each presentation.
 
 ### List and check held credentials
 The list answer holds `credential` (an array) and `pagination`. Wallet Unit
@@ -277,7 +266,7 @@ The revocation status operation reads the status list of the issuer, updates
 the status list of the issuer is not available.
 
 ### Read credential issuer metadata
-`GET /v2/config/digital-wallet/openid/credential-issuer` takes the mandatory
+`GET /v4/config/ows/holder/credential-issuer-metadata` takes the mandatory
 `credentialIssuer` query parameter: the Credential Issuer Identifier, or the URL
 of its metadata document. `version` is optional, and its only value is
 `version_01` (the default). The wallet reads the metadata from the standard
@@ -291,16 +280,16 @@ gets `Not Discoverable` for `location` and `description` when the issuer gives
 no value. `credential_configurations_supported` passes through unchanged.
 
 ### Read wallet unit status
-`GET /v2/config/digital-wallet/openid/wallet-unit/status` returns `status`:
+`GET /v4/config/ows/holder/wallet-unit/status` returns `status`:
 `not_installed` (no wallet deployment), `installed` (deployed, but no valid
 Wallet Unit Attestation), `operational` (a valid Wallet Unit Attestation, but no
 LPID credential), or `valid` (both).
 
 ### Answer a presentation request
-**1. Receive.** `POST /v3/config/digital-wallet/openid/sdjwt/verification/receive`
+**1. Receive.** `POST /v4/config/ows/holder/presentations`
 takes the mandatory `vpTokenQrCode`: the `openid4vp://` Authorization Request URI
-that the holder scanned or opened. `autoPresent` (default `false`) makes the
-wallet send at once with the matching credentials that have auto-present on.
+that the holder scanned or opened. The holder approves each presentation:
+the wallet sends nothing before the response operation.
 
 The response holds `presentation`. Fields to read: `presentationId`,
 `presentationExchangeId`, `status` (`presentation_pending` or
@@ -313,8 +302,8 @@ The response holds `presentation`. Fields to read: `presentationId`,
 `trustServiceProvider`, `dataAgreement`, `vpToken` and `presentation` (the
 credentials that the wallet shared).
 
-**2. Filter.**
-`POST /v2/config/digital-wallet/openid/sdjwt/verification/{presentationId}/filter`
+**2. Matching credentials.**
+`POST /v4/config/ows/holder/presentations/{presentationId}/matching-credentials`
 has no request body; the wallet ignores one if you send it. It refuses a record
 that is already `presentation_acked`. The response holds `credentials` when the
 verifier sent a DCQL query, which is the usual answer. It holds
@@ -330,8 +319,8 @@ holds `credentialId`, its `vct`, `doctype` or `type`, and `match` (the claims
 that answer the query). A Presentation Exchange entry holds `id`, `name`,
 `purpose` and `matchedCredentials`.
 
-**3. Send.**
-`POST /v3/config/digital-wallet/openid/sdjwt/verification/{presentationId}/send`
+**3. Response.**
+`POST /v4/config/ows/holder/presentations/{presentationId}/response`
 takes one of two shapes. Use the DCQL shape when the presentation record holds a
 `dcqlQuery`:
 
@@ -347,7 +336,7 @@ takes one of two shapes. Use the DCQL shape when the presentation record holds a
 ```
 
 - `credentials` is mandatory, and each entry needs `id`: the DCQL credential
-  query that it answers. Use the `id` that the filter operation returned, or
+  query that it answers. Use the `id` that the matching-credentials operation returned, or
   `dcqlQuery.credentials[].id` from the record.
 - Give `credentialId` for one credential, or `credentialIds` for a query that
   sets `multiple` to `true`. More than one credential for a query without
@@ -381,13 +370,13 @@ Both delete operations answer HTTP 204 with no body. When you delete a
 `credential_acked`, the wallet also deletes that credential: this declines the
 offer.
 
-**The SSE stream.** `GET /v2/config/digital-wallet/openid/notifications/sse`
+**The SSE stream.** `GET /v4/config/ows/holder/notification-stream`
 keeps the connection open and writes one frame for each new notification.
 
 - From your backend, send the `Authorization` header. The browser `EventSource`
   API cannot set request headers: let your backend call
   `POST /v2/config/sse-ticket` with the body
-  `{"path": "/v2/config/digital-wallet/openid/notifications/sse"}`. The answer
+  `{"path": "/v4/config/ows/holder/notification-stream"}`. The answer
   is HTTP 201 `{"ticket": "...", "expiresIn": 30}`. The browser opens the
   stream with `?ticket=<ticket>`. A ticket is valid for 30 seconds and for one
   connection, so get a new one for each connection and each reconnect. An
@@ -408,6 +397,29 @@ keeps the connection open and writes one frame for each new notification.
 - A status change or a delete makes no frame. Use the list operation for the
   notifications that the wallet holds already.
 
+### Holder webhook events
+A webhook can subscribe to the holder events (see `igrantio-api-webhooks`).
+The body names the resource in `subject` and holds its summary, never the
+credential, the claims or the presentation:
+
+| Event type | Step |
+| --- | --- |
+| `ows.holder.credential.created` | A new held credential waits for a transaction code, an authorisation code or a deferred credential. |
+| `ows.holder.credential.received` | The wallet received the credential. |
+| `ows.holder.credential.reissued` | The wallet received a new version of the credential. |
+| `ows.holder.credential.accepted` | You accepted the held credential. |
+| `ows.holder.credential.revoked`, `suspended`, `reactivated` | A status check found a new revocation status at the issuer. |
+| `ows.holder.credential.deleted` | You deleted the held credential. |
+| `ows.holder.presentation.request_received` | The wallet received a presentation request. |
+| `ows.holder.presentation.sent` | The wallet sent the presentation to the verifier. |
+| `ows.holder.presentation.deleted` | You deleted the presentation. |
+
+`data.credential` holds `id`, `credentialFormat`, `credentialConfigurationId`,
+`credentialIssuer`, `credentialStatus`, `revocationStatus` (`operational`,
+`revoked`, `suspended` or `null`), `isWalletUnitAttestation`, `batchId`,
+`refreshCount` and the times. `data.presentation` holds `id`, `status`,
+`clientId`, `clientMetadata.clientName` and the times.
+
 ## Sandbox call style
 To work in a sandbox organisation, call the API with an API key that is bound
 to that sandbox organisation. The service takes the sandbox organisation from
@@ -420,16 +432,18 @@ there.
 
 Holder functionality is split for sandbox organisations:
 
-- **The v2 holder credential operations do not work in a sandbox context.**
-  This covers receive, receive-deferred, user PIN, exchange-code, accept,
-  auto-present, list, read, delete, reissuance, the issuer metadata read, and
-  the holder-side filter and verification delete. When the call carries a
-  sandbox context (a bound API key), the service rejects it with HTTP 400
-  "Holder functionalities for sandbox organisation is disabled". Call these
-  operations with a key of the main wallet.
-- **The v3 presentation operations support the sandbox context** (receive,
-  read, send, list). A bound key runs them in its sandbox organisation.
-- The holder global configuration, the revocation status check, and the
+- **The held credential operations do not work in a sandbox context.**
+  This covers receive, deferred credential, transaction code, authorisation
+  code exchange, acceptance, list, read, delete, reissuance, the issuer
+  metadata read, the matching credentials of a presentation and the
+  presentation delete. When the call carries a sandbox context (a bound API
+  key), the service rejects it with HTTP 400 "Holder functionalities for
+  sandbox organisation is disabled". Call these operations with a key of the
+  main wallet.
+- **The other presentation operations support the sandbox context**
+  (receive, read, response, list). A bound key runs them in its sandbox
+  organisation.
+- The holder configuration, the revocation status check, and the
   notification operations also support the sandbox context in the same way.
 
 Read `igrantio-api-sandboxes` for the sandbox organisation lifecycle and the

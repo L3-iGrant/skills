@@ -6,7 +6,7 @@ metadata:
   categories: [ows-api, education]
   provider: iGrant.io
   keywords: trust anchor, trust authority, trust list, ETSI_TL, ETSI_TL_JSON, X509_CA, ETSI TS 119 612, ETSI TS 119 602, LoTE, X.509 CA, issuer validation, verifier validation, OpenID4VP, OID4VCI, EUDIW, eIDAS2
-  version: 2026.10.01
+  version: 2026.11.01
   source-doc: https://docs.igrant.io/docs/developer-apis/
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0, ETSI TS 119 612 trust lists, ETSI TS 119 602 lists of trusted entities
   auth: OWS API key (Authorization "ApiKey <YOUR_API_KEY>")
@@ -59,12 +59,12 @@ Record the answers before you write code.
 
 | Method | Path | Purpose | Docs |
 | --- | --- | --- | --- |
-| POST | `/v2/config/digital-wallet/openid/trust-authority` | Create a trust authority | [config-create-digital-wallet-open-id-trust-authority](https://docs.igrant.io/docs/openid4vc-api/config-create-digital-wallet-open-id-trust-authority/) |
-| GET | `/v2/config/digital-wallet/openid/trust-authorities` | List the trust authorities of the organisation | [config-list-digital-wallet-open-id-trust-authority](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-trust-authority/) |
-| GET | `/v2/config/digital-wallet/openid/trust-authority/{trustAuthorityId}` | Read 1 trust authority | [config-read-digital-wallet-open-id-trust-authority](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-trust-authority/) |
-| PUT | `/v2/config/digital-wallet/openid/trust-authority/{trustAuthorityId}` | Update a trust authority (partial) | [config-update-digital-wallet-open-id-trust-authority](https://docs.igrant.io/docs/openid4vc-api/config-update-digital-wallet-open-id-trust-authority/) |
-| PUT | `/v2/config/digital-wallet/openid/trust-authority/{trustAuthorityId}/disable` | Enable or disable a trust authority | [config-toggle-digital-wallet-open-id-trust-authority](https://docs.igrant.io/docs/openid4vc-api/config-toggle-digital-wallet-open-id-trust-authority/) |
-| DELETE | `/v2/config/digital-wallet/openid/trust-authority/{trustAuthorityId}` | Delete a trust authority | [config-delete-digital-wallet-open-id-trust-authority](https://docs.igrant.io/docs/openid4vc-api/config-delete-digital-wallet-open-id-trust-authority/) |
+| POST | `/v4/config/ows/trust/authorities` | Create a trust authority | [config-create-digital-wallet-open-id-trust-authority](https://docs.igrant.io/docs/openid4vc-api/config-create-digital-wallet-open-id-trust-authority/) |
+| GET | `/v4/config/ows/trust/authorities` | List the trust authorities of the organisation | [config-list-digital-wallet-open-id-trust-authority](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-trust-authority/) |
+| GET | `/v4/config/ows/trust/authorities/{trustAuthorityId}` | Read 1 trust authority | [config-read-digital-wallet-open-id-trust-authority](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-trust-authority/) |
+| PUT | `/v4/config/ows/trust/authorities/{trustAuthorityId}` | Update a trust authority (partial) | [config-update-digital-wallet-open-id-trust-authority](https://docs.igrant.io/docs/openid4vc-api/config-update-digital-wallet-open-id-trust-authority/) |
+| PUT | `/v4/config/ows/trust/authorities/{trustAuthorityId}/status` | Enable or disable a trust authority | [config-toggle-digital-wallet-open-id-trust-authority](https://docs.igrant.io/docs/openid4vc-api/config-toggle-digital-wallet-open-id-trust-authority/) |
+| DELETE | `/v4/config/ows/trust/authorities/{trustAuthorityId}` | Delete a trust authority | [config-delete-digital-wallet-open-id-trust-authority](https://docs.igrant.io/docs/openid4vc-api/config-delete-digital-wallet-open-id-trust-authority/) |
 
 ## Key fields
 
@@ -98,9 +98,9 @@ nothing.
 - Every answer wraps one record as `{ "trustAuthority": { … } }`. The stored
   object adds `id` (a UUID), `disabled` (boolean), `createdAt` and `updatedAt`
   (numbers, Unix seconds). `name` is an empty string when none was given.
-- The toggle operation takes `{ "disabled": true }` - give the **wanted end
-  state** as a JSON boolean, not a flip - and answers with the full updated
-  object. A disabled trust authority is not used for credential or verifier
+- The status operation (`PUT .../authorities/{trustAuthorityId}/status`) takes
+  `{ "isEnabled": false }` - give the **wanted end state** as a JSON boolean,
+  not a flip - and answers with the full updated object. A disabled trust authority is not used for credential or verifier
   trust validation.
 - Delete answers with `200` and **no response body**. After the delete the
   service no longer uses that trust authority to validate issuers and
