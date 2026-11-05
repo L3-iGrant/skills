@@ -3,17 +3,19 @@ import type { EventStore } from "./eventStore";
 
 /**
  * Server-Sent Events transport, mounted at /webhook:
- *   GET    /webhook/sse/:exchangeId  - hold open, emit the stored event when it appears
- *   DELETE /webhook/:exchangeId      - browser consume-and-delete after processing
+ *   GET    /webhook/sse/:resourceId  - hold open, emit the stored event when it appears
+ *   DELETE /webhook/:resourceId      - browser consume-and-delete after processing
  *
+ * `resourceId` is the `subject.id` of the webhook events: the issuance id (`id`
+ * of the create issuance answer) or the verification id (`presentationExchangeId`).
  * The frontend (igrantio-frontend-client) opens `${base}/sse/${id}` and deletes
  * `${base}/${id}` where base = the /webhook URL.
  */
 export function sseRouter(store: EventStore): Router {
   const r = Router();
 
-  r.get("/sse/:exchangeId", (req, res) => {
-    const { exchangeId } = req.params;
+  r.get("/sse/:resourceId", (req, res) => {
+    const { resourceId } = req.params;
 
     res.writeHead(200, {
       "Content-Type": "text/event-stream",
@@ -25,14 +27,17 @@ export function sseRouter(store: EventStore): Router {
 
     let closed = false;
     let ticks = 0;
+    let lastSent = "";
 
     const interval = setInterval(async () => {
       if (closed) return;
       ticks += 1;
       try {
-        const event = await store.latest(exchangeId);
-        if (event) {
+        const event = await store.latest(resourceId);
+        if (event && event.id !== lastSent) {
+          // The event body as the webhook delivered it, plus receivedAt.
           res.write(`data: ${JSON.stringify(event)}\n\n`);
+          lastSent = event.id;
         } else if (ticks % 20 === 0) {
           res.write(":keepalive\n\n"); // comment heartbeat every ~20s
         }
@@ -47,9 +52,9 @@ export function sseRouter(store: EventStore): Router {
     });
   });
 
-  r.delete("/:exchangeId", async (req, res) => {
-    await store.delete(req.params.exchangeId);
-    res.json({ message: `Event ${req.params.exchangeId} deleted` });
+  r.delete("/:resourceId", async (req, res) => {
+    await store.delete(req.params.resourceId);
+    res.json({ message: `Event of ${req.params.resourceId} deleted` });
   });
 
   return r;

@@ -1,12 +1,12 @@
 ---
 name: igrantio-backend-webhooks
-description: 'Composable building block: register, receive, and verify iGrant.io OWS digital-wallet webhooks for OpenID4VCI issuance and OpenID4VP verification events. Idempotently create a webhook via config-create-webhook (skip if one already targets the payloadUrl), verify the X-iGrant-Signature HMAC-SHA256, map each topic to its exchange id (CredentialExchangeId / presentationExchangeId), and store the event. Use to add OWS webhook handling to any Node/TypeScript backend.'
+description: 'Composable building block: register, receive, and verify the iGrant.io OWS webhook events of the wallet for OpenID4VCI issuance (ows.issuer.issuance.*) and OpenID4VP verification (ows.verifier.verification.*). Idempotently create a webhook via config-create-webhook (skip if one already targets the payloadUrl), verify the X-IGrant-Signature t=,v1= HMAC-SHA256 over the exact body bytes, and store each event under its resource id (subject.id: the issuance id or the verification id). Use to add OWS webhook handling to any Node/TypeScript backend.'
 license: Apache-2.0
 metadata:
   categories: [backend, education]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, OpenID4VCI, OpenID4VP, webhooks, HMAC, digital identity wallet
-  version: 2026.10.01
+  version: 2026.11.01
   api: https://docs.igrant.io/docs/openid4vc-api/config-create-webhook
   auth: OWS API key to register; shared HMAC secretKey to verify deliveries
   requires-skills: igrantio-ows-overview, igrantio-backend-sse
@@ -42,35 +42,44 @@ Record the answers before you write code.
    continue.
 3. **Webhook reachability** - which public HTTPS URL receives OWS webhooks?
    _Local dev needs a tunnel or the polling fallback._
-4. **Topics** - issuer, verifier, or both?
+4. **Event types** - issuer, verifier, or both?
 5. **Event store** - in-memory (one instance) or shared (Redis/Postgres)?
 
 ## What it does
 - **Register (idempotent)** - `POST /v2/config/webhook` with `payloadUrl`,
-  `contentType`, `subscribedEvents.digitalWalletWebhook`, `secretKey`. Lists
-  existing webhooks first and **skips if one already targets the payloadUrl**.
-  OWS answers `200` with `{ "webhook": { … } }`. It refuses (`400`) an unknown
-  topic and a second webhook for the same `payloadUrl`.
-- **Receive** - `POST /webhook`: verify `X-iGrant-Signature: t=<time>,sig=<hex>`
-  where `t` is the UTC delivery time in ISO 8601 and
-  `sig = HMAC_SHA256(secretKey, "<t>.<raw body>")` (constant-time compare),
-  reject unknown topics, extract the exchange id, store the event.
+  `contentType` (`application/json`), `subscribedEvents.digitalWalletWebhook`,
+  `secretKey`. Lists existing webhooks first and **skips if one already
+  targets the payloadUrl** (it does not change the event types of that
+  webhook). OWS answers `200` with `{ "webhook": { … } }`. It refuses (`400`)
+  an unknown event type and a second webhook for the same `payloadUrl`.
+- **Receive** - `POST /webhook`: verify
+  `X-IGrant-Signature: t=<Unix seconds>,v1=<hex>` where
+  `v1 = HMAC_SHA256(secretKey, "<t>." + <raw body bytes>)` (constant-time
+  compare; refuse a `t` more than 5 minutes from the clock), then store the
+  event under `subject.id`. The store keeps the event with the highest
+  `subject.sequence` of each resource, so a duplicate or an older event does
+  not replace a newer one. An event type that the backend does not use gets
+  `204` too: any answer other than 2xx makes OWS send the event again.
 
 ## Reference
 [`./references`](./references):
-- `topics.ts` - `ISSUER_TOPICS`, `VERIFIER_TOPICS`, `extractExchangeId(type, data)`.
+- `topics.ts` - `ISSUER_TOPICS`, `VERIFIER_TOPICS`, `isSupportedTopic(type)`.
 - `webhooks.ts` - `verifySignature(...)` + `webhookReceiver(store)` router.
 - `registerWebhook.ts` - `registerWebhook({ owsBaseUrl, apiKey, payloadUrl, secretKey, topics })`, idempotent.
 - `eventStore.ts` - the `EventStore` the receiver writes to (shared with SSE).
 - `config.ts` - `webhookSecretKey`, OWS base URL.
 
-## Topics → exchange id
-| Topic | Exchange id path in `data` |
-| --- | --- |
-| `openid.credential.offer_received` / `token_issued` / `credential_acked` / `credential_accepted` / `issuance_denied` | `credential.CredentialExchangeId` |
-| `openid.presentation.presentation_acked.v3` | `presentation.presentationExchangeId` |
+## Event types → resource id
+Every event names its resource in `subject`. `subject.id` is the SSE key:
 
-`GET /v2/config/webhooks/event-types` lists every topic that OWS sends.
+| Event types | `subject.id` |
+| --- | --- |
+| `ows.issuer.issuance.offer_retrieved`, `token_issued`, `credential_deferred`, `credential_issued`, `credential_accepted`, `denied`, `expired` | the issuance id (`id` of the create issuance answer) |
+| `ows.verifier.verification.presentation_received`, `declined` | the verification id (`presentationExchangeId`) |
+
+`GET /v2/config/webhooks/event-types` lists every event type that OWS sends.
+The body holds the summary of the resource (`data.issuance` or
+`data.verification`), never the claims: read the resource for them.
 
 ## Register once per org (idempotent)
 ```ts
@@ -86,12 +95,16 @@ Re-running is safe: it lists existing webhooks and skips creation if the
 payloadUrl is already registered.
 
 ## Clean-code notes
-- Signature verification is constant-time; the secret lives only in `config`.
-- Topic knowledge (names + exchange-id extraction) is isolated in `topics.ts`.
+- Signature verification runs over the raw bytes, in constant time; the secret
+  lives only in `config`.
+- The event type names are isolated in `topics.ts`.
 
 ## Validation / done criteria
-- A tampered body or wrong secret → 401. A supported topic with a valid signature
-  → stored under its exchange id. An unsupported topic → 400.
+- A tampered body, a wrong secret or an old `t` → 401. A supported event type
+  with a valid signature → stored under its `subject.id`. An event type that
+  the backend does not use → 204, not stored.
+- A second delivery of the same event, or an event with a lower
+  `subject.sequence`, does not replace the stored event.
 - Registering twice creates exactly one webhook.
 
 ## Documentation & workflows
