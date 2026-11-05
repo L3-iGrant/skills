@@ -6,7 +6,7 @@ metadata:
   categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, Student ID, VerifiableStudentID, eu.europa.ec.eudi.studentid.1, eduPerson, SCHAC, schacHomeOrganization, eduPersonScopedAffiliation, student status, presentation definition, OpenID4VP, mso_mdoc, SD-JWT VC, jwt_vc_json, EUDIW
-  version: 2026.10.01
+  version: 2026.11.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/presentationDefinitions/dcqlQuery/studentId
   registry-version: 2025.7.1
   requires-skills: igrantio-api-verifier
@@ -191,7 +191,7 @@ Store the query as a presentation definition, then send the verification
 request.
 
 **Step 1.** Create the presentation definition with
-`POST /v2/config/digital-wallet/openid/sdjwt/presentation-definition`.
+`POST /v4/config/ows/verifier/presentation-definitions`.
 Put one entry in `dcqlQuery.credentials`. Give it an `id`, the `format`, the
 `meta` that the format allows, and the `claims` that you need. Set `version`
 to `version_01`.
@@ -254,8 +254,8 @@ To accept only the students of named institutions, add a `values` array to
 the claim. For example, a `values` array on `schacHomeOrganization` limits
 the accepted schools.
 
-**Step 2.** Send the request with the V3 send operation,
-`POST /v3/config/digital-wallet/openid/sdjwt/verification/send`. Send the
+**Step 2.** Send the request with the send operation,
+`POST /v4/config/ows/verifier/verifications`. Send the
 `presentationDefinitionId` of the record from step 1. Read `vpTokenQrCode`
 for the deep link and `presentationExchangeId` for the correlation id.
 

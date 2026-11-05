@@ -6,7 +6,7 @@ metadata:
   categories: [credential-schema]
   provider: iGrant.io
   keywords: PID, Person Identification Data, eIDAS2, identity, age over 18, credential schema, claim path pointer, SD-JWT VC, mso_mdoc, jwt_vc_json, EUDIW, verifiable data registry
-  version: 2026.10.01
+  version: 2026.11.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/credentialSchemas/claimPathPointer/pid
   schema-version: 2025.7.1
   credential-formats: dc+sd-jwt, jwt_vc_json, mso_mdoc
@@ -59,7 +59,7 @@ Record the answers before you write code.
    rule book requires mdoc._
 4. **Claims** - all claims of the schema, or a subset? _Mandatory claims
    stay._
-5. **Issuance mode** - `InTime` (claims known now) or `Deferred` (claims
+5. **Issuance mode** - `in_time` (claims known now) or `deferred` (claims
    arrive later)?
 6. **Revocation** - status list on? _Recommend on for any credential with a
    lifetime._
@@ -325,7 +325,7 @@ For `jwt_vc_json`, the first element of the path is always `credentialSubject`.
 
 ## Use with the iGrant.io API
 Create a credential definition with
-`POST /v2/config/digital-wallet/openid/sdjwt/credential-definition`. Put the
+`POST /v4/config/ows/issuer/credential-definitions`. Put the
 `claims` array of the registry document into the configuration entry, and set
 the format fields that the table above gives.
 
@@ -381,13 +381,14 @@ Notes on the request.
   certificate of the signing key must then be a PID provider certificate (ETSI
   TS 119 412-6: QcType `id-etsi-qct-pid`), or the create call fails. Request
   it with the certificate preset `pid-provider`.
-  `GET /v2/config/digital-wallet/openid/credential-categories` lists the
+  `GET /v4/config/ows/issuer/credential-categories` lists the
   categories and their certificate rules.
 - Add one entry of `credentialDefinitions[]` for each format that you want to
   publish. You can publish more than one format from one credential definition.
-- Keep the `id` that the response returns for each entry. The issue operation
-  uses that value to match the claims to a configuration.
-- Add `supportRevocation`, `revocationMethod`, `expirationInDays`, `display` and
+- Keep the `credentialConfigurationId` that the response returns for each
+  entry. An issuance of a definition with more than one configuration names
+  it in `credentialConfigurationId`.
+- Add `revocation`, `expirationInDays`, `display` and
   the other entry fields as your use case needs them.
 
 Read `igrantio-api-issuer` for the full operation reference, the other request

@@ -6,7 +6,7 @@ metadata:
   categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, mDL, mobile driving licence, ISO 18013-5, org.iso.18013.5.1.mDL, driving_privileges, age_over_18, portrait, mso_mdoc, OpenID4VP, presentation definition, EUDIW, eIDAS2
-  version: 2026.10.01
+  version: 2026.11.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/presentationDefinitions/dcqlQuery/mobileDrivingLicense
   requires-skills: igrantio-api-verifier
 ---
@@ -130,7 +130,7 @@ date of each. You cannot ask for one category alone.
 
 ## Use with the iGrant.io API
 Create a presentation definition with
-`POST /v2/config/digital-wallet/openid/sdjwt/presentation-definition`. Put the
+`POST /v4/config/ows/verifier/presentation-definitions`. Put the
 claims into one entry of `dcqlQuery.credentials[]`. Give the entry an `id`, set
 `format` to `mso_mdoc`, and set `meta.doctype_value` to `org.iso.18013.5.1.mDL`.
 `mso_mdoc` allows `doctype_value` only. The server refuses `vct_values` and
@@ -168,10 +168,10 @@ Set `version` to `version_01`.
 organisation and its X.509 certificate chain, and `clientIdScheme` then
 defaults to `x509_hash`. Name another key with `cryptographicKeyIdentifier`.
 
-Then send the verification request with the V3 send operation,
-`POST /v3/config/digital-wallet/openid/sdjwt/verification/send`, and pass the
+Then send the verification request with the send operation,
+`POST /v4/config/ows/verifier/verifications`, and pass the
 `presentationDefinitionId` of the record that you created. Read the disclosed
-data elements from `presentation` on the verification history record.
+data elements from `presentation` on the verification record.
 
 For a same-device check in a browser, the presentation definition also supports
 the ISO 18013-7 Annex C profile (`version` `iso18013_7_annex_c`). It has its own
@@ -182,7 +182,7 @@ use it.
 
 The `igrantio-api-verifier` skill holds the full operation reference: every
 field of the presentation definition, every transport option, and the shape of
-the verification history record.
+the verification record.
 
 ## Source is the registry
 The iGrant.io verifiable data registry is the source of truth for this

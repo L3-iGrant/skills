@@ -6,7 +6,7 @@ metadata:
   categories: [dcql-query, education]
   provider: iGrant.io
   keywords: DCQL, presentation definition, OpenID4VP, diploma, qualification check, employer, selective disclosure, PID, National Learner Registry, EUDIW, GovStack, ITU
-  version: 2026.10.01
+  version: 2026.11.01
   source-doc: https://giga-staging.igrant.io/knowledgebase/showcase-credentials
   requires-skills: igrantio-api-verifier
 ---
@@ -81,9 +81,9 @@ Two credential queries, one PID and one diploma, in a single request.
 
 ## Use with the iGrant.io API
 Create the presentation definition with
-`POST /v2/config/digital-wallet/openid/sdjwt/presentation-definition`, then send
-it at request time with the V3 verification `send` operation
-(`POST /v3/config/digital-wallet/openid/sdjwt/verification/send` with
+`POST /v4/config/ows/verifier/presentation-definitions`, then send
+it at request time with the verification `send` operation
+(`POST /v4/config/ows/verifier/verifications` with
 `{ presentationDefinitionId, requestByReference: true }`).
 
 ```json
@@ -130,19 +130,19 @@ Notes on the request.
 - `version` is required. Use `version_01` (OpenID4VP 1.0).
 - Both queries are required by default, so the wallet must hold both a PID and a
   diploma. Read the verification result with
-  `GET /v3/config/digital-wallet/openid/sdjwt/verification/history/{presentationExchangeId}`.
+  `GET /v4/config/ows/verifier/verifications/{verificationId}`.
 - `clientIdScheme: "x509_hash"` and `cryptographicKeyFormat: "x509"` sign the
   request with the verifier certificate, so the wallet shows the request as
   trusted.
 
 Read `igrantio-api-verifier` for the full DCQL reference (claim sets, credential
-sets, trusted authorities, transaction data) and the send and history
-operations.
+sets, trusted authorities, transaction data) and the send and read
+operations of the verifications.
 
 ## Cross-references
 - `igrantio-credential-schema-diploma` - the diploma credential definition this
   query reads.
 - `igrantio-dcql-query-pid` - the PID query on its own (the learner sign-in).
 - `igrantio-api-verifier` - create presentation definition, send, and read
-  history.
+  the verification.
 - `igrantio-ows-overview` - architecture and glossary.

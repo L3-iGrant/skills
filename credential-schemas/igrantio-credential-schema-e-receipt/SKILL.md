@@ -6,7 +6,7 @@ metadata:
   categories: [credential-schema]
   provider: iGrant.io
   keywords: eReceipt, verifiable receipt, digital receipt, purchase_receipt, UBL, VerifiablevReceiptSDJWT, eu.europa.ec.eudi.verifiablereceipt, SD-JWT VC, dc+sd-jwt, claim path pointer, credential definition, EUDIW, selective disclosure
-  version: 2026.10.01
+  version: 2026.11.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/credentialSchemas/claimPathPointer/eReceipt
   schema-version: 2025.7.1
   formats: dc+sd-jwt
@@ -54,7 +54,7 @@ Record the answers before you write code.
    `dc+sd-jwt`.
 4. **Claims** - all claims of the schema, or a subset? _Mandatory claims
    stay._
-5. **Issuance mode** - `InTime` (claims known now) or `Deferred` (claims
+5. **Issuance mode** - `in_time` (claims known now) or `deferred` (claims
    arrive later)?
 6. **Revocation** - status list on? _Recommend on for any credential with a
    lifetime._
@@ -399,7 +399,7 @@ place of the index.
 ## Use with the iGrant.io API
 Create a credential definition with:
 
-`POST /v2/config/digital-wallet/openid/sdjwt/credential-definition`
+`POST /v4/config/ows/issuer/credential-definitions`
 
 Put one entry in `credentialDefinitions[]` and copy the `claims` array of the
 schema document into that entry.
@@ -448,7 +448,8 @@ schema document into that entry.
 The example shows two claims. Send the full array when you want the full
 schema.
 
-When you issue, put the claim values in `credential.claims` as a nested object
+When you issue, put the claim values in `claims` of the create issuance body,
+as a nested object
 that matches the paths. The issuer takes the `vct` from the credential
 definition.
 

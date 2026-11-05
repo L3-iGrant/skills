@@ -6,7 +6,7 @@ metadata:
   categories: [dcql-query, education]
   provider: iGrant.io
   keywords: DCQL, SCA, Strong Customer Authentication, TS12, payment account, IBAN, BIC, currency, PSD2, transaction data, presentation definition, OpenID4VP, SD-JWT VC, EUDIW, eIDAS2
-  version: 2026.10.01
+  version: 2026.11.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/presentationDefinitions/dcqlQuery/scaPaymentAccount
   registry-version: 2025.7.1
   requires-skills: igrantio-api-verifier
@@ -87,7 +87,7 @@ the issuer. For a credential that an iGrant.io organisation issues, that is
 staging, so the demo vct is
 `https://oid4vc.igrant.io/service/vct-metadata/payment_account`.
 The templates operation
-`GET /v2/config/digital-wallet/openid/sdjwt/presentation-definition/templates`
+`GET /v4/config/ows/verifier/presentation-definition-templates`
 returns the value with `{baseUrl}` already replaced. Do not send the literal
 text `{baseUrl}` in a query.
 
@@ -135,7 +135,7 @@ An SCA query needs one more field than a plain query: the presentation
 definition must name a transaction data template.
 
 **Step 1.** Create the presentation definition with
-`POST /v2/config/digital-wallet/openid/sdjwt/presentation-definition`.
+`POST /v4/config/ows/verifier/presentation-definitions`.
 Set `version` to `version_01`. Set `transactionDataDefinitionType`. Put one
 entry in `dcqlQuery.credentials` with the `dc+sd-jwt` format and the
 `vct_values` meta.
@@ -185,11 +185,11 @@ account), `account_access` (access to the account data) and `emandate` (a
 standing order or direct debit mandate).
 `payment_data` belongs to the Payment Wallet Attestation and `qes_data` to the
 QESAC, so the API refuses them here. Read the JSON Schema of each type with
-`GET /v2/config/digital-wallet/openid/sdjwt/transaction-data-definitions`,
+`GET /v4/config/ows/verifier/transaction-data-templates`,
 because the schema decides which fields the request must carry.
 
-**Step 2.** Send the request with the V3 send operation,
-`POST /v3/config/digital-wallet/openid/sdjwt/verification/send`. Send the
+**Step 2.** Send the request with the send operation,
+`POST /v4/config/ows/verifier/verifications`. Send the
 `presentationDefinitionId`, and send `transactionData` that follows the JSON
 Schema of the chosen type. The server answers HTTP 400 when the presentation
 definition sets a `transactionDataDefinitionType` and the request carries no

@@ -6,7 +6,7 @@ metadata:
   categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, age verification, age_over_18, eu.europa.ec.av.1, mso_mdoc, age gate, data minimisation, OpenID4VP, presentation definition, EUDIW, eIDAS2
-  version: 2026.10.01
+  version: 2026.11.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/presentationDefinitions/dcqlQuery/ageVerification
   requires-skills: igrantio-api-verifier
 ---
@@ -109,7 +109,7 @@ namespace goes into the first element of every `path`.
 
 ## Use with the iGrant.io API
 Create a presentation definition with
-`POST /v2/config/digital-wallet/openid/sdjwt/presentation-definition`. Put the
+`POST /v4/config/ows/verifier/presentation-definitions`. Put the
 claims into one entry of `dcqlQuery.credentials[]`. Give the entry an `id`, set
 `format` to `mso_mdoc`, and set `meta.doctype_value` to the credential type.
 `mso_mdoc` allows `doctype_value` only. The server refuses `vct_values` and
@@ -147,14 +147,14 @@ defaults to `x509_hash`. Name another key with `cryptographicKeyIdentifier`.
 an extension and refuses it. Give the definition a label that names your use,
 for example `Age gate at checkout`.
 
-Then send the verification request with the V3 send operation,
-`POST /v3/config/digital-wallet/openid/sdjwt/verification/send`, and pass the
+Then send the verification request with the send operation,
+`POST /v4/config/ows/verifier/verifications`, and pass the
 `presentationDefinitionId` of the record that you created. Read the disclosed
-flags from `presentation` on the verification history record.
+flags from `presentation` on the verification record.
 
 The `igrantio-api-verifier` skill holds the full operation reference: every
 field of the presentation definition, every transport option, and the shape of
-the verification history record.
+the verification record.
 
 ## Source is the registry
 The iGrant.io verifiable data registry is the source of truth for this

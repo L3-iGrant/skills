@@ -6,7 +6,7 @@ metadata:
   categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, claim_sets, selective disclosure, age verification, is_over_21, PID, OpenID4VP, EUDIW, eIDAS2, GDPR
-  version: 2026.10.01
+  version: 2026.11.01
   source-doc: https://docs.igrant.io/docs/dcql-2-4-2-claim-set-age-verification/
   requires-skills: igrantio-ows-overview, igrantio-verifier-backend
 ---
@@ -91,7 +91,7 @@ Record the answers before you write code.
 
 ## Run it on OWS
 1. Store the query in `dcqlQuery` of a presentation definition (`POST
-   /v2/config/digital-wallet/openid/sdjwt/presentation-definition`, with
+   /v4/config/ows/verifier/presentation-definitions`, with
    `label`, `version: "version_01"` and `cryptographicKeyFormat: "x509"`)
    and keep the `presentationDefinitionId` (`igrantio-ows-overview`
    api-reference §3).

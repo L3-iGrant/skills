@@ -6,7 +6,7 @@ metadata:
   categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, multiple true, bank statements, loan application, credit check, OpenID4VP, EUDIW, EUBW, eIDAS2
-  version: 2026.10.01
+  version: 2026.11.01
   source-doc: https://docs.igrant.io/docs/dcql-2-4-6-loan-application-multiple-bank-statements/
   requires-skills: igrantio-ows-overview, igrantio-verifier-backend
 ---
@@ -78,7 +78,7 @@ Record the answers before you write code.
 
 ## Run it on OWS
 1. Store the query in `dcqlQuery` of a presentation definition (`POST
-   /v2/config/digital-wallet/openid/sdjwt/presentation-definition`, with
+   /v4/config/ows/verifier/presentation-definitions`, with
    `label`, `version: "version_01"` and `cryptographicKeyFormat: "x509"`);
    then send the verification request (v3).
 2. On `presentation_acked` + `verified === true`, `presentation` carries

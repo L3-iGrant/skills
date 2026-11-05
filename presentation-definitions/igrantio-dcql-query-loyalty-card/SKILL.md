@@ -6,7 +6,7 @@ metadata:
   categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, loyalty card, membership, eu.europa.ec.eudi.loyaltycard, LoyaltyCard, points, miles, retail, dc+sd-jwt, jwt_vc_json, mso_mdoc, OpenID4VP, presentation definition, EUDIW, eIDAS2
-  version: 2026.10.01
+  version: 2026.11.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/presentationDefinitions/dcqlQuery/loyaltyCard
   requires-skills: igrantio-api-verifier
 ---
@@ -193,7 +193,7 @@ let you ask for single members. The mdoc form does not.
 
 ## Use with the iGrant.io API
 Create a presentation definition with
-`POST /v2/config/digital-wallet/openid/sdjwt/presentation-definition`. Put the
+`POST /v4/config/ows/verifier/presentation-definitions`. Put the
 claims of one format into one entry of `dcqlQuery.credentials[]`. Give the entry
 an `id`, set `format`, and set `meta` for that format:
 
@@ -237,14 +237,14 @@ Set `version` to `version_01`.
 organisation and its X.509 certificate chain, and `clientIdScheme` then
 defaults to `x509_hash`. Name another key with `cryptographicKeyIdentifier`.
 
-Then send the verification request with the V3 send operation,
-`POST /v3/config/digital-wallet/openid/sdjwt/verification/send`, and pass the
+Then send the verification request with the send operation,
+`POST /v4/config/ows/verifier/verifications`, and pass the
 `presentationDefinitionId` of the record that you created. Read the disclosed
-claims from `presentation` on the verification history record.
+claims from `presentation` on the verification record.
 
 The `igrantio-api-verifier` skill holds the full operation reference: every
 field of the presentation definition, every transport option, and the shape of
-the verification history record.
+the verification record.
 
 ## Source is the registry
 The iGrant.io verifiable data registry is the source of truth for this

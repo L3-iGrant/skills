@@ -6,7 +6,7 @@ metadata:
   categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, PID, Person Identification Data, PID Rulebook, ARF, urn:eudi:pid:1, eu.europa.ec.eudi.pid.1, place_of_birth, nationalities, personal_administrative_number, presentation definition, OpenID4VP, mso_mdoc, SD-JWT VC, EUDIW, eIDAS2
-  version: 2026.10.01
+  version: 2026.11.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/presentationDefinitions/dcqlQuery/pidV2
   registry-version: 2026.4.1
   requires-skills: igrantio-api-verifier
@@ -207,7 +207,7 @@ Store the query as a presentation definition, then send the verification
 request.
 
 **Step 1.** Create the presentation definition with
-`POST /v2/config/digital-wallet/openid/sdjwt/presentation-definition`.
+`POST /v4/config/ows/verifier/presentation-definitions`.
 Put one entry in `dcqlQuery.credentials`. Give it an `id`, the `format`, the
 `meta` that the format allows, and the `claims` that you need. Set `version`
 to `version_01`.
@@ -267,8 +267,8 @@ option for each identifier, for example
 `"options": [["pid-v2"], ["pid-v1"]]`. An option that lists both identifiers
 asks for both credentials.
 
-**Step 2.** Send the request with the V3 send operation,
-`POST /v3/config/digital-wallet/openid/sdjwt/verification/send`. Send the
+**Step 2.** Send the request with the send operation,
+`POST /v4/config/ows/verifier/verifications`. Send the
 `presentationDefinitionId` of the record from step 1. Read `vpTokenQrCode`
 for the deep link and `presentationExchangeId` for the correlation id.
 

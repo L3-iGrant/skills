@@ -6,7 +6,7 @@ metadata:
   categories: [credential-schema]
   provider: iGrant.io
   keywords: credential schema, claim path pointer, DCQL query, schema discovery, verifiable data registry, attestation rulebook, ARF, EUDIW, eIDAS2
-  version: 2026.10.01
+  version: 2026.11.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry
 ---
 
@@ -62,8 +62,8 @@ this collection, so check it even when a skill exists.
 
 The API serves the latest version of each template, with your API key:
 
-- `GET /v2/config/digital-wallet/openid/sdjwt/credential-definition/templates`
-- `GET /v2/config/digital-wallet/openid/sdjwt/presentation-definition/templates`
+- `GET /v4/config/ows/issuer/credential-definition-templates`
+- `GET /v4/config/ows/verifier/presentation-definition-templates`
 
 Each answer holds a `templates` array and a `pagination` object (`offset` and
 `limit` query parameters, 10 items by default). In the first answer, use the

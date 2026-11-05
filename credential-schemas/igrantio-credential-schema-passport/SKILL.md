@@ -6,7 +6,7 @@ metadata:
   categories: [credential-schema]
   provider: iGrant.io
   keywords: passport, travel document, ePassport, org.iso.18013.5.1.passport, nationality, personalNumber, issuerAuthority, SD-JWT VC, dc+sd-jwt, jwt_vc_json, mso_mdoc, claim path pointer, credential definition, EUDIW, selective disclosure
-  version: 2026.10.01
+  version: 2026.11.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/credentialSchemas/claimPathPointer/passport
   schema-version: 2025.7.1
   formats: dc+sd-jwt, jwt_vc_json, mso_mdoc
@@ -58,7 +58,7 @@ Record the answers before you write code.
    rule book requires mdoc._
 4. **Claims** - all claims of the schema, or a subset? _Mandatory claims
    stay._
-5. **Issuance mode** - `InTime` (claims known now) or `Deferred` (claims
+5. **Issuance mode** - `in_time` (claims known now) or `deferred` (claims
    arrive later)?
 6. **Revocation** - status list on? _Recommend on for any credential with a
    lifetime._
@@ -331,7 +331,7 @@ signature.
 ## Use with the iGrant.io API
 Create a credential definition with:
 
-`POST /v2/config/digital-wallet/openid/sdjwt/credential-definition`
+`POST /v4/config/ows/issuer/credential-definitions`
 
 Put one entry in `credentialDefinitions[]` for each format that you publish, and
 copy the `claims` array of the matching schema document into that entry.
@@ -357,8 +357,7 @@ copy the `claims` array of the matching schema document into that entry.
       "credentialFormat": "dc+sd-jwt",
       "vct": "Passport",
       "validationPath": "$",
-      "supportRevocation": true,
-      "revocationMethod": "status_list",
+      "revocation": { "enabled": true, "method": "status_list", "revokeWhenHolderDeletes": true },
       "claims": {
         "claims": [
           { "path": ["serialNumber"], "mandatory": true, "limitDisclosure": true },
@@ -390,7 +389,7 @@ copy the `claims` array of the matching schema document into that entry.
 ```
 
 The example shows two claims per entry. Send the full array when you want the
-full schema. A passport can be reported lost, so set `supportRevocation` to
+full schema. A passport can be reported lost, so set `revocation.enabled` to
 `true`.
 
 When you issue, the top key of `claims` for the `mso_mdoc` entry is the

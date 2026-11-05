@@ -6,7 +6,7 @@ metadata:
   categories: [credential-schema]
   provider: iGrant.io
   keywords: age verification, proof of age, age_over_18, eu.europa.ec.av.1, mso_mdoc, mdoc, claim path pointer, credential definition, EUDIW, selective disclosure
-  version: 2026.10.01
+  version: 2026.11.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/credentialSchemas/claimPathPointer/ageVerification
   schema-version: 2026.4.1
   formats: mso_mdoc
@@ -53,7 +53,7 @@ Record the answers before you write code.
    `mso_mdoc`.
 4. **Claims** - all claims of the schema, or a subset? _Mandatory claims
    stay._
-5. **Issuance mode** - `InTime` (claims known now) or `Deferred` (claims
+5. **Issuance mode** - `in_time` (claims known now) or `deferred` (claims
    arrive later)?
 6. **Revocation** - status list on? _Recommend on for any credential with a
    lifetime._
@@ -130,7 +130,7 @@ Every claim value is a boolean.
 ## Use with the iGrant.io API
 Create a credential definition with:
 
-`POST /v2/config/digital-wallet/openid/sdjwt/credential-definition`
+`POST /v4/config/ows/issuer/credential-definitions`
 
 Put one entry in `credentialDefinitions[]` and copy the `claims` array of the
 schema document into that entry.

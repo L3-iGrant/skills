@@ -1,12 +1,12 @@
 ---
 name: igrantio-dcapi-ios
-description: 'Same-device and cross-device credential verification on iOS/iPadOS via the W3C Digital Credentials API using ISO 18013-7 Annex C request/response with ISO/IEC 18013-5 mdoc/mDL credentials on the iGrant.io Organisation Wallet Suite. On iOS the DC API runs over Annex C only: a presentation definition with version iso18013_7_annex_c, responseType device_response, an X.509 key, exactly one expectedOrigins entry and (recommended) a signed request with reader authentication. Then the verification request v3, wallet invocation from Safari, the receive call, and the check of the result and the issuer trust status. For EUDI Wallet (EUDIW) relying parties under eIDAS 2.0.'
+description: 'Same-device and cross-device credential verification on iOS/iPadOS via the W3C Digital Credentials API using ISO 18013-7 Annex C request/response with ISO/IEC 18013-5 mdoc/mDL credentials on the iGrant.io Organisation Wallet Suite. On iOS the DC API runs over Annex C only: a presentation definition with version iso18013_7_annex_c, responseType device_response, an X.509 key, exactly one expectedOrigins entry and (recommended) a signed request with reader authentication. Then the verification request, wallet invocation from Safari, the receive call, and the check of the result and the issuer trust status. For EUDI Wallet (EUDIW) relying parties under eIDAS 2.0.'
 license: Apache-2.0
 metadata:
   categories: [dcapi]
   provider: iGrant.io
   keywords: Digital Credentials API, DC API, iOS, Safari, ISO 18013-7, mdoc, mDL, OpenID4VP, EUDIW, eIDAS2, verification
-  version: 2026.10.01
+  version: 2026.11.01
   source-doc: https://docs.igrant.io/docs/openID4vc-send-verify-credentials-dcapi-ios/
   requires-skills: igrantio-ows-overview, igrantio-verifier-backend, igrantio-verifier-frontend
 ---
@@ -59,7 +59,7 @@ Record the answers before you write code.
 
 ## Workflow
 1. **Presentation definition** - `POST
-   /v2/config/digital-wallet/openid/sdjwt/presentation-definition`. The
+   /v4/config/ows/verifier/presentation-definitions`. The
    Annex C rules: `version: "iso18013_7_annex_c"`, `responseType:
    "device_response"`, `responseMode: "dc_api"`, `cryptographicKeyFormat:
    "x509"`, exactly one `expectedOrigins` entry, no `clientIdScheme` and no
@@ -93,8 +93,8 @@ Record the answers before you write code.
      }
    }
    ```
-2. **Verification request (v3)** - `POST
-   /v3/config/digital-wallet/openid/sdjwt/verification/send` with the
+2. **Verification request** - `POST
+   /v4/config/ows/verifier/verifications` with the
    `presentationDefinitionId` only; the presentation definition gives the
    rest. Read `verificationHistory.dcApiRequest` (with a `safari` variant)
    and `verificationHistory.dcApiProtocol` (`org-iso-mdoc`), and keep the
@@ -104,10 +104,10 @@ Record the answers before you write code.
    request variant, `invokeWallet` calls the API, `buildReceivePayload`
    returns the `{ response: <EncryptedResponse> }` shape.
 4. **Post the response back** via your backend proxy to `POST
-   /v2/config/digital-wallet/openid/sdjwt/verification/history/{presentationExchangeId}/receive`;
-   the backend decrypts it. SSE delivers the verified result as usual.
+   /v4/config/ows/verifier/verifications/{verificationId}/response`;
+   the backend decrypts it. SSE delivers the verifier event of the result as usual.
 5. **Verify** - `GET
-   /v3/config/digital-wallet/openid/sdjwt/verification/history/{presentationExchangeId}`:
+   /v4/config/ows/verifier/verifications/{verificationId}`:
    require `verified: true`, and read the issuer trust status of each
    credential in `presentationValidity`
    (`issuerTrustServiceProvider.isVerified` and `trustServiceProvider`).

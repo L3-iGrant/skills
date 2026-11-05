@@ -6,7 +6,7 @@ metadata:
   categories: [credential-schema]
   provider: iGrant.io
   keywords: mDL, mobile driving licence, mobile driving license, ISO 18013-5, org.iso.18013.5.1, mso_mdoc, mdoc, driving privileges, claim path pointer, credential definition, EUDIW, selective disclosure
-  version: 2026.10.01
+  version: 2026.11.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/credentialSchemas/claimPathPointer/mobileDrivingLicense
   schema-version: 2026.4.1
   formats: mso_mdoc
@@ -53,7 +53,7 @@ Record the answers before you write code.
    `mso_mdoc`.
 4. **Claims** - all claims of the schema, or a subset? _Mandatory claims
    stay._
-5. **Issuance mode** - `InTime` (claims known now) or `Deferred` (claims
+5. **Issuance mode** - `in_time` (claims known now) or `deferred` (claims
    arrive later)?
 6. **Revocation** - status list on? _Recommend on for any credential with a
    lifetime._
@@ -233,7 +233,7 @@ check an age limit without the birth date.
 ## Use with the iGrant.io API
 Create a credential definition with:
 
-`POST /v2/config/digital-wallet/openid/sdjwt/credential-definition`
+`POST /v4/config/ows/issuer/credential-definitions`
 
 Put one entry in `credentialDefinitions[]` and copy the `claims` array of the
 schema document into that entry.
@@ -259,8 +259,7 @@ schema document into that entry.
       "credentialFormat": "mso_mdoc",
       "doctype": "org.iso.18013.5.1.mDL",
       "validationPath": "$",
-      "supportRevocation": true,
-      "revocationMethod": "status_list",
+      "revocation": { "enabled": true, "method": "status_list", "revokeWhenHolderDeletes": true },
       "claims": {
         "claims": [
           {

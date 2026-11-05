@@ -6,7 +6,7 @@ metadata:
   categories: [recipe]
   provider: iGrant.io
   keywords: EUBW, European Business Wallet, EBWOID, LPID, EWC RFC005, OpenID4VCI, SD-JWT, eIDAS2, EUDIW
-  version: 2026.10.01
+  version: 2026.11.01
   source-doc: https://docs.igrant.io/docs/european-business-wallet-owner-id/
   requires-skills: igrantio-ows-overview, igrantio-issuer-backend
 ---
@@ -54,8 +54,8 @@ Record the answers before you write code.
    ([support@igrant.io](mailto:support@igrant.io)); held server-side only
    (see `igrantio-backend-proxy`).
 2. **Create the credential definition** - `POST
-   /v2/config/digital-wallet/openid/sdjwt/credential-definition`. Keep the
-   returned `credentialDefinitionId` and the `credentialDefinitions[].id`.
+   /v4/config/ows/issuer/credential-definitions`. Keep the
+   returned `credentialDefinitionId`.
    The claims below are those of the registry LPID template
    (`igrantio-credential-schema-lpid`); add the claims that your rule book
    asks for.
@@ -69,7 +69,7 @@ Record the answers before you write code.
        {
          "credentialFormat": "dc+sd-jwt",
          "vct": "LegalPersonIdentificationData",
-         "supportRevocation": true,
+         "revocation": { "enabled": true, "method": "status_list", "revokeWhenHolderDeletes": true },
          "claims": {
            "claims": [
              { "path": ["identifier"], "mandatory": true, "limitDisclosure": true },
@@ -80,17 +80,17 @@ Record the answers before you write code.
      ]
    }
    ```
-3. **Issue (Deferred)** - `POST
-   /v2/config/digital-wallet/openid/sdjwt/credential/issue` with
-   `issuanceMode: "Deferred"`, the `credentialDefinitionId` and the
+3. **Issue (deferred)** - `POST
+   /v4/config/ows/issuer/issuances` with
+   `mode: "deferred"`, the `credentialDefinitionId` and the
    `credentialOfferEndpoint` of the holder organisation's wallet, which then
-   receives the offer. Keep the `credentialExchangeId`. Exact issue payloads:
-   `igrantio-ows-overview` api-reference §1.1.
+   receives the offer. Keep the issuance `id` of the answer. Exact issue
+   payloads: `igrantio-ows-overview` api-reference §1.1.
 4. **Holder receives the offer** in its Organisation Wallet Suite.
 5. **Complete the deferred issue** - `PUT
-   /v2/config/digital-wallet/openid/sdjwt/credential/history/{credentialExchangeId}`
-   with `{ "credential": { "id": "<credentialDefinitions[].id>", "claims": {
-   ... } } }` once the legal-person data is validated (api-reference §1.2).
+   /v4/config/ows/issuer/issuances/{issuanceId}/claims`
+   with `{ "claims": { ... } }` once the legal-person data is validated
+   (api-reference §1.2).
 
 Track progress over webhooks/SSE exactly as in `igrantio-issuer-backend`.
 
@@ -102,7 +102,7 @@ Track progress over webhooks/SSE exactly as in `igrantio-issuer-backend`.
   checks that the certificate of the signing key fits it. Not set, it is
   `none`.
 - Deferred is the norm here because legal-person validation happens between
-  offer and claims; switch to `InTime` only if the data is pre-validated.
+  offer and claims; switch to `in_time` only if the data is pre-validated.
 - Tenant/base URLs and API-key handling follow `igrantio-backend-proxy`.
 
 ## Register your certificate in the trust list

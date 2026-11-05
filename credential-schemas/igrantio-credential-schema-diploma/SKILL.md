@@ -6,7 +6,7 @@ metadata:
   categories: [credential-schema, education]
   provider: iGrant.io
   keywords: diploma, education credential, qualification, National Learner Registry, ULID, awarding institution, credential schema, claim path pointer, SD-JWT VC, EUDIW, GovStack, ITU
-  version: 2026.10.01
+  version: 2026.11.01
   source-doc: https://giga-staging.igrant.io/knowledgebase/showcase-credentials
   credential-formats: dc+sd-jwt
   requires-skills: igrantio-api-issuer
@@ -92,7 +92,7 @@ All nine claims are mandatory and selectively disclosable (`dc+sd-jwt`).
 
 ## Use with the iGrant.io API
 Create the credential definition with
-`POST /v2/config/digital-wallet/openid/sdjwt/credential-definition`. Send the
+`POST /v4/config/ows/issuer/credential-definitions`. Send the
 `claims` array above inside the single `dc+sd-jwt` configuration entry.
 
 ```json
@@ -125,7 +125,7 @@ Create the credential definition with
           { "path": ["graduationDecisionHash"], "mandatory": true, "limitDisclosure": true }
         ]
       },
-      "supportRevocation": true,
+      "revocation": { "enabled": true, "method": "status_list", "revokeWhenHolderDeletes": true },
       "expirationInDays": 3650
     }
   ]
@@ -145,10 +145,10 @@ Notes on the request.
 - `supportInteractiveAuthorisationEndpoint: true` lets the payment credential be
   presented during issuance, so the diploma follows in the same session (the
   dynamic credential request). Leave it off if you issue the diploma on its own.
-- Keep the `id` the response returns. The issue operation matches the claims to
-  this configuration by that id.
+- Keep the `credentialConfigurationId` that the response returns. An issuance
+  of a definition with more than one configuration names it.
 
-Read `igrantio-api-issuer` for the issue operation (InTime, pre-authorised code,
+Read `igrantio-api-issuer` for the issue operation (`in_time`, pre-authorised code,
 and the dynamic credential request with transaction data), the revocation
 operation, and the full request reference.
 

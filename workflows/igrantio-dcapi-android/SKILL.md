@@ -1,12 +1,12 @@
 ---
 name: igrantio-dcapi-android
-description: 'Same-device and cross-device credential verification on Android via the W3C Digital Credentials API (browser invokes the wallet, no QR scan needed on same device) using OpenID4VP 1.0 on the iGrant.io Organisation Wallet Suite. Presentation definition with responseMode dc_api or dc_api.jwt and dcApiRequestType signed (with expectedOrigins and an X.509 key) or unsigned, verification request v3, navigator.credentials.get invocation from Chrome 141+, the receive call that posts the wallet response back, then verify the result and the issuer trust status. For EUDI Wallet (EUDIW) and European Business Wallet (EUBW) relying parties under eIDAS 2.0.'
+description: 'Same-device and cross-device credential verification on Android via the W3C Digital Credentials API (browser invokes the wallet, no QR scan needed on same device) using OpenID4VP 1.0 on the iGrant.io Organisation Wallet Suite. Presentation definition with responseMode dc_api or dc_api.jwt and dcApiRequestType signed (with expectedOrigins and an X.509 key) or unsigned, verification request, navigator.credentials.get invocation from Chrome 141+, the receive call that posts the wallet response back, then verify the result and the issuer trust status. For EUDI Wallet (EUDIW) and European Business Wallet (EUBW) relying parties under eIDAS 2.0.'
 license: Apache-2.0
 metadata:
   categories: [dcapi]
   provider: iGrant.io
   keywords: Digital Credentials API, DC API, Android, Chrome, OpenID4VP, EUDIW, EUBW, eIDAS2, same-device, verification
-  version: 2026.10.01
+  version: 2026.11.01
   source-doc: https://docs.igrant.io/docs/openID4vc-send-verify-credentials-dcapi-android/
   requires-skills: igrantio-ows-overview, igrantio-verifier-backend, igrantio-verifier-frontend
 ---
@@ -57,7 +57,7 @@ Record the answers before you write code.
 
 ## Workflow
 1. **Presentation definition** - `POST
-   /v2/config/digital-wallet/openid/sdjwt/presentation-definition` with
+   /v4/config/ows/verifier/presentation-definitions` with
    `version: "version_01"` and a DC API response mode:
    - `responseMode`: `dc_api` (the wallet response is not encrypted) or
      `dc_api.jwt` (the wallet encrypts the response).
@@ -94,8 +94,8 @@ Record the answers before you write code.
      }
    }
    ```
-2. **Verification request (v3)** - `POST
-   /v3/config/digital-wallet/openid/sdjwt/verification/send` with the
+2. **Verification request** - `POST
+   /v4/config/ows/verifier/verifications` with the
    `presentationDefinitionId`. The answer's `verificationHistory.dcApiRequest`
    holds the browser payload (a `chrome` and a `safari` variant), and
    `verificationHistory.dcApiProtocol` is `openid4vp-v1-signed` or
@@ -106,12 +106,13 @@ Record the answers before you write code.
    (`supportsDcApi`, `invokeWallet`, `buildReceivePayload`) - they handle
    the Chrome request formats and the plain-vs-signed response shapes.
 4. **Post the response back** through your backend proxy to `POST
-   /v2/config/digital-wallet/openid/sdjwt/verification/history/{presentationExchangeId}/receive`
+   /v4/config/ows/verifier/verifications/{verificationId}/response`
    with `{ "response": "<wallet response>" }` (or `{ "vp_token": { ... } }`
-   for an unencrypted `dc_api` response). The SSE stream still delivers the
-   final result.
+   for an unencrypted `dc_api` response). The SSE stream then delivers the
+   verifier event of the result
+   (`ows.verifier.verification.presentation_received`).
 5. **Verify** - `GET
-   /v3/config/digital-wallet/openid/sdjwt/verification/history/{presentationExchangeId}`:
+   /v4/config/ows/verifier/verifications/{verificationId}`:
    require `verified: true`, read the claims from `presentation`, and read
    the issuer trust status of each credential in `presentationValidity`
    (`issuerTrustServiceProvider.isVerified` and `trustServiceProvider`).

@@ -6,7 +6,7 @@ metadata:
   categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, Photo ID, photoid, eu.europa.ec.eudi.photoid.1, ISO 23220, DTC, digital travel credential, presentation definition, OpenID4VP, mso_mdoc, SD-JWT VC, jwt_vc_json, EUDIW, eIDAS2
-  version: 2026.10.01
+  version: 2026.11.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/presentationDefinitions/dcqlQuery/photoId
   registry-version: 2025.7.1
   requires-skills: igrantio-api-verifier
@@ -242,7 +242,7 @@ Store the query as a presentation definition, then send the verification
 request.
 
 **Step 1.** Create the presentation definition with
-`POST /v2/config/digital-wallet/openid/sdjwt/presentation-definition`.
+`POST /v4/config/ows/verifier/presentation-definitions`.
 Put one entry in `dcqlQuery.credentials`. Give it an `id`, the `format`, the
 `meta` that the format allows, and the `claims` that you need. Set `version`
 to `version_01`.
@@ -293,8 +293,8 @@ defaults to `x509_hash`. Name another key with `cryptographicKeyIdentifier`.
 `jwt_vc_json` takes `type_values` only. The value is an array of type sets,
 so it is an array of arrays: `{ "type_values": [["eu.europa.ec.eudi.photoid.1"]] }`.
 
-**Step 2.** Send the request with the V3 send operation,
-`POST /v3/config/digital-wallet/openid/sdjwt/verification/send`. Send the
+**Step 2.** Send the request with the send operation,
+`POST /v4/config/ows/verifier/verifications`. Send the
 `presentationDefinitionId` of the record from step 1. Read `vpTokenQrCode`
 for the deep link and `presentationExchangeId` for the correlation id.
 

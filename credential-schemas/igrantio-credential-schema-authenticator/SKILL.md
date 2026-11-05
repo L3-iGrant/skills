@@ -6,7 +6,7 @@ metadata:
   categories: [credential-schema]
   provider: iGrant.io
   keywords: authenticator, io.igrant.authenticator, passwordless login, email_address, SD-JWT VC, dc+sd-jwt, jwt_vc_json, mso_mdoc, claim path pointer, credential definition, EUDIW, selective disclosure
-  version: 2026.10.01
+  version: 2026.11.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/credentialSchemas/claimPathPointer/authenticator
   schema-version: 2025.7.1
   formats: dc+sd-jwt, jwt_vc_json, mso_mdoc
@@ -59,7 +59,7 @@ Record the answers before you write code.
    rule book requires mdoc._
 4. **Claims** - all claims of the schema, or a subset? _Mandatory claims
    stay._
-5. **Issuance mode** - `InTime` (claims known now) or `Deferred` (claims
+5. **Issuance mode** - `in_time` (claims known now) or `deferred` (claims
    arrive later)?
 6. **Revocation** - status list on? _Recommend on for any credential with a
    lifetime._
@@ -165,7 +165,7 @@ Each item of the `claims` array is one claim path pointer.
 ## Use with the iGrant.io API
 Create a credential definition with:
 
-`POST /v2/config/digital-wallet/openid/sdjwt/credential-definition`
+`POST /v4/config/ows/issuer/credential-definitions`
 
 Put one entry in `credentialDefinitions[]` for each format that you publish, and
 copy the `claims` array of the matching schema document into that entry.
@@ -192,8 +192,7 @@ copy the `claims` array of the matching schema document into that entry.
       "credentialFormat": "dc+sd-jwt",
       "vct": "io.igrant.authenticator",
       "validationPath": "$",
-      "supportRevocation": true,
-      "revocationMethod": "status_list",
+      "revocation": { "enabled": true, "method": "status_list", "revokeWhenHolderDeletes": true },
       "claims": {
         "claims": [
           {
@@ -221,7 +220,7 @@ copy the `claims` array of the matching schema document into that entry.
 }
 ```
 
-A sign-in credential must be revocable, so set `supportRevocation` to `true`.
+A sign-in credential must be revocable, so set `revocation.enabled` to `true`.
 When you issue, the top key of `claims` for the `mso_mdoc` entry is the
 namespace `io.igrant.authenticator`.
 

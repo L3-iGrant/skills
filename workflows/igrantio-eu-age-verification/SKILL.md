@@ -1,12 +1,12 @@
 ---
 name: igrantio-eu-age-verification
-description: 'EU Age Verification on the iGrant.io Organisation Wallet Suite: issue an age verification attestation as an ISO/IEC 18013-5 mdoc (doctype eu.europa.ec.av.1, boolean age_over_NN claims) via OpenID4VCI InTime, then verify a selectively disclosed age_over_18 proof via OpenID4VP + DCQL - no birthdate or identity revealed. Implements the EU Age Verification solution profile for EUDI Wallet (EUDIW) under eIDAS 2.0. Use for age-restricted content, products, or services.'
+description: 'EU Age Verification on the iGrant.io Organisation Wallet Suite: issue an age verification attestation as an ISO/IEC 18013-5 mdoc (doctype eu.europa.ec.av.1, boolean age_over_NN claims) via OpenID4VCI in_time, then verify a selectively disclosed age_over_18 proof via OpenID4VP + DCQL - no birthdate or identity revealed. Implements the EU Age Verification solution profile for EUDI Wallet (EUDIW) under eIDAS 2.0. Use for age-restricted content, products, or services.'
 license: Apache-2.0
 metadata:
   categories: [recipe]
   provider: iGrant.io
   keywords: EU age verification, age_over_18, mso_mdoc, eu.europa.ec.av.1, EUDIW, eIDAS2, OpenID4VCI, OpenID4VP, DCQL, selective disclosure
-  version: 2026.10.01
+  version: 2026.11.01
   source-doc: https://docs.igrant.io/docs/eu-age-verification/
   requires-skills: igrantio-ows-overview, igrantio-issuer-backend, igrantio-verifier-backend
 ---
@@ -54,7 +54,7 @@ Record the answers before you write code.
 ## Workflow
 **Issuer side (once per user):**
 1. Create a credential definition (`POST
-   /v2/config/digital-wallet/openid/sdjwt/credential-definition`). An mdoc
+   /v4/config/ows/issuer/credential-definitions`). An mdoc
    needs an X.509 key with a certificate chain. The claims and the
    `mandatory` flags follow the registry template
    (`igrantio-credential-schema-age-verification`).
@@ -79,12 +79,13 @@ Record the answers before you write code.
      ]
    }
    ```
-2. Issue **InTime** with the boolean claim values, e.g.
-   `{ "age_over_18": true, "age_over_21": false, "age_over_65": false }`.
-   The response carries `credentialExchangeId` + the
+2. Issue **in_time** (`POST /v4/config/ows/issuer/issuances` with
+   `mode: "in_time"`) with the boolean claim values under the namespace, e.g.
+   `{ "eu.europa.ec.av.1": { "age_over_18": true, "age_over_21": false, "age_over_65": false } }`.
+   The response (HTTP 201) carries the issuance `id` + `offer.uri`, the
    `openid-credential-offer://` QR/deeplink (render with
-   `igrantio-qr-code`). Completion signal: webhook
-   `openid.credential.credential_acked`.
+   `igrantio-qr-code`). Completion signal: webhook event
+   `ows.issuer.issuance.credential_issued`.
 
 **Verifier side (per check):**
 3. Create a presentation definition (`version: "version_01"`,
@@ -106,10 +107,12 @@ Record the answers before you write code.
    ```
 
    The label `Age Verification` is reserved; use another label.
-4. Send the verification request (v3) with that
-   `presentationDefinitionId`; render the `openid4vp://` QR / deeplink.
-5. Wallet discloses only the boolean; done on
-   `openid.presentation.presentation_acked.v3` with `verified === true`.
+4. Send the verification request (`POST /v4/config/ows/verifier/verifications`)
+   with that `presentationDefinitionId`; render the `openid4vp://` QR /
+   deeplink.
+5. Wallet discloses only the boolean; done on the webhook event
+   `ows.verifier.verification.presentation_received`, then read the
+   verification and check `verified === true`.
 
 Endpoints, payload shapes, and response fields: `igrantio-ows-overview`
 api-reference §1 and §2.

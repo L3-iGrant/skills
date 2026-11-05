@@ -6,7 +6,7 @@ metadata:
   categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, QESAC, qualified electronic signature, remote signing, QES, qes_data, transaction data, credentialId, presentation definition, OpenID4VP, SD-JWT VC, EUDIW, eIDAS2
-  version: 2026.10.01
+  version: 2026.11.01
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/presentationDefinitions/dcqlQuery/qesac
   registry-version: 2025.7.1
   requires-skills: igrantio-api-verifier
@@ -108,7 +108,7 @@ A QESAC query needs one more field than a plain query: the presentation
 definition must name a transaction data template.
 
 **Step 1.** Create the presentation definition with
-`POST /v2/config/digital-wallet/openid/sdjwt/presentation-definition`.
+`POST /v4/config/ows/verifier/presentation-definitions`.
 Set `version` to `version_01`. Set `transactionDataDefinitionType` to
 `qes_data`. Put one entry in `dcqlQuery.credentials` with the `dc+sd-jwt`
 format and the `vct_values` meta.
@@ -143,15 +143,15 @@ defaults to `x509_hash`. Name another key with `cryptographicKeyIdentifier`.
 `dc+sd-jwt` takes only `vct_values` in `meta`. It refuses `type_values`
 (W3C formats) and `doctype_value` (`mso_mdoc`).
 
-**Step 2.** Send the request with the V3 send operation,
-`POST /v3/config/digital-wallet/openid/sdjwt/verification/send`. Send the
+**Step 2.** Send the request with the send operation,
+`POST /v4/config/ows/verifier/verifications`. Send the
 `presentationDefinitionId`, and send `transactionData` that follows the JSON
 Schema of the `qes_data` type. The server answers HTTP 400 when the
 presentation definition sets a `transactionDataDefinitionType` and the
 request carries no `transactionData`, and also in the opposite case.
 
 Read the schema of the type with
-`GET /v2/config/digital-wallet/openid/sdjwt/transaction-data-definitions`
+`GET /v4/config/ows/verifier/transaction-data-templates`
 before you build the payload.
 
 The send operation also takes `signatureStamp` and `signatureCoordinate` for
@@ -160,8 +160,8 @@ a signed PDF. `signatureCoordinate` holds exactly four integers,
 with `signedFile`, `unsignedFile` and any error for each credential.
 
 **Step 3.** Read `vpTokenQrCode` for the deep link and
-`presentationExchangeId` for the correlation id, then poll the V3 read
-operation or wait for the webhook.
+`presentationExchangeId` for the correlation id, then poll the read
+operation or wait for the webhook event.
 
 `label` must hold 3 to 100 characters. The server refuses the labels that
 extensions reserve, for example `Document Signing`. Name the contract instead.
