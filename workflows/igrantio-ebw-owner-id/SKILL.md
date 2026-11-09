@@ -98,9 +98,10 @@ Track progress over webhooks/SSE exactly as in `igrantio-issuer-backend`.
 - Fill the LPID claim values from your organisation register (legal name,
   registration number).
 - Set `credentialCategory` in the configuration (`pid`, `qeaa`, `pub-eaa`
-  or `eaa`) when you issue under an eIDAS category: the platform then
-  checks that the certificate of the signing key fits it. Not set, it is
-  `none`.
+  or `eaa`) to the eIDAS category under which you issue. The platform
+  compares the certificate of the signing key with the category, and the
+  definition shows when the key does not fit (`signingKeyCheck` with the
+  result `does-not-fit`). The save is not refused. Not set, it is `eaa`.
 - Deferred is the norm here because legal-person validation happens between
   offer and claims; switch to `in_time` only if the data is pre-validated.
 - Tenant/base URLs and API-key handling follow `igrantio-backend-proxy`.

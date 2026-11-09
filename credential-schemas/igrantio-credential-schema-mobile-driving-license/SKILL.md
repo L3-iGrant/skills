@@ -284,9 +284,10 @@ schema.
 
 The signing key of an mDL must have an mDL Document Signer certificate
 (ISO/IEC 18013-5 Table B.3: `keyUsage` digitalSignature and the extended key
-usage `1.0.18013.5.1.2`), issued by an IACA. The create call refuses another
-key. Request the certificate with the certificate preset `mdoc-document-signer`
-(`igrantio-api-key-management`).
+usage `1.0.18013.5.1.2`), issued by an IACA. The create call accepts another
+key, and the definition shows that the key does not fit (`signingKeyCheck`
+with the result `does-not-fit`). Request the certificate with the certificate
+preset `mdoc-document-signer` (`igrantio-api-key-management`).
 
 When you issue, the top key of `claims` in the issue request is the namespace
 `org.iso.18013.5.1`.

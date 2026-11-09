@@ -177,8 +177,17 @@ most one key store of each provider (HTTP 409).
 ### List and read
 `GET …/keys` query parameters: `keyStoreId`, `search` (the key id or name,
 or the label or id of a definition that signs with the key),
-`withCertificateChain` (`true`: only keys with a chain), `sortBy` (`name`,
-`createdAt`, `updatedAt`), `sortOrder` (`asc`, `desc`), `offset`, `limit`.
+`withCertificateChain` (`true`: only keys with a chain), `purpose` (the
+suggested keys of a use: keys with a chain and a certificate preset that the
+use accepts, or no preset), `certificatePreset` (a preset id, or `none` for
+keys with a chain and no preset; another value gives HTTP 400), `sortBy`
+(`name`, `createdAt`, `updatedAt`), `sortOrder` (`asc`, `desc`), `offset`,
+`limit`. `purpose` and `certificatePreset` are filters for a key picker, not
+rules of a save. The `purpose` values: `credential-pid`, `credential-eaa`,
+`credential-qeaa`, `credential-pub-eaa`, `credential-mdl`, `status-list`,
+`status-list-mdoc`, `wallet-provider`, `verifier-x509-hash`,
+`verifier-x509-san-dns`, `verifier-attestation`, `annex-c-reader`,
+`issuer-metadata`.
 Without `sortBy` the last updated key comes first. The answer holds `keys`
 and `pagination` (`totalItems`, `limit`, `offset`, `hasNext`). Each key of
 the list also has `usage`: the number of `credentialDefinitions` and
@@ -198,7 +207,6 @@ the list also has `usage`: the number of `credentialDefinitions` and
 | `testCertificate` | `true` when the built-in test CA issued the certificate. For tests only. |
 | `certificatePreset` | The certificate preset of the certificate, or `null`. |
 | `certificateAssessment` | What the platform reads from the certificate (see below). Present also without a chain. |
-| `trustedListExemption` | Read only; `null` without one. The platform operator sets it when the certificate is already in a trusted list; `applies` is `false` when the key has another leaf certificate now. |
 | `trust` | For a key of a qualified provider only: the qualified status of its certificate against the EU trusted lists (`status`, `checkedAt`, `detail`). |
 | `qscd`, `createdAt`, `updatedAt` | As named. |
 
@@ -209,12 +217,18 @@ end of validity of the leaf). **No answer holds the private member `d`.**
 
 `certificateAssessment` is the certificate assessment of the key:
 `keyUsageType` (`A` to `F`, ETSI EN 319 412-2), `fitsCredentialCategories`
-and `fitsCredentialCategoriesForMdl` (the credential categories that the
-certificate fits), `mdlDocumentSigner`, `qcPsb`, and the rule texts for each
-credential category in `categoryMessages` and `mdlConfigurationMessages`
-(`[]` when the key fits). Read it before you pick the signing key of a
-credential configuration: the credential definition checks the key against
-its credential category (the signing key check).
+(the credential categories that the certificate fits), `qcPsb`, and the rule
+texts for each credential category in `categoryMessages` (`[]` when the key
+fits). Read it before you pick the signing key of a credential
+configuration: the credential definition compares the key with its
+credential category (the signing key check).
+
+The signing key check is information. A save does not refuse a key because
+of its certificate or its certificate preset: the credential definition
+shows the result in `signingKeyCheck` (`fits` or `does-not-fit`, with
+`messages`), and the other saves give `signingKeyWarnings`. A save refuses a
+signing key only when the key cannot sign: it is not an active key of the
+organisation, or it has no certificate chain (HTTP 400).
 
 ### Create, reference, import
 `POST …/keys`:
@@ -255,7 +269,9 @@ new keys, or `vault`). The answer is **`201`** with the key.
 ### Certificate presets
 `GET …/certificate-presets` gives `presets` and `testCaEnabled`. Each preset
 targets one certificate profile and holds `id`, `name`, `description`,
-`purpose`, `fixed` (the values the preset sets), `required` (the field paths
+`purpose`, `signingPurposes` (the uses that accept a key with the preset:
+the `purpose` values of the key list), `fixed` (the values the preset sets),
+`required` (the field paths
 the request must give; `a|b` means one of them), `prefill` (values from the
 organisation), `maxValidityDays`, `testCertificateValidityDays`,
 `etsiSyntax`, `testCaDomain` and `sources`. The preset ids:

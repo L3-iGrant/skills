@@ -379,8 +379,10 @@ Notes on the request.
   (`igrantio-api-key-management`).
 - A PID provider sets `credentialCategory` to `pid` in each configuration. The
   certificate of the signing key must then be a PID provider certificate (ETSI
-  TS 119 412-6: QcType `id-etsi-qct-pid`), or the create call fails. Request
-  it with the certificate preset `pid-provider`.
+  TS 119 412-6: QcType `id-etsi-qct-pid`). The create call accepts another
+  key, and the definition shows that the key does not fit (`signingKeyCheck`
+  with the result `does-not-fit`). Request the certificate with the
+  certificate preset `pid-provider`.
   `GET /v4/config/ows/issuer/credential-categories` lists the
   categories and their certificate rules.
 - Add one entry of `credentialDefinitions[]` for each format that you want to

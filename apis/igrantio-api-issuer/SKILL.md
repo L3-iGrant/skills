@@ -258,7 +258,7 @@ mandatory, and it selects the other fields that you must send.
 | `credentialDefinition` | object | Claim path pointers for `jwt_vc_json`. Each path starts with `credentialSubject`. |
 | `credentialDefinitionUri` | string | External claims schema. Send it in place of `claims` or `credentialDefinition`. |
 | `validationPath` | `$.vc`, `$` | Optional. The issuer sets `$.vc` for `jwt_vc_json` and `$` for the other formats. |
-| `credentialCategory` | `none`, `pid`, `eaa`, `qeaa`, `pub-eaa` | The eIDAS credential category. Default `none`. See "Credential category" below. |
+| `credentialCategory` | `eaa`, `qeaa`, `pub-eaa`, `mdl`, `pid` | The eIDAS credential category. Default `eaa`, or `mdl` for the mDL doctype. See "Credential category" below. |
 | `cryptographicKeyFormat` / `cryptographicKeyIdentifier` | as at the top level | The signing key of this configuration. Send both or none; none takes the definition-level key. An `mso_mdoc` configuration needs `x509`. |
 | `expirationInDays` | 1 to 3650 | Validity of the credential. |
 | `expirationInSeconds` | 60 to 315360000 | Validity in seconds; wins over `expirationInDays`. Without both, the issuer takes `definitionDefaults.validitySeconds` of the issuer configuration (default 180 days). |
@@ -333,18 +333,22 @@ issuance of a definition with more than one configuration names one of them.
 ### Credential category
 `credentialCategory` declares the eIDAS category under which you issue the
 configuration. The list credential categories operation gives the certificate
-rules of each category. An mDL (`mso_mdoc` with the mDL doctype) also needs an
-mDL Document Signer certificate, whatever its category.
+rules of each category. The category `mdl` and the mDL doctype
+(`org.iso.18013.5.1.mDL`) go together: a request in which they do not go
+together gives HTTP 400 with `errorType` `credential_category_mismatch`.
 
-- On create and update, the issuer checks the certificate of the signing key
-  against the rules. A key that does not fit gives HTTP 400 with `errorType`
-  `signing_key_does_not_fit`, `errorField` and `errorMessages`.
+- The issuer compares the certificate of the signing key with the rules of
+  the category. The result is information: the create and update calls save
+  a configuration whose key does not fit.
+- Each configuration of an answer has `signingKeyCheck` (`result`: `fits` or
+  `does-not-fit`, with `messages`). It is read only. A wallet or a verifier
+  can refuse a credential whose certificate does not fit its category.
+- A save refuses a signing key only when the key cannot sign: it is not an
+  active key of the organisation, or it has no certificate chain. The answer
+  is HTTP 400, and `errorDescription` names the field and the key.
 - For `eaa`, `qeaa` and `pub-eaa`, do not declare the EAA category claim
   (`category`) in the claims or the type: HTTP 400 with `errorType`
   `eaa_category_claim_reserved`. The issuer adds it for `qeaa` and `pub-eaa`.
-- The read answer adds, to each configuration, `signingKeyCheck`
-  (`result`: `fits`, `does-not-fit`, `exempt` or `not-checked`, with
-  `messages`) and `suggestedCredentialCategory`. Both are read only.
 
 ### Update credential definition
 `PUT /v4/config/ows/issuer/credential-definitions/{definitionId}` takes the
