@@ -6,7 +6,7 @@ metadata:
   categories: [consent, education]
   provider: iGrant.io
   keywords: consent management, GDPR, data agreement, eIDAS2, EUDIW, user onboarding, personal data
-  version: 2026.10.01
+  version: 2026.11.02
   api: https://docs.igrant.io/docs/category/consent-management-admin-api/individual
   auth: Organisation API key (Authorization "ApiKey <YOUR_API_KEY>"), server-side only, never the browser
   requires-skills: igrantio-consent-records
@@ -57,13 +57,16 @@ Persist `individualId` in YOUR database keyed by your `userId`. The reference us
 `externalId = your userId` so the individual is also recoverable from OWS if the
 local mapping is ever lost.
 
-## API (Consent BB admin, base `/v2`, `Authorization: ApiKey <YOUR_API_KEY>`)
+## API (Consent BB admin, `Authorization: ApiKey <YOUR_API_KEY>`)
+The API key needs the scopes `individuals:create`, `individuals:read` and
+`individuals:update`. A key without the scope of a route gets HTTP 403.
+
 | Method | Path | Purpose |
 | --- | --- | --- |
-| POST | `/v2/config/individual` | Create individual → returns `individual.id` |
-| GET | `/v2/config/individual/{id}` | Read individual |
-| PUT | `/v2/config/individual/{id}` | Update individual |
-| GET | `/v2/config/individuals?limit=&offset=&search=&externalIndividualId=` | List (find by your userId) |
+| POST | `/v4/config/consent/individual` | Create individual; returns `individual.id` |
+| GET | `/v4/config/consent/individual/{individualId}` | Read individual |
+| PUT | `/v4/config/consent/individual/{individualId}` | Update individual |
+| GET | `/v4/config/consent/individuals?limit=&offset=&search=&externalIndividualId=` | List (find by your userId) |
 
 Body of create and update: `{"individual": {...}}`, with `name`, `email`,
 `phone`, `externalId`, `externalIdType`, `identityProviderId`, `mapperId`,

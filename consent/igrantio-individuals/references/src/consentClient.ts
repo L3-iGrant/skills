@@ -5,7 +5,8 @@
  * All requests send `Authorization: ApiKey <YOUR_API_KEY>`. Consent-record
  * requests also send `X-ConsentBB-IndividualId: <individualId>`: the API takes
  * the individual from this header, not from the path or the query. Paths are
- * under `/v2`.
+ * under `/v4/config/consent` (individuals) and `/v4/service/consent` (consent
+ * records).
  */
 
 export interface ConsentClientConfig {
@@ -87,16 +88,16 @@ export interface ListParams {
 }
 
 const P = {
-  createIndividual: "/v2/config/individual",
-  individual: (id: string) => `/v2/config/individual/${id}`,
-  individuals: "/v2/config/individuals",
+  createIndividual: "/v4/config/consent/individual",
+  individual: (id: string) => `/v4/config/consent/individual/${id}`,
+  individuals: "/v4/config/consent/individuals",
   recordForAgreement: (dataAgreementId: string) =>
-    `/v2/service/individual/record/data-agreement/${dataAgreementId}`,
-  consentRecords: "/v2/service/individual/record/consent-record",
+    `/v4/service/consent/individual/record/data-agreement/${dataAgreementId}`,
+  consentRecords: "/v4/service/consent/individual/record/consent-record",
   consentRecord: (consentRecordId: string) =>
-    `/v2/service/individual/record/consent-record/${consentRecordId}`,
-  consentRecordHistory: "/v2/service/individual/record/consent-record/history",
-  allRecords: "/v2/service/individual/record",
+    `/v4/service/consent/individual/record/consent-record/${consentRecordId}`,
+  consentRecordHistory: "/v4/service/consent/individual/record/consent-record/history",
+  allRecords: "/v4/service/consent/individual/record",
 } as const;
 
 export interface ConsentClient {

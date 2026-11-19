@@ -6,7 +6,7 @@ metadata:
   categories: [consent, education]
   provider: iGrant.io
   keywords: consent management, GDPR, data agreement, eIDAS2, EUDIW, right to be forgotten, personal data
-  version: 2026.10.01
+  version: 2026.11.02
   api: https://docs.igrant.io/docs/category/consent-management-individual-api/consent-record
   auth: Organisation API key (Authorization "ApiKey <YOUR_API_KEY>") + X-ConsentBB-IndividualId, server-side only
   requires-skills: igrantio-individuals
@@ -53,20 +53,24 @@ Record the answers before you write code.
    to end users, or admin-only? _Recommend admin-only unless the product
    requires self-service._
 
-## API (Consent BB individual, base `/v2`)
+## API (Consent BB individual)
 Auth on every call: `Authorization: ApiKey <YOUR_API_KEY>` **and**
 `X-ConsentBB-IndividualId: <individualId>`. The service takes the individual
 from this header (the `individualId` or the `externalId` of the individual),
 not from the path or the query. A call without it gives HTTP 400.
+The API key needs the scopes `consent-records:create`,
+`consent-records:read`, `consent-records:update` and, for the delete of all
+records, `consent-records:delete`. A key without the scope of a route gets
+HTTP 403.
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| POST | `/v2/service/individual/record/data-agreement/{dataAgreementId}?revisionId=` | Record consent (first time); no body |
-| GET | `/v2/service/individual/record/data-agreement/{dataAgreementId}` | Read consent for a data agreement |
-| GET | `/v2/service/individual/record/consent-record?limit=&offset=` | List all the individual's records |
-| PUT | `/v2/service/individual/record/consent-record/{consentRecordId}` | Update (allow/withdraw) |
-| GET | `/v2/service/individual/record/consent-record/history?limit=&offset=` | Consent change history |
-| DELETE | `/v2/service/individual/record` | Delete all records (right to be forgotten) |
+| POST | `/v4/service/consent/individual/record/data-agreement/{dataAgreementId}?revisionId=` | Record consent (first time); no body |
+| GET | `/v4/service/consent/individual/record/data-agreement/{dataAgreementId}` | Read consent for a data agreement |
+| GET | `/v4/service/consent/individual/record/consent-record?limit=&offset=` | List all the individual's records |
+| PUT | `/v4/service/consent/individual/record/consent-record/{consentRecordId}` | Update (allow/withdraw) |
+| GET | `/v4/service/consent/individual/record/consent-record/history?limit=&offset=` | Consent change history |
+| DELETE | `/v4/service/consent/individual/record` | Delete all records (right to be forgotten) |
 
 Consent record fields: `id`, `dataAgreementId`, `dataAgreementRevisionId`,
 `dataAgreementRevisionHash`, `individualId`, **`optIn`** (true=allow,
