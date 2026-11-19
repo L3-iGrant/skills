@@ -1,8 +1,8 @@
 /**
- * Credential detail view: banner + issuer avatar, title + format chip, eye
- * (blur) toggle, trust badge, claims table, validity dates, data-agreement
- * policy row. In review mode (a `credential_acked` credential arriving from a
- * notification) it shows Accept / Reject instead of Close.
+ * Credential detail view: banner and issuer avatar, title and format chip,
+ * eye (blur) toggle, the trust checks of the signers, claims table and
+ * validity dates. In review mode (a `credential_acked` credential from a
+ * notification or a receive) it shows Accept and Refuse instead of Close.
  */
 
 import { useEffect, useState } from "react";
@@ -30,7 +30,7 @@ export function CredentialDetail({
   onClose,
 }: {
   record: CredentialRecord;
-  /** True when reviewing an incoming credential (accept/reject footer). */
+  /** True when the user reviews a received credential (Accept and Refuse footer). */
   reviewMode?: boolean;
   onAccept?: () => void;
   onReject?: () => void;
@@ -65,11 +65,7 @@ export function CredentialDetail({
         </span>
         <div>
           <div style={{ fontWeight: 700, color: COLORS.text }}>{issuer.name}</div>
-          <TrustBadge
-            verified={record.isVerifiedWithTrustList}
-            provider={record.trustServiceProvider}
-            showText
-          />
+          <TrustBadge check={record.credentialSignerTrustedListCheck} title="Credential signer" showText />
         </div>
       </div>
 
@@ -98,10 +94,28 @@ export function CredentialDetail({
         {dates.expires !== undefined && <div>Expiry: {formatDate(dates.expires)}</div>}
       </div>
 
+      {/* The other two signers: show them only when the record has their check. */}
+      {(record.issuerTrustedListCheck || record.statusIssuerTrustedListCheck) && (
+        <div style={{ fontSize: 12, color: COLORS.secondary, marginTop: 8, display: "grid", gap: 4 }}>
+          {record.issuerTrustedListCheck && (
+            <div>
+              Issuer metadata signer:{" "}
+              <TrustBadge check={record.issuerTrustedListCheck} title="Issuer metadata signer" showText />
+            </div>
+          )}
+          {record.statusIssuerTrustedListCheck && (
+            <div>
+              Status list signer:{" "}
+              <TrustBadge check={record.statusIssuerTrustedListCheck} title="Status list signer" showText />
+            </div>
+          )}
+        </div>
+      )}
+
       <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16 }}>
         {reviewMode ? (
           <>
-            <Button kind="danger" onClick={onReject}>Reject</Button>
+            <Button kind="danger" onClick={onReject}>Refuse</Button>
             <Button onClick={onAccept}>Accept</Button>
           </>
         ) : (

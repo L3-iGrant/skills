@@ -8,22 +8,27 @@ import { Router } from "express";
  *
  *   GET /:tenant/v4/config/ows/holder/notification-stream
  *
- * The relay resolves the tenant's authorization value, opens the upstream OWS
- * stream with it in the `Authorization` header, and pipes the bytes through
- * untouched. Mount it on the proxy prefix BEFORE the proxy router so the
- * browser uses one base URL for REST and SSE alike.
+ * The relay resolves the authorization value of the tenant, opens the
+ * upstream stream with it in the `Authorization` header, and pipes the bytes
+ * through without a change. Mount it on the proxy prefix BEFORE the proxy
+ * router, so that the browser uses one base URL for REST and SSE.
  *
- * Replay: the browser's `Last-Event-ID` header (sent by `EventSource` on its
- * own reconnects) or `lastEventId` query parameter goes upstream as the
- * `lastEventId` query parameter, so OWS sends the missed frames first. OWS
- * takes no other query parameters on this path.
+ * Replay: the `Last-Event-ID` header of the browser (`EventSource` sends it
+ * when it reconnects) or its `lastEventId` query parameter goes upstream as
+ * the `lastEventId` query parameter, so the wallet sends the missed frames
+ * first. The stream takes no other query parameter.
+ *
+ * Without a relay, a backend can get a one-time ticket with
+ * `POST /v4/config/platform/sse-ticket` (body `{"path": ...}`) and give it to
+ * the browser, which opens the stream on the API host with `?ticket=`. A
+ * ticket is valid for 30 seconds and one connection.
  */
 export interface NotificationsSseOptions {
-  /** OWS base URL, e.g. https://demo-api.igrant.io */
+  /** OWS API base URL, for example https://demo-api.igrant.io */
   owsBaseUrl: string;
   /**
-   * Resolve the upstream authorization value for a tenant: `ApiKey <key>`.
-   * Return undefined for unknown tenants (the relay answers 404).
+   * Resolve the upstream authorization value of a tenant: `ApiKey <key>`.
+   * Return undefined for an unknown tenant (the relay answers 404).
    */
   getAuthorization: (tenant: string) => Promise<string | undefined> | string | undefined;
   /** Upstream connect timeout in ms (default 15000). */
@@ -40,13 +45,14 @@ export function notificationsSseRouter(opts: NotificationsSseOptions): Router {
       return;
     }
 
+    const url = new URL(`${opts.owsBaseUrl.replace(/\/$/, "")}/v4/config/ows/holder/notification-stream`);
     const lastEventId = String(req.header("last-event-id") ?? req.query.lastEventId ?? "");
-    const qs = /^\d+$/.test(lastEventId) ? `?${new URLSearchParams({ lastEventId })}` : "";
-    const url = `${opts.owsBaseUrl}/v4/config/ows/holder/notification-stream${qs}`;
+    if (/^\d+$/.test(lastEventId)) url.searchParams.set("lastEventId", lastEventId);
 
     const controller = new AbortController();
     const connectTimer = setTimeout(() => controller.abort(), opts.connectTimeoutMs ?? 15_000);
-    req.on("close", () => controller.abort());
+    // The response closes when the browser goes away: stop the upstream stream too.
+    res.on("close", () => controller.abort());
 
     let upstream: Response | undefined;
     try {
@@ -55,7 +61,7 @@ export function notificationsSseRouter(opts: NotificationsSseOptions): Router {
         signal: controller.signal,
       });
     } catch {
-      res.status(502).json({ detail: "Upstream SSE connect failed" });
+      if (!res.headersSent) res.status(502).json({ detail: "Upstream SSE connect failed" });
       return;
     } finally {
       clearTimeout(connectTimer);
@@ -82,7 +88,7 @@ export function notificationsSseRouter(opts: NotificationsSseOptions): Router {
         res.write(Buffer.from(value));
       }
     } catch {
-      // client or upstream went away - fall through and close our side
+      // The browser or the upstream went away: close this side as well.
     }
     res.end();
   });

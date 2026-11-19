@@ -1,13 +1,13 @@
 /**
- * Shared credentials: the stats row doubles as the status filter (click
- * "Presentation Shared" / "Presentation Pending" to filter; Total clears),
- * plus a table of past/pending presentations. Viewing a shared record renders
- * one collapsible card per disclosed credential (collapsed by default when
- * more than one). Pending rows re-enter the share wizard.
+ * Shared credentials: the stats row is also the status filter (click
+ * "Presentation Shared" or "Presentation Pending" to filter; Total clears
+ * it), and a table of the presentations. The view of a shared record shows
+ * one card for each disclosed credential. A pending row opens the share
+ * wizard again.
  */
 
 import { useState } from "react";
-import type { PresentationRecord } from "../holderClient";
+import type { PresentationRecord, PresentedCredential } from "../holderClient";
 import { useSharedPresentations, useShareFlow } from "../useHolder";
 import {
   COLORS,
@@ -24,14 +24,16 @@ import { LifecycleModal, PRESENTATION_LIFECYCLE } from "./lifecycle";
 import { Button, Chip, SearchInput, StatCard, card, tableStyle, tdStyle, thStyle } from "./ui";
 import { EXCLUDED_CLAIM_KEYS } from "../credentialDisplay";
 
-function DisclosedCredentialCard({ credential, blur }: { credential: Record<string, unknown>; blur: boolean }) {
+/** One shared credential: `claims` (SD-JWT VC, mdoc) or `credentialSubject` (W3C VC). */
+function DisclosedCredentialCard({ credential, blur }: { credential: PresentedCredential; blur: boolean }) {
+  const source = credential.claims ?? credential.credentialSubject ?? {};
   const claims = Object.fromEntries(
-    Object.entries(credential).filter(
-      ([k]) => !EXCLUDED_CLAIM_KEYS.has(k) && !k.startsWith("vct") && k !== "id" && k !== "type" && k !== "doctype",
-    ),
+    Object.entries(source).filter(([k]) => !EXCLUDED_CLAIM_KEYS.has(k) && !k.startsWith("vct") && k !== "id"),
   );
+  const label = credential.vct ?? credential.doctype ?? credential.type?.[credential.type.length - 1] ?? credential.id;
   return (
     <div style={{ ...card, marginTop: 8 }}>
+      <div style={{ fontSize: 12, color: COLORS.secondary, marginBottom: 6 }}>{label}</div>
       <ClaimsTable claims={claims} blur={blur} />
     </div>
   );
@@ -45,7 +47,7 @@ function SharedDetail({ record, onClose }: { record: PresentationRecord; onClose
     <div style={{ ...card, maxWidth: 620, marginTop: 12 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <div style={{ fontWeight: 700, color: COLORS.text, flex: 1 }}>{verifier.name}</div>
-        <TrustBadge verified={record.isVerifiedWithTrustList} provider={record.trustServiceProvider} showText />
+        <TrustBadge check={record.relyingPartyTrustedListCheck} title="Verifier" showText />
         <Button kind="secondary" onClick={() => setBlur((b) => !b)}>{blur ? "Show" : "Hide"}</Button>
       </div>
       {disclosed.map((c, i) => (
@@ -118,7 +120,7 @@ export function SharedCredentialsView({ proxyBaseUrl }: { proxyBaseUrl: string }
                 <td style={tdStyle}>{presentationTypeLabel(r)}</td>
                 <td style={tdStyle}>
                   {r.clientMetadata?.clientName ?? "Unknown"}{" "}
-                  <TrustBadge verified={r.isVerifiedWithTrustList} provider={r.trustServiceProvider} />
+                  <TrustBadge check={r.relyingPartyTrustedListCheck} title="Verifier" />
                 </td>
                 <td style={tdStyle}>{formatDate(r.updatedAt)}</td>
                 <td style={tdStyle}>

@@ -1,11 +1,12 @@
 /**
- * Received credentials: stats row (Total / Active / Archived), search, an
- * Active and an Archived table (both list credential_accepted records; the
- * archived table filters expired=true and shows Revoked/Expired), per-row
- * view/refresh/delete actions.
+ * Received credentials: a stats row (Total, Active, Archived), search, an
+ * Active and an Archived table (both list `credential_accepted` records with
+ * one row for each batch; the archived table filters `expired=true` and
+ * shows Revoked or Expired), and the view, refresh and delete actions of
+ * each row.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { CredentialRecord } from "../holderClient";
 import { useHolderClient, useWalletCredentials } from "../useHolder";
 import {
@@ -13,6 +14,7 @@ import {
   credentialListTitle,
   formatDate,
   formatLabel,
+  revocationLabel,
 } from "../credentialDisplay";
 import { TrustBadge } from "./TrustBadge";
 import { CredentialDetail } from "./CredentialDetail";
@@ -31,10 +33,13 @@ function CredentialsTable({
   const client = useHolderClient({ proxyBaseUrl });
   const [viewing, setViewing] = useState<CredentialRecord | null>(null);
 
-  onTotal?.(list.total);
+  useEffect(() => {
+    onTotal?.(list.total);
+  }, [onTotal, list.total]);
 
   const refreshStatus = async (record: CredentialRecord) => {
-    // Revocation check + reissuance request; either may be unsupported - ignore.
+    // The revocation status check and the re-issuance request; the issuer can
+    // support neither, so ignore their errors.
     await Promise.allSettled([
       client.credentials.revocationStatus(record.id),
       client.credentials.requestReissuance(record.id),
@@ -65,18 +70,24 @@ function CredentialsTable({
         <tbody>
           {list.records.map((r) => {
             const revoked = r.revocationStatus === "Revoked";
+            const state = revocationLabel(r.revocationStatus, expired);
             return (
               <tr key={r.id}>
-                <td style={tdStyle}>{credentialListTitle(r)}</td>
+                <td style={tdStyle}>
+                  {credentialListTitle(r)}
+                  {(r.batchInstanceCount ?? 0) > 1 && (
+                    <div style={{ fontSize: 11, color: COLORS.secondary }}>
+                      {r.batchAvailableCount ?? 0} of {r.batchInstanceCount} single-use copies left
+                    </div>
+                  )}
+                </td>
                 <td style={tdStyle}>
                   {r.issuer?.name ?? "Unknown"}{" "}
-                  <TrustBadge verified={r.isVerifiedWithTrustList} provider={r.trustServiceProvider} />
+                  <TrustBadge check={r.credentialSignerTrustedListCheck} title="Credential signer" />
                 </td>
                 <td style={tdStyle}>{formatLabel(r)}</td>
                 <td style={tdStyle}>
-                  <span style={{ color: revoked ? COLORS.red : COLORS.secondary }}>
-                    {revoked ? "Revoked" : expired ? "Expired" : "Active"}
-                  </span>
+                  <span style={{ color: state.color }}>{state.text}</span>
                 </td>
                 <td style={tdStyle}>{formatDate(r.createdAt)}</td>
                 <td style={{ ...tdStyle, whiteSpace: "nowrap" }}>
@@ -92,6 +103,8 @@ function CredentialsTable({
                   )}{" "}
                   <Button
                     kind="danger"
+                    // The wallet refuses to delete a Wallet Unit Attestation and a system-managed credential.
+                    disabled={r.isWalletUnitAttestation === true || r.isSystemManaged === true}
                     onClick={() => void client.credentials.delete(r.id).then(list.refresh)}
                   >
                     Delete

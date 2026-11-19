@@ -1,266 +1,325 @@
 # OWS holder API reference - receive, hold, present
 
-Authoritative endpoint/payload/response reference for the OWS **holder**
-(wallet-side) API, as exercised by the iGrant.io dashboard wallet-unit pages.
-Paths are relative to the OWS base URL (see the overview skill for
-environments). The tenant backend authenticates with
-`Authorization: ApiKey <key>`. The browser calls the backend proxy path with
-no key.
+The holder (wallet-side) contract that the holder portal drives through this
+backend. `igrantio-api-holder` is the full field and enum dictionary; this
+file is the flow-ordered view of the same release.
 
-Legend: `{base}` = OWS base URL. Frontend base = `{backend}/ows/{tenant}`
-(see `igrantio-backend-proxy`). Error responses carry `errorDescription`
-(sometimes `detail`) - surface that string. Request bodies are strict: an
-unknown field or a value of the wrong JSON type answers 400.
-
-Every holder path starts with `/v4/config/ows/holder`. The held credential
-routes in §1 and §2 (all except §1.10, §2.1, §2.3, §2.4 and §2.5) answer 400
-"Holder functionalities for sandbox organisation is disabled" for an API key
-that is bound to a sandbox organisation. Use a key of the main organisation.
+- `{base}` is the API host of the environment of the key: demo
+  `https://demo-api.igrant.io` (default), staging
+  `https://staging-api.igrant.io`, production `https://api.igrant.io`.
+- The backend authenticates with `Authorization: ApiKey <key>`. The browser
+  calls `{backend}/ows/{tenant}/<path>` with no key (see
+  `igrantio-backend-proxy`).
+- An error answer is `{"errorCode": <status>, "errorDescription": "..."}`.
+  Show `errorDescription`. The proxy and the relay answer
+  `{"detail": "..."}` for their own errors.
+- Request bodies are strict: an unknown field, or a value of the wrong JSON
+  type, gives 400 that names the field. Send JSON booleans and strings.
+- The wallet always uses its own holder key. No request has a key field.
+- The credential, issuer metadata and presentation operations need an
+  operational wallet unit (section 5). Else the answer is 400
+  `Wallet Unit is not operational`. The list and read of credentials and of
+  presentations work without it.
+- Sandbox organisation: the held credential operations (receive, transaction
+  code, deferred credential, authorisation code exchange, acceptance, list,
+  read, delete, re-issuance, issuer metadata, matching credentials, and the
+  presentation delete) answer 400 "Holder functionalities for sandbox
+  organisation is disabled" for a key of a sandbox organisation. Use a key of
+  the main organisation.
 
 ---
 
 ## 1. Receive a credential (OpenID4VCI, wallet side)
 
-### 1.1 Receive a credential offer
+### 1.1 Receive a credential offer, or start a wallet-initiated issuance
 ```
 POST {base}/v4/config/ows/holder/credentials
 ```
+One of two bodies:
 ```jsonc
-{
-  "credentialOffer": "openid-credential-offer://…"   // the scanned/pasted offer URI (or offer JSON)
-}
-```
-The wallet receives with the organisation default key; there is no key
-field in the body.
+// An offer from an issuer: the scanned or pasted offer link (or the offer JSON)
+{ "credentialOffer": "openid-credential-offer://?credential_offer_uri=https%3A%2F%2Fissuer.example.com%2Foffers%2F123" }
 
-**Response**: `credential` - a single object **or an array** (multi-credential
-offers); normalise to an array. Fields that drive the next step:
+// A wallet-initiated issuance: the issuer and the configurations to receive
+{ "credentialIssuer": "https://issuer.example.com", "credentialConfigurationIds": ["ExampleCredential_dc+sd-jwt"] }
+```
+The wallet-initiated body starts the Authorization Code Flow: open
+`authorisationRequest` of the answer in the browser of the user (section
+1.4). Read the configuration ids with the issuer metadata operation (section
+5.1).
+
+**Answer**: `{"credential": ...}`: one record, a list (an offer with more
+than one configuration, or a batch), or `null`. Work with a list. A wallet
+holds at most 10000 credentials: a receive above that gives 409.
 
 | Field | Use |
 | --- | --- |
-| `id` | credential record id - the `{id}` of every follow-up call. |
-| `credentialStatus` | `credential_pending` until received; `credential_acked` when ready to review. |
-| `userPinRequired`, `userPin`, `txCode` | transaction-code (pre-authorised code) flow - see §1.2. `txCode.length` = digits, `txCode.input_mode` = `numeric` \| `text`. |
-| `oAuthFlow`, `authorizationRequest`, `acceptanceToken` | front-channel authorization-code flow - see §1.3. |
+| `credentialId`, `id` | The credential id (the same value): the `{credentialId}` of every follow-up call. |
+| `receivedOfferId` | The same for every record of one reception. Filter the list with it. |
+| `credentialStatus` | `credential_pending` (the flow needs a transaction code, an authorisation code or a deferred fetch), `credential_acked` (the wallet holds it; review it), `credential_accepted`, `credential_archived`. |
+| `requiresTransactionCode`, `txCode` | The issuer asks for a transaction code. `txCode.length` (0 when the issuer gives none), `txCode.input_mode` (`numeric` or `text`), `txCode.description`. |
+| `oauthFlow`, `authorisationRequest` | `frontchannel`: open `authorisationRequest` in the browser of the user. |
+| `acceptanceToken`, `deferredEndpoint`, `deferredIntervalSeconds` | Set for a deferred issuance. `deferredIntervalSeconds` is the wait that the issuer asks for (left out when empty). |
+| `presentationId` | The presentation that the issuer asks for during the issuance (section 2). |
+| `credentialSignerTrustedListCheck`, `issuerTrustedListCheck`, `statusIssuerTrustedListCheck`, `statusIssuerIsCredentialSigner` | The trust checks of the signers (section 7). |
 
-**Which flow am I in?** (same decision table as the notifications skill)
+**Which step is next?** The first match wins. An absent value is `""` in a
+credential answer and `null` in a notification.
 
-| Signal on the record | Flow | Next call |
+| Signal on the record | Step | Next call |
 | --- | --- | --- |
-| `userPinRequired && !userPin && credentialStatus == "credential_pending"` | pre-authorised code + transaction code | §1.2 |
-| `oAuthFlow == "frontchannel" && credentialStatus == "credential_pending" && acceptanceToken absent && authorizationRequest` | authorization code (front-channel) | open `authorizationRequest`, then §1.3 |
-| `acceptanceToken present && credentialStatus == "credential_pending"` | deferred issuance | §1.4 |
-| `credentialStatus == "credential_acked"` | credential arrived | review, then §1.5 accept or §1.8 reject |
+| `credential_pending` and `acceptanceToken` set | deferred issuance | section 1.3 |
+| `credential_pending` and `requiresTransactionCode` | pre-authorised code with a transaction code | section 1.2 |
+| `credential_pending`, `oauthFlow == "frontchannel"` and `authorisationRequest` set | Authorization Code Flow | open `authorisationRequest`, then section 1.4 |
+| `credential_pending` and `presentationId` set | a presentation during the issuance | section 2.2, then 2.3 |
+| `credential_acked` | the credential is in the wallet | review, then section 1.5 accept or section 1.8 refuse |
 
-(`acceptanceToken` is `""` in this response but `null` in notifications -
-treat empty and null alike.)
-
-### 1.2 Submit the transaction code
+### 1.2 Send the transaction code
 ```
 PUT {base}/v4/config/ows/holder/credentials/{credentialId}/transaction-code
 ```
 ```jsonc
-{ "transactionCode": "1234" }   // a JSON string, 4 to 12 characters
+{ "transactionCode": "493817" }   // a JSON string; 4 to 12 characters after the trim
 ```
-On a wrong code OWS answers 400; show its `errorDescription`. **Response**:
-`{ "credential": CredentialRecord }`.
+A wrong code gives 400; show its `errorDescription`. **Answer**:
+`{"credential": ...}`, one record or a list. A deferred answer has
+`acceptanceToken` set.
 
-### 1.3 Exchange the front-channel authorization code
-Open `authorizationRequest` in the browser; the issuer redirects back with
-`?code=…&state=…`. Then:
+### 1.3 Fetch a deferred credential
+```
+PUT {base}/v4/config/ows/holder/credentials/{credentialId}/deferred-credential
+```
+No body. **Answer**: `{"credential": ...}`. `credentialStatus`
+`credential_acked`: the credential is in the wallet. `credential_pending`:
+the issuer is not ready; call again after `deferredIntervalSeconds`.
+
+### 1.4 Exchange the authorisation code
+The issuer redirects the browser to the `redirectUrl` of the holder
+configuration (section 4). When that URL is empty, the wallet uses its own
+callback URL and exchanges the code itself: nothing to do in the portal.
+When it is the portal, take `code`, `state` and `iss` from the redirect:
 ```
 POST {base}/v4/config/ows/holder/authorisation-code-exchanges
 ```
 ```jsonc
-{ "code": "<from ?code>", "state": "<from ?state>", "iss": "<from ?iss, when present>" }
+{ "code": "<from ?code>", "state": "<from ?state>", "iss": "<from ?iss>" }
 ```
-`state` is required: the wallet finds the credential records by it (or by
-an optional `credentialIds` array, which must match the same `state`).
-**Response**: `{ "credential": … }` (one record or an array); refetch the
-credential list and notifications as well.
-
-### 1.4 Retrieve a deferred credential
-```
-PUT {base}/v4/config/ows/holder/credentials/{credentialId}/deferred-credential
-```
-Empty body. **Response**: `credential.credentialStatus` -
-`credential_acked` means the credential is now in the wallet; anything else
-means the issuer is not ready yet - retry later.
+`code` and `state` are mandatory. The wallet finds the records by `state`,
+or by the optional `credentialIds` list (each must belong to that `state`).
+`iss` (RFC 9207) is mandatory when the authorisation server says that it
+sends `iss`, and it must match. **Answer**: `{"credential": ...}`, one record
+or a list.
 
 ### 1.5 Accept a received credential
 ```
 PUT {base}/v4/config/ows/holder/credentials/{credentialId}/acceptance
 ```
-Empty body. Accepts a `credential_acked` credential into the wallet
-(**response** `{ "credential": … }`). To reject instead, `DELETE` the
-credential (§1.8).
+No body. The record must be `credential_acked`. The wallet sends the
+`credential_accepted` notification to the issuer (once for a batch).
+**Answer**: `{"credential": ...}` with `credentialStatus`
+`credential_accepted`.
 
 ### 1.6 Read one credential
 ```
 GET {base}/v4/config/ows/holder/credentials/{credentialId}
 ```
-**Response**: `{ "credential": CredentialRecord }`. Key fields:
-`credentialFormat` (`dc+sd-jwt` \| `vc+sd-jwt` \| `vp+sd-jwt` \| `jwt_vc` \|
-`jwt_vc_json` \| `mso_mdoc`), the claims
-(`credential.vc.credentialSubject` + `credential.vc.type` for W3C,
-`credential.vct` for SD-JWT VC, `credential.nameSpaces` for mdoc),
-`issuer.name` / `issuer.logo` / `issuer.cover`,
-`credentialConfigurations.display[0]` (or
-`credentialConfigurations.credential_metadata.display[0]`) with `.name`,
-`.logo.uri`, `.background_image.uri`, `isVerifiedWithTrustList`,
-`trustServiceProvider`, `revocationStatus`, `createdAt` and
-`updatedAt` (Unix seconds).
+**Answer**: `{"credential": ...}`. Display fields:
+- `credentialFormat`: `dc+sd-jwt`, `vc+sd-jwt`, `vp+sd-jwt`, `jwt_vc_json`,
+  `jwt_vc` or `mso_mdoc`.
+- `credential`: the decoded claims (`vc.credentialSubject` and `vc.type` for
+  a W3C VC, `vct` and the claims for an SD-JWT VC, `nameSpaces` and
+  `issuerAuth` for an mdoc).
+- `issuer` (`name`, `location`, `cover`, `logo`, `description`,
+  `identifier`, `display`) and `credentialIssuer`.
+- `credentialConfigurations`: the configuration of the issuer metadata,
+  with `display[0]` or `credential_metadata.display[0]` (`name`,
+  `logo.uri`, `background_image.uri`).
+- `revocationStatus`: `Operational`, `Revoked`, `Suspended`, or empty
+  before the first check.
+- `batchId`, `isPresented`, `isWalletUnitAttestation`, `isSystemManaged`,
+  `issuedAt`, `refreshCount`, `lastRefreshedAt`, `createdAt` and
+  `updatedAt` (Unix seconds).
 
-### 1.7 List credentials held in the wallet
+### 1.7 List the credentials of the wallet
 ```
-GET {base}/v4/config/ows/holder/credentials?limit=&offset=[&expired=true|false][&vct=][&doctype=][&credentialStatus=credential_accepted][&search=][&sortBy=createdAt|updatedAt][&sortOrder=asc|desc]
+GET {base}/v4/config/ows/holder/credentials?limit=10&offset=0&expired=false&credentialStatus=credential_accepted&groupBatches=true&sortBy=createdAt&sortOrder=desc
 ```
-Omit `expired` for both (revoked and archived count as expired).
-`credentialStatus` takes one value or a comma list. The list sorts on
-`updatedAt` unless `sortBy=createdAt`; `sortOrder=asc` sorts ascending,
-anything else descending.
+Filters: `expired` (`true`: revoked, archived, or past its expiry; `false`:
+the others; leave it out for both), `credentialStatus` (one value or a comma
+list), `vct`, `doctype`, `type`, `ids` (comma list), `receivedOfferId`,
+`search` (credential type or issuer name), `sortBy` (`updatedAt` default, or
+`createdAt`), `sortOrder` (`asc`, else descending), `groupBatches`, `offset`
+and `limit` (default 10, at most 100). Wallet Unit Attestations come last.
 
-**Response**:
+**Answer**:
 ```jsonc
 {
-  "credential": [ /* CredentialRecord[] */ ],
+  "credential": [ /* credential records */ ],
   "pagination": { "currentPage": 1, "totalItems": 12, "totalPages": 2, "limit": 10, "hasNext": true, "hasPrevious": false }
 }
 ```
+With `groupBatches=true` the list has one row for each batch, with
+`batchInstanceCount` (the copies) and `batchAvailableCount` (the copies not
+presented yet).
 
-### 1.8 Delete (or reject) a credential
+### 1.8 Delete (or refuse) a credential
 ```
 DELETE {base}/v4/config/ows/holder/credentials/{credentialId}
 ```
-**Response**: 204, no body.
+**Answer**: 204, no body. The wallet deletes every copy of the batch and
+sends the `credential_deleted` notification to the issuer (best effort). It
+refuses to delete a Wallet Unit Attestation and a credential with
+`isSystemManaged` `true`.
 
-### 1.9 Request reissuance
+### 1.9 Request a re-issuance
 ```
 PUT {base}/v4/config/ows/holder/credentials/{credentialId}/reissuance
 ```
-Empty body. Requests reissuance of an expired or near-expiry credential via
-OID4VCI. **Response**: `{ "credential": … }`.
+No body. The wallet gets a new credential from the issuer with the refresh
+token of the record. **Answer**: `{"credential": ...}`.
 
-### 1.10 Check revocation status
+### 1.10 Check the revocation status
 ```
 GET {base}/v4/config/ows/holder/credentials/{credentialId}/revocation-status
 ```
-Queries the IETF Token Status List for the credential's current revocation
-status. **Response**: `{ "credential": … }` with `revocationStatus` updated.
-A credential without a status answers 400 ("does not support revocation"); an
-issuer status list that cannot be read answers 502.
+The wallet reads the status list of the issuer and updates
+`revocationStatus`. **Answer**: `{"credential": ...}`. A credential without
+a status list entry gives 400; a status list that the wallet cannot read
+gives 502.
 
 ---
 
-## 2. Present credentials (OpenID4VP + DCQL, wallet side)
+## 2. Present credentials (OpenID4VP 1.0 with DCQL, wallet side)
 
 ### 2.1 Receive a presentation request
 ```
 POST {base}/v4/config/ows/holder/presentations
 ```
 ```jsonc
-{
-  "vpTokenQrCode": "openid4vp://…"    // the scanned/pasted request - URI or https request URL, verbatim
-}
+{ "requestUrl": "openid4vp://?client_id=x509_san_dns%3Averifier.example.com&request_uri=https%3A%2F%2Fverifier.example.com%2Frequests%2F42" }
 ```
+`requestUrl` is mandatory: the Authorization Request URI that the holder
+scanned or opened, as it is. The wallet answers only the DCQL shape. It sends
+nothing to the verifier before the response operation.
 
-**Response**: `{ "presentation": PresentationRecord }`. Fields to process:
+**Answer**: `{"presentation": ...}`:
 
 | Field | Use |
 | --- | --- |
-| `presentation.presentationId` | the `{id}` for §2.2 matching credentials and §2.3 response. |
-| `presentation.status` | `presentation_pending` → continue; `presentation_acked` → already answered. |
-| `presentation.dcqlQuery` | the verifier's DCQL query: `credentials[]` (each `id`, `multiple`, `claims[].id`, `claim_sets`, `meta.vct_values`) and `credential_sets` (alternative groups). |
-| `presentation.transactionDataDecoded[]` | wallet-displayed transaction data (SCA/QES): entries may carry `data_agreement_record`, `data_disclosure_agreement_record`, or `qes_data.external_link` - show before consent. |
-| `presentation.clientMetadata` | verifier display: `clientName`, `logoUri`, `coverUri`, `location`. |
-| `presentation.isVerifiedWithTrustList`, `trustServiceProvider` | verifier trust signals. |
-| `presentation.dataAgreement.policy` | data agreement to show. |
-| `presentation.presentationDefinition` | legacy Presentation Exchange (string or object) when there is no `dcqlQuery`. |
+| `presentationId`, `id` | The presentation id (the same value) for sections 2.2 to 2.6. |
+| `status` | `presentation_pending`: continue. `presentation_acked`: already answered. `request_refused`: the wallet refused the request; `refusalReason` tells why. |
+| `dcqlQuery` | The DCQL query: `credentials[]` (each `id`, `format`, `meta`, `claims[]` with `id` and `path`, `claim_sets`, `multiple`) and `credential_sets[]` (`options`, `required`, which is `true` when it is left out). |
+| `clientMetadata` | Verifier display: `clientName`, `logoUri`, `coverUri`, `location`, `description`. |
+| `clientId`, `clientIdScheme`, `verifierAttestation` | The identity of the verifier. |
+| `relyingPartyTrustedListCheck` | The trust check of the signer of the request (section 7). |
+| `transactionData`, `transactionDataDecoded` | Transaction data to show before consent. |
+| `dataAgreement` | The data agreement of the request, when there is one. |
+| `encryptedResponseEncValuesSupported`, `encryptionAlgorithm` | The response encryption values of the verifier. |
+| `responseRedirectUri` | After the send: where to send the browser of the user. |
+| `presentation` | After the send: the shared credentials (`id`, `credentialId`, and `claims`, or `type` and `credentialSubject`, with `vct` or `doctype`). |
 
-### 2.2 Match held credentials against the request
+With `requiresTrustedRelyingParty` on (section 4), the wallet does not answer
+a request whose signer is not trusted.
+
+### 2.2 Read the matching credentials
 ```
 POST {base}/v4/config/ows/holder/presentations/{presentationId}/matching-credentials
 ```
-Empty body. **Response**: `credentials` for a DCQL request,
-`inputDescriptors` for a Presentation Exchange request - one entry per
-requested credential:
+No body. A record that is already `presentation_acked` is refused.
+**Answer**: `credentials`, one entry for each credential query (the key is
+left out when there is no entry):
 ```jsonc
-{ "credentials": [ { "id": "<dcql credential id>", "multiple": false, "claimSets": [["a", "b"]],
-    "matchedCredentials": [ { "credentialId": "…", "vct": "…", "doctype": "…", "type": ["…"] } ] } ] }
+{ "credentials": [ {
+    "id": "example_id",
+    "matchedCredentials": [ { "credentialId": "3f2a6c1e-0b8d-4d2a-9c3e-7f5b2a0d8e11", "vct": "https://issuer.example.com/vct/example", "match": { "given_name": "Erika" }, "claimSets": [["a", "b"]] } ],
+    "claimSets": [["a", "b"], ["c"]],
+    "multiple": true
+} ] }
 ```
-`name`, `purpose`, `claimSets` and `multiple` are present only when set.
-An empty `matchedCredentials` on a mandatory descriptor means the holder
-cannot satisfy the request.
+`claimSets` (of the query: the options that a match answers, in the order of
+preference of the verifier; of a match: the options that this credential
+answers) and `multiple` (only when `true`) are left out when empty. An empty
+`matchedCredentials` marks a query that the wallet cannot answer.
 
-### 2.3 Send the presentation response (consent)
+### 2.3 Send the presentation (consent)
 ```
 POST {base}/v4/config/ows/holder/presentations/{presentationId}/response
 ```
-Top-level key by query type: `credentials` when the record has a `dcqlQuery`,
-`inputDescriptors` for legacy Presentation Exchange. One uniform item shape
-across the array:
 ```jsonc
-// with claim-set selection (per item):
-{ "credentials": [ { "id": "<dcql id>", "credentialId": "<held id>", "claimIds": ["a", "b"] } ] }
-// any descriptor has multiple:true → array form everywhere:
-{ "credentials": [ { "id": "<dcql id>", "credentialIds": ["<id1>", "<id2>"] } ] }
-// all single, no claim sets → string form everywhere:
-{ "credentials": [ { "id": "<dcql id>", "credentialId": "<held id>" } ] }
+// one credential for each query
+{ "credentials": [ { "id": "example_id", "credentialId": "3f2a6c1e-0b8d-4d2a-9c3e-7f5b2a0d8e11" } ] }
+// a query with multiple: true, so every item uses credentialIds
+{ "credentials": [ { "id": "example_id", "credentialIds": ["3f2a6c1e-0b8d-4d2a-9c3e-7f5b2a0d8e11", "7c1d9e4b-5a2f-4e8b-8d0c-1b6e3f9a2c55"] },
+                   { "id": "other_id", "credentialIds": ["a8b7c6d5-e4f3-4a2b-9c1d-0e1f2a3b4c5d"] } ] }
+// a query with claim_sets: claimIds names one option exactly
+{ "credentials": [ { "id": "example_id", "credentialId": "3f2a6c1e-0b8d-4d2a-9c3e-7f5b2a0d8e11", "claimIds": ["a", "b"] } ] }
 ```
-`claimIds` are the claim ids of the chosen `claim_sets` entry. Include only
-descriptors from the selected credential-set option group. Sending both
-`credentials` and `inputDescriptors`, or neither, answers 400.
+- `credentials` is mandatory. Each item needs `id` (the credential query)
+  and `credentialId` or `credentialIds`, never both.
+- The first item decides the form: when it has `credentialId`, every item
+  must have `credentialId`; when it has `credentialIds`, every item must
+  have `credentialIds`. More than one credential for a query without
+  `multiple` gives 400.
+- `claimIds` is mandatory for a query with `claim_sets`, and must be one
+  option exactly. Leave it out for a query without `claim_sets`.
+- Every required credential set (`required` left out is `true`) must have
+  one option with all its queries answered.
+- `encryptionAlgorithm` is optional: a value of
+  `encryptedResponseEncValuesSupported`.
+- The wallet refuses to sign transaction data with a PID. The signature of
+  transaction data happens in this call: there is no separate sign
+  operation.
 
-**Response**: `presentation.responseRedirectUri` - when non-empty, open it
-(the verifier's post-presentation redirect). The signing/approval of
-transaction data happens through this call - there is no separate holder
-"sign" endpoint.
+**Answer**: `{"presentation": ...}` with `status` `presentation_acked`. When
+`responseRedirectUri` is not empty, open it. When the send fails, the wallet
+also sends an error response to the verifier, so that it does not wait.
 
-### 2.4 List presentations
+### 2.4 List the presentations
 ```
-GET {base}/v4/config/ows/holder/presentations?limit=&offset=[&search=][&sortOrder=][&status=presentation_acked|presentation_pending]
+GET {base}/v4/config/ows/holder/presentations?limit=10&offset=0&status=presentation_acked&search=example&sortOrder=desc
 ```
-**Response**:
+**Answer**:
 ```jsonc
 {
-  "presentation": [ /* PresentationRecord[] */ ],
+  "presentation": [ /* presentation records */ ],
   "pagination": { "currentPage": 1, "totalItems": 4, "totalPages": 1, "limit": 10, "hasNext": false, "hasPrevious": false },
   "presentationStats": { "total": 4, "presentationShared": 3, "presentationPending": 1 }
 }
 ```
 The list sorts on `updatedAt` (`sortOrder=asc` ascending, else descending).
+`search` looks in the shared credential types and the verifier name.
 
 ### 2.5 Read one presentation
 ```
 GET {base}/v4/config/ows/holder/presentations/{presentationId}
 ```
-**Response**: `{ "presentation": PresentationRecord }`; after sharing,
-`presentation.presentation[]` holds the disclosed credentials and
-`updatedAt` the share time.
+**Answer**: `{"presentation": ...}`.
 
 ### 2.6 Delete a presentation record
 ```
 DELETE {base}/v4/config/ows/holder/presentations/{presentationId}
 ```
-**Response**: 204, no body.
+**Answer**: 204, no body.
 
 ---
 
 ## 3. Notifications
 
-The holder's event channel (no webhooks on the holder side). Full contract,
-SSE stream, and the notification→action decision table:
-`igrantio-holder-notifications`. Summary:
+The event channel of the holder user interface. The full contract, the
+stream and the notification-to-action table are in
+`igrantio-holder-notifications`.
 
 | Method | Path |
 | --- | --- |
-| GET | `{base}/v4/config/ows/holder/notifications?limit=&offset=&search=&notificationType=&status=&sortOrder=` |
-| GET / PUT / DELETE | `{base}/v4/config/ows/holder/notifications/{notificationId}` |
-| DELETE | `{base}/v4/config/ows/holder/notifications` (delete all, 204) |
-| GET (SSE) | `{base}/v4/config/ows/holder/notification-stream[?lastEventId=]` (the backend relay sends the `Authorization` header) |
+| `GET` | `{base}/v4/config/ows/holder/notifications` (filters `status`, `notificationType`, `search`, `sortOrder`, `offset`, `limit`) |
+| `GET`, `PUT`, `DELETE` | `{base}/v4/config/ows/holder/notifications/{notificationId}` |
+| `DELETE` | `{base}/v4/config/ows/holder/notifications` (all, 204) |
+| `GET` (SSE) | `{base}/v4/config/ows/holder/notification-stream` (the relay of this backend sends the `Authorization` header) |
+| `POST` | `{base}/v4/config/platform/sse-ticket` (a one-time ticket for a browser, 30 seconds) |
 
-The PUT body is `{ "status": "<string>" }`; the response wraps the record as
-`{ "notification": … }`.
+The `PUT` body is `{"status": "read"}`; the answer is `{"notification": ...}`.
+A delete of a `credential_acked` notification whose credential is still
+`credential_acked` also deletes the credential (the offer is refused).
 
 ---
 
@@ -270,46 +329,102 @@ The PUT body is `{ "status": "<string>" }`; the response wraps the record as
 GET    {base}/v4/config/ows/holder/configuration
 PATCH  {base}/v4/config/ows/holder/configuration
 ```
-An organisation has one holder configuration. The wallet makes it with
-the default values when it deploys the organisation wallet: there is no create,
-list or delete, and no id in the path. The update is partial (a field that you
-leave out keeps its stored value).
+An organisation has one holder configuration. The wallet makes it with the
+default values when it deploys the organisation wallet: there is no create,
+list or delete, and no id in the path. `PATCH` is partial: a field that you
+leave out keeps its stored value, and a sent list replaces the stored list.
 
-Update body:
+Body of `PATCH` (no envelope):
 ```jsonc
 {
-  "supportCredentialEncryption": false,
-  "refreshCredentialStatusInterval": 86400,     // seconds (86400 = daily revocation-status refresh)
-  "redirectUrl": "https://…",                   // absolute return URL after front-channel authorization; "" = the wallet default
-  "requirePushedAuthorizationRequests": false   // true = use a Pushed Authorization Request in the authorization code flow
+  "isCredentialEncryptionEnabled": false,          // ask the issuers for encrypted Credential Responses; null gives 400
+  "credentialStatusRefreshIntervalSeconds": 86400, // seconds between two automatic status checks; 0 stops them
+  "redirectUrl": "https://wallet-portal.example.com/callback", // "" = the callback URL of the wallet
+  "requiresPushedAuthorisationRequests": false,    // send a Pushed Authorization Request (RFC 9126)
+  "requiresTrustedCredentialSigner": true,
+  "acceptedCredentialSigners": ["<trust source id>"]
 }
 ```
-Read and update response: the record is under the envelope key **`globalConfiguration`**
-(`{ "globalConfiguration": { … } }`); it carries `holderGlobalConfigurationId`
-plus the fields above.
+The trust settings: `requiresTrustedCredentialSigner` with
+`acceptedCredentialSigners`, `requiresTrustedIssuer` with `acceptedIssuers`
+(the signer of the signed issuer metadata), `requiresTrustedStatusIssuer`
+with `acceptCredentialSignerAsStatusIssuer` (default `true`) and
+`acceptedStatusIssuers`, `requiresTrustedRelyingParty` with
+`acceptedRelyingParties` and `acceptedClientIds` (prefix `x509_san_dns:` or
+`x509_hash:`), and `acceptedEtsiTrustedLists`. An accepted list holds the
+`id` values of trust sources (see `igrantio-api-trust-anchor`). A switch that
+is on needs a list that is not empty. All switches are off by default.
+
+**Answer** of both operations: `{"globalConfiguration": {...}}` with `id`,
+`holderGlobalConfigurationId` (the same value), `openIdOrganisationId`,
+`createdAt`, `updatedAt` and the settings above. An empty `redirectUrl`
+shows the callback URL of the wallet.
 
 ---
 
-## 5. Wallet unit
+## 5. Issuer metadata and wallet unit
 
+### 5.1 Read the metadata of an issuer
+```
+GET {base}/v4/config/ows/holder/credential-issuer-metadata?credentialIssuer=https%3A%2F%2Fissuer.example.com
+```
+`credentialIssuer` is mandatory: the Credential Issuer Identifier, or the URL
+of its metadata document. **Answer**: `{"credentialIssuerMetadata": {...}}`,
+the OpenID4VCI 1.0 metadata (for example `credential_configurations_supported`).
+
+### 5.2 Read the wallet unit status
 ```
 GET {base}/v4/config/ows/holder/wallet-unit/status
 ```
-**Response**: `{ "status": "not_installed" | "installed" | "operational" | "valid" }`
-(no wallet → wallet deployed without a valid Wallet Unit Attestation → valid
-Wallet Unit Attestation → valid Wallet Unit Attestation and an LPID
-credential).
+**Answer**: `{"status": "not_installed" | "installed" | "operational" | "valid"}`:
+no wallet deployment; deployed with no usable Wallet Unit Attestation; a
+usable Wallet Unit Attestation but no LPID credential; both. The receive and
+present steps need `operational` or `valid`.
 
 ---
 
 ## 6. Vocabularies
 
-- **`credentialStatus`** (holder records): `credential_pending`,
-  `credential_acked`, `credential_accepted`, `credential_archived` (a
-  superseded Wallet Unit Attestation). Revocation is in `revocationStatus`.
-- **Presentation `status`**: `presentation_pending`, `presentation_acked`.
+- **`credentialStatus`**: `credential_pending`, `credential_acked`,
+  `credential_accepted`, `credential_archived` (a Wallet Unit Attestation
+  that a newer one replaced). The revocation state is in `revocationStatus`.
+- **Presentation `status`**: `presentation_pending`, `presentation_acked`,
+  `request_refused`.
 - **`notificationType`**: `credential_pending`, `credential_acked`,
   `credential_revoked`, `credential_expired`.
-- **`credentialFormat`**: `dc+sd-jwt`, `vc+sd-jwt`, `vp+sd-jwt`, `jwt_vc`,
-  `jwt_vc_json`, `mso_mdoc`.
-- **Errors**: read `errorDescription` (fallback `detail`).
+- **`credentialFormat`**: `dc+sd-jwt`, `vc+sd-jwt`, `vp+sd-jwt`,
+  `jwt_vc_json`, `jwt_vc`, `mso_mdoc`.
+- **`revocationStatus`**: `Operational`, `Revoked`, `Suspended`.
+
+---
+
+## 7. Trust checks (`TrustedListCheck`)
+
+Every trust check has the same members, and every member is present:
+
+| Member | Meaning |
+| --- | --- |
+| `verified` | `true` when the signer passed. |
+| `result` | `trusted`, `not_trusted` (entries match, but none is valid), `not_found`, `not_applicable` (the switch is off; `reason.code` is `not_required`) or `error` (the check cannot decide). |
+| `role` | The role that the check asked for. |
+| `entry` | The used entry (`trusted`), or the entry of the reason (`not_trusted`): `provider.tSPName`, `service.serviceName`, `source` (`id`, `name`, `kind`, `url`), `status`, `roles`, `matchedCertificate`. |
+| `reason`, `warning` | `{code, message}`: why it did not pass; an odd status, an expired list, or the decision between entries. |
+| `presentedCertificates` | The certificates of the signer, leaf first (`subject`, `issuer`, `notValidBefore`, `notValidAfter`, ...), or `null`. |
+| `matches`, `pathChecks`, `acceptedSources`, `decision` | Every matching entry, the checks of the path to the anchor, the sources of the accepted list, and why one entry was picked. `null` when no check ran. |
+
+Where they are: `credentialSignerTrustedListCheck` (the issuer that signed
+the credential), `issuerTrustedListCheck` (the signer of the signed issuer
+metadata) and `statusIssuerTrustedListCheck` (the signer of the status list)
+in a credential record; `relyingPartyTrustedListCheck` (the signer of the
+request) in a presentation record. A pending credential has `null`.
+
+---
+
+## 8. Holder webhook events
+
+The holder role needs no webhook URL. A server that must react without a
+browser can subscribe to `ows.holder.credential.created`, `.received`,
+`.reissued`, `.accepted`, `.revoked`, `.suspended`, `.reactivated`,
+`.deleted` and `ows.holder.presentation.request_received`, `.sent`,
+`.deleted` (see `igrantio-api-webhooks`). The body holds a summary, never the
+credential, the claims or the presentation.

@@ -1,10 +1,11 @@
 /**
- * Display/view-model helpers for the holder portal. Every fallback chain and
- * exclusion list mirrors the iGrant.io dashboard behaviour so a portal built
- * from these renders credentials the same way the reference wallet does.
+ * Display and view-model helpers for the holder portal. Every fallback chain
+ * and exclusion list follows the reference wallet of the iGrant.io
+ * dashboard, so that a portal built from these shows credentials the same
+ * way.
  */
 
-import type { CredentialRecord, PresentationRecord } from "./holderClient";
+import type { CredentialRecord, PresentationRecord, TrustedListCheck } from "./holderClient";
 import type { HolderNotification, NotificationContent } from "./notificationsClient";
 import { getNotificationContent } from "./notificationsClient";
 
@@ -24,7 +25,7 @@ export function displayConfig(record: CredentialRecord): AnyRecord | undefined {
   );
 }
 
-/** List/table title chain: type array → vct → mdoc docType → draft-11 vc.type[0] → "Unknown". */
+/** List and table title chain: type array, then vct, then mdoc docType, then vc.type[0], then "Unknown". */
 export function credentialListTitle(record: CredentialRecord): string {
   const cfg = obj(record.credentialConfigurations);
   const cred = obj(record.credential);
@@ -39,9 +40,10 @@ export function credentialListTitle(record: CredentialRecord): string {
 }
 
 /**
- * Detail-view title chain (different from the list): display name →
- * credential_metadata display name → vc.type join → "". When the result is an
- * http(s) URL, fetch it and use `data.name ?? data.display.name`.
+ * Detail view title chain (different from the list): the display name, then
+ * the credential_metadata display name, then the vc.type values, then "".
+ * When the result is an http(s) URL, fetch it and use
+ * `data.name ?? data.display.name`.
  */
 export function credentialDetailTitle(record: CredentialRecord): string {
   const cfg = obj(record.credentialConfigurations);
@@ -76,7 +78,7 @@ const FORMAT_LABELS: Record<string, string> = {
   jwt_vc_json: "W3C VC (JWT)",
 };
 
-/** Human format label with the dashboard's structural fallbacks. */
+/** Format label, with fallbacks on the structure of the credential. */
 export function formatLabel(record: CredentialRecord): string {
   const direct = FORMAT_LABELS[str(record.credentialFormat) ?? ""];
   if (direct) return direct;
@@ -97,7 +99,7 @@ export interface PartyDisplay {
   location?: string;
 }
 
-/** Issuer identity for a held credential (banner/logo chains with the "not discoverable" guard). */
+/** Issuer identity of a held credential (banner and logo chains; "not discoverable" counts as absent). */
 export function issuerDisplay(record: CredentialRecord): PartyDisplay {
   const cfg = displayConfig(record);
   const issuer = obj(record.issuer);
@@ -119,9 +121,9 @@ export function verifierDisplay(p: PresentationRecord): PartyDisplay {
   };
 }
 
-/** Claim keys never rendered (plus `vct*` / `transaction_data_types*` prefixes). */
+/** Claim keys that the portal never shows (also the `vct*` and `transaction_data_types*` prefixes). */
 export const EXCLUDED_CLAIM_KEYS = new Set([
-  "exp", "iat", "iss", "jti", "nbf", "sub", "_sd_alg", "vct", "status", "cnf",
+  "exp", "iat", "iss", "jti", "nbf", "sub", "_sd_alg", "vct", "status", "cnf", "kb",
   "dataAgreement", "transaction_data_types", "schema_uri#integrity",
 ]);
 
@@ -135,10 +137,10 @@ const withoutKeys = (source: AnyRecord, extra: string[] = []): AnyRecord =>
 
 /**
  * Claims to show in the detail view, per format:
- * mdoc → first namespace minus `dataAgreement`; W3C JWT → (possibly nested)
- * credentialSubject minus `dataAgreement`; SD-JWT → credentialSubject minus
- * excluded keys and `id`; legacy SD-JWT (claims at the credential root) minus
- * excluded keys.
+ * mdoc: the first namespace without `dataAgreement`; W3C VC (JWT): the
+ * credentialSubject (or a nested credentialSubject) without `dataAgreement`;
+ * SD-JWT VC: the claims at the root without the excluded keys (or a
+ * `vc.credentialSubject` without the excluded keys and `id`).
  */
 export function extractClaims(record: CredentialRecord): AnyRecord {
   const cred = obj(record.credential);
@@ -176,9 +178,9 @@ export interface CredentialDates {
 }
 
 /**
- * Issued/expiry values: mdoc → `issuerAuth.validityInfo.validFrom/validUntil`
- * (a "YYYY-MM-DD HH:mm:ss UTC" string); W3C → `vc.issuanceDate` /
- * `vc.expirationDate`; SD-JWT → unix `iat` / `exp`.
+ * Issue and expiry values: mdoc `issuerAuth.validityInfo.validFrom` and
+ * `validUntil` (a "YYYY-MM-DD HH:mm:ss UTC" text); W3C VC `vc.issuanceDate`
+ * and `vc.expirationDate`; SD-JWT VC the Unix `iat` and `exp`.
  */
 export function credentialDates(record: CredentialRecord): CredentialDates {
   const cred = obj(record.credential);
@@ -239,11 +241,20 @@ export function presentationTypeLabel(p: PresentationRecord): string {
   return "Unknown";
 }
 
-/** Presentation status → holder-facing label. */
+/** The label of a presentation status for the holder. */
 export function presentationStatusLabel(status: string | undefined): string {
   if (status === "presentation_acked") return "Presentation Shared";
   if (status === "presentation_pending") return "Presentation Pending";
+  if (status === "request_refused") return "Request Refused";
   return status ?? "";
+}
+
+/** The label and colour of `revocationStatus` (Operational, Revoked, Suspended). */
+export function revocationLabel(revocationStatus: string | undefined, expired: boolean): { text: string; color: string } {
+  if (revocationStatus === "Revoked") return { text: "Revoked", color: COLORS.red };
+  if (revocationStatus === "Suspended") return { text: "Suspended", color: COLORS.orange };
+  if (expired) return { text: "Expired", color: COLORS.secondary };
+  return { text: "Active", color: COLORS.green };
 }
 
 /** Portal palette (matches the reference wallet). */
@@ -261,6 +272,7 @@ export const COLORS = {
 export const STATUS_CHIP: Record<string, [string, string]> = {
   presentation_acked: [COLORS.green, "#F0FFF4"],
   presentation_pending: [COLORS.orange, "#FFF8EE"],
+  request_refused: [COLORS.red, "#FFF2F1"],
   credential_pending: [COLORS.orange, "#FFF8EE"],
   credential_acked: [COLORS.orange, "#FFF8EE"],
   credential_revoked: [COLORS.red, "#FFF2F1"],
@@ -314,7 +326,7 @@ export function notificationIssuer(n: HolderNotification): { name: string; logo?
   };
 }
 
-/** `credential_acked` → "Credential Acknowledged"; otherwise snake_case → Title Case. */
+/** `credential_acked` is "Credential Acknowledged"; any other snake_case value becomes Title Case. */
 export function notificationTypeLabel(type: string): string {
   if (type === "credential_acked") return "Credential Acknowledged";
   return type
@@ -326,10 +338,10 @@ export function notificationTypeLabel(type: string): string {
 /** SSE snackbar copy per notification type. */
 export function snackbarText(type: string): string {
   const texts: Record<string, string> = {
-    credential_revoked: "A credential is archived",
-    credential_expired: "A credential has expired",
-    credential_acked: "New credential has been acknowledged",
-    credential_pending: "New Pending Credential is received",
+    credential_revoked: "The issuer revoked a credential",
+    credential_expired: "A credential expired",
+    credential_acked: "A new credential is ready for review",
+    credential_pending: "A credential offer needs your action",
   };
   return texts[type] ?? `Notification: ${type}`;
 }
@@ -358,4 +370,86 @@ export function timeAgo(value: string | number | undefined): string {
   if (minutes < 60) return `${minutes}m ago`;
   if (minutes < 24 * 60) return `${Math.floor(minutes / 60)}h ago`;
   return formatDate(date.toISOString());
+}
+
+/* ------------------------------------------------------------------ */
+/* Trust checks (TrustedListCheck)                                     */
+/* ------------------------------------------------------------------ */
+
+export type TrustTone = "trusted" | "not_trusted" | "not_checked" | "failed";
+
+export interface TrustCheckView {
+  tone: TrustTone;
+  /** A short label in plain words. */
+  label: string;
+  color: string;
+  /** The listed name of the signer, when a trust source names it. */
+  name?: string;
+  /** The trust source that holds the entry. */
+  source?: string;
+  role?: string;
+  /** Why the signer did not pass, or why the check did not run. */
+  reason?: string;
+  warning?: string;
+  /** The subject of the signer certificate (leaf). */
+  certificateSubject?: string;
+  certificateIssuer?: string;
+  certificateValidUntil?: string;
+}
+
+const REASON_TEXT: Record<string, string> = {
+  not_required: "The wallet does not check this signer: the trust setting is off.",
+  same_as_credential_signer: "The signer of the status list is the signer of the credential.",
+  path_not_valid: "The certificate chain does not lead to a listed certificate.",
+  certificate_not_valid: "A certificate of the chain is not valid now.",
+  ca_rules_not_met: "A CA certificate of the chain does not follow the CA rules.",
+  key_usage_not_allowed: "The key usage of a certificate does not allow this signature.",
+  revoked: "A certificate of the chain is revoked.",
+  not_granted: "The list entry does not have a granted status.",
+  wrong_role: "The list entry does not have the role that the check asks for.",
+  object_signature: "The signature does not verify with the certificate.",
+  not_accepted: "The client identifier is not one of the accepted client IDs.",
+  ski_only: "The list gives only the key identifier of the CA.",
+  list_not_downloaded: "A trusted list of the accepted sources is not downloaded.",
+  check_failed: "The check could not finish.",
+};
+
+const noteText = (note: TrustedListCheck["reason"]): string | undefined =>
+  note ? str(note.message) ?? REASON_TEXT[note.code] ?? note.code : undefined;
+
+/**
+ * The view model of a trust check for a badge and its detail panel. A
+ * missing check (a pending credential) and a check whose switch is off
+ * (`not_applicable`) are both "Not checked": a neutral grey, not a warning.
+ */
+export function trustCheckView(check: TrustedListCheck | null | undefined): TrustCheckView {
+  if (!check) return { tone: "not_checked", label: "Not checked", color: COLORS.secondary };
+  const leaf = check.presentedCertificates?.[0];
+  const entry = check.entry;
+  const base = {
+    name:
+      str(entry?.provider?.tSPName) ??
+      str(entry?.service?.serviceName) ??
+      str(check.decision?.entity) ??
+      undefined,
+    source: str(entry?.source?.name),
+    role: str(check.role),
+    reason: noteText(check.reason),
+    warning: noteText(check.warning),
+    certificateSubject: str(leaf?.subject),
+    certificateIssuer: str(leaf?.issuer),
+    certificateValidUntil: str(leaf?.notValidAfter),
+  };
+  switch (check.result) {
+    case "trusted":
+      return { ...base, tone: "trusted", label: "Trusted", color: "#2e7d32" };
+    case "not_trusted":
+      return { ...base, tone: "not_trusted", label: "Not trusted", color: "#d32f2f" };
+    case "not_found":
+      return { ...base, tone: "not_trusted", label: "Not in the trusted lists", color: "#d32f2f" };
+    case "not_applicable":
+      return { ...base, tone: "not_checked", label: "Not checked", color: COLORS.secondary };
+    default:
+      return { ...base, tone: "failed", label: "Check failed", color: COLORS.orange };
+  }
 }

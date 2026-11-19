@@ -1,38 +1,37 @@
 ---
 name: igrantio-holder-frontend
-description: Build the browser UI for an EUDI Wallet / European Business Wallet HOLDER portal against the iGrant.io Organisation Wallet Suite - the customer-facing wallet frontend. Receive credential offers (OpenID4VCI - transaction code, front-channel authorization, deferred), show received/archived credentials with per-format claim rendering, blur-by-default personal data, and trust-list badges, answer verifier presentation requests through the full DCQL selection wizard (credential-set OPTION groups, claim-set disclosure profiles, multiple-instance pick, transaction-data consent), and drive everything from the live notifications inbox. Composes igrantio-frontend-client and igrantio-holder-notifications; talks to igrantio-holder-backend.
+description: Build the browser UI for an EUDI Wallet / European Business Wallet HOLDER portal against the iGrant.io Organisation Wallet Suite - the customer-facing wallet frontend. Receive credential offers (OpenID4VCI - transaction code, front-channel authorisation, deferred), show received and archived credentials with claim rendering for each format, personal data blurred by default, and trust badges from the trust checks of the wallet, answer verifier presentation requests through the full DCQL selection wizard (credential set options, claim set disclosure options, several credentials for one query, transaction data before consent), and drive everything from the live notifications inbox. Composes igrantio-frontend-client and igrantio-holder-notifications; talks to igrantio-holder-backend.
 license: Apache-2.0
 metadata:
   categories: [frontend]
   provider: iGrant.io
-  keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, holder, wallet portal, OpenID4VCI, OpenID4VP, DCQL, claim sets, credential sets, trust list, notifications, Next.js, TypeScript, Better Auth, passwordless
-  version: 2026.11.01
-  api: https://docs.igrant.io/docs/developer-apis
+  keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, holder, wallet portal, OpenID4VCI, OpenID4VP, DCQL, claim sets, credential sets, trust check, TrustedListCheck, notifications, Next.js, TypeScript, Better Auth, passwordless
+  version: 2026.11.02
+  api: https://docs.igrant.io/docs/developer-apis/
   protocols: OpenID4VCI-1.0, OpenID4VP-1.0, DCQL, SD-JWT-VC, W3C-VC-2.0, mso_mdoc
-  auth: none in the browser - the holder backend injects the OWS API key
+  auth: none in the browser - the holder backend adds the OWS API key
   requires-skills: igrantio-ows-overview, igrantio-frontend-client, igrantio-holder-backend, igrantio-holder-notifications
 ---
 
 # iGrant.io holder frontend (wallet portal)
 
 ## When to use
-Build the holder-side portal a customer's users see: the organisation's
-wallet that receives, holds, and presents credentials. Ships the complete
-flow logic and reference views so an integrator scaffolds a working portal
-first and restyles it after. Depends on `igrantio-frontend-client` (vendored
-at `src/lib/ows/`) and an `igrantio-holder-backend` deployment; the exact
-endpoint contract is in `igrantio-api-holder` and
-`igrantio-holder-backend/references/holder-api-reference.md`. Issuer and
-verifier UIs are separate skills.
+Build the holder-side portal that the users of a customer see: the wallet
+of the organisation, which receives, holds and presents credentials. The
+skill ships the complete flow logic and reference views, so that an
+integrator gets a working portal first and changes the style after. It
+needs `igrantio-frontend-client` (vendored at `src/lib/ows/`) and a running
+`igrantio-holder-backend`. The exact contract is in `igrantio-api-holder`
+and `igrantio-holder-backend/references/holder-api-reference.md`. The issuer
+and verifier user interfaces are separate skills.
 
 ## Prerequisites
 - An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
   [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
   an environment variable or a secret manager. The browser never sees it.
-- The **OWS environment** the key belongs to. The default is **demo**
-  (`https://demo-api.igrant.io`). Use **staging**
-  (`https://staging-api.igrant.io`) only when the integrator asks for it.
-  A key works only in its own environment.
+- The **environment** the key belongs to: demo (`https://demo-api.igrant.io`,
+  the default), staging (`https://staging-api.igrant.io`) or production
+  (`https://api.igrant.io`). A key works only in its own environment.
 
 ## Ask the integrator first
 Ask one question at a time. Wait for the answer. Give the recommended
@@ -40,7 +39,7 @@ default with each question. Look up facts in the project (framework,
 environment variables, an existing backend) instead of asking for them.
 Record the answers before you write code.
 
-1. **Environment** - demo or staging? _Default demo
+1. **Environment** - demo, staging or production? _Default demo
    (`https://demo-api.igrant.io`); a switch later is a configuration
    change._
 2. **API key** - do you have the OWS API key for that environment? If not,
@@ -48,126 +47,159 @@ Record the answers before you write code.
    continue.
 3. **Framework** - React, Next.js, or another? _Look it up in the project
    before you ask._
-4. **Scaffold** - the full `HolderPortal` scaffold, or individual views?
+4. **Scaffold** - the full `HolderPortal` scaffold, or single views?
    _Recommend the scaffold first._
 5. **Look** - the default iGrant.io look (`igrantio-usecase-ui`), or the
-   integrator's own design system?
-6. **Webhooks** - none. The holder runs on the notifications stream.
+   design system of the integrator?
+
+The holder role needs no webhook URL: the portal runs on the notification
+stream. Do not ask for one.
 
 ## What it provides
-- **`holderClient.ts`** - typed client for every holder route under
-  `/v4/config/ows/holder` (receive / transaction-code /
-  authorisation-code-exchanges / deferred-credential / acceptance /
-  reissuance / revocation-status / list / delete; presentations receive /
-  read / matching-credentials / response / list / delete; wallet-unit
-  status).
-- **`shareSelection.ts`** - the pure DCQL selection engine: pre-flight
-  validation ("Requested data is not present in holder"), required-first
-  step ordering, OPTION groups with "None", claim-set disclosure profiles
-  with claim previews, `multiple:true` instance picks, submit gating, and
-  the uniform `{id, credentialId|credentialIds, claimIds?}` payload.
-- **`credentialDisplay.ts`** - every display fallback chain: titles (list vs
-  detail), format labels, issuer/verifier identity, per-format claim
-  extraction with the excluded-key set, validity dates, notification
-  title/issuer/time, status-chip palette, wallet-unit ladder.
+- **`holderClient.ts`** - a typed client for the holder routes under
+  `/v4/config/ows/holder`: receive (an offer, or a wallet-initiated issuance
+  with `credentialIssuer` and `credentialConfigurationIds`), transaction
+  code, authorisation code exchange, deferred credential, acceptance,
+  re-issuance, revocation status, list, read, delete; presentations receive
+  (`requestUrl`), read, matching credentials, response, list, delete; the
+  holder configuration (read, partial update); the issuer metadata; the
+  wallet unit status. It also has the types of the records and of
+  `TrustedListCheck`.
+- **`shareSelection.ts`** - the pure DCQL selection engine: the pre-flight
+  check, the step order (required sets first), the options with "None",
+  the claim set options with claim previews (only the options that the
+  chosen credential answers), several credentials for a `multiple: true`
+  query, the submit gate, and the `credentials` items of the response call
+  in the form that the wallet takes (see "Share" below).
+- **`credentialDisplay.ts`** - every display fallback chain: titles (list
+  and detail), format labels, issuer and verifier identity, the claims of
+  each format with the excluded keys, validity dates, the notification
+  title, issuer and time, the status chip colours, the wallet unit ladder,
+  and `trustCheckView` (the plain-word view of a trust check).
 - **`useHolder.ts`** - hooks: `useWalletCredentials`, `useSharedPresentations`,
-  `useWalletUnitStatus`, `useReceiveCredential` (with
-  `captureAuthorizationCode()` for the front-channel return leg),
-  `useShareFlow`, `useHolderNotifications` (list + live SSE).
-- **`components/`** - working views: `HolderPortal` (full scaffold: status
-  bar + bell + drawer inbox + snackbars + deep-link capture),
-  `ReceivedCredentialsView` (stats, active/archived, status, refresh),
-  `SharedCredentialsView` (stats-as-filter, disclosed-claims detail,
-  presentation lifecycle), `BaseConfigurationView` (wallet solution settings
-  + wallet-unit stepper), `ShareWizard`, `ReceivePanel`,
-  `NotificationsInbox` (state filter + search), `NotificationSnackbars`
-  (max 5 toasts, 6s auto-hide, dedupe), `CredentialDetail` (blur-by-default
-  claims, portraits, age chips, copy, review mode), `TrustBadge` (green/red
-  trust-list shield with provider details), `ClaimsTable`, `LifecycleModal`
-  (+ wallet-unit and presentation stage data), `Drawer`, `NotificationBell`
-  (99+/nK+ count formatting).
-- **`portal-ux-reference.md`** - the distilled UX rules of the reference
-  wallet (conditions → UI behaviour) for building custom views.
+  `useWalletUnitStatus`, `useHolderConfiguration`, `useReceiveCredential`
+  (with `captureAuthorizationCode()` for the front-channel return),
+  `useShareFlow`, `useHolderNotifications` (list and live SSE), and
+  `errorMessage` (the `errorDescription` of an error answer).
+- **`components/`** - working views: `HolderPortal` (the full scaffold:
+  status bar, bell, drawer inbox, snackbars, deep-link capture),
+  `ReceivedCredentialsView` (stats, active and archived, status, refresh,
+  one row for each batch), `SharedCredentialsView` (stats as filter,
+  disclosed claims, presentation lifecycle), `BaseConfigurationView` (wallet
+  settings, the holder configuration with its trust settings, the wallet
+  unit stepper), `ShareWizard`, `ReceivePanel`, `NotificationsInbox` (state
+  filter and search), `NotificationSnackbars` (at most 5 toasts, 6 s, no
+  repeats), `CredentialDetail` (claims blurred by default, portraits, age
+  chips, copy, review mode), `TrustBadge`, `ClaimsTable`, `LifecycleModal`,
+  `Drawer`, `NotificationBell` (99+ and nK+ count format).
+- **`portal-ux-reference.md`** - the UX rules of the reference wallet
+  (condition, then behaviour of the user interface) for custom views.
 
 ## Flow (what happens)
-1. **Receive**: paste an `openid-credential-offer://…` URI →
-   `POST …/holder/credentials` → branch on the record: transaction code
-   (`…/transaction-code`), front-channel (open `authorizationRequest`,
-   exchange `?code`/`?state` with `…/authorisation-code-exchanges`), deferred
-   (`…/deferred-credential`, retry until `credential_acked`), then review →
-   accept (`…/acceptance`) or reject.
-2. **Share**: paste/deep-link an `openid4vp://…` request →
-   `POST …/holder/presentations` → `{id}/matching-credentials` → pre-flight
-   → the selection wizard → `{presentationId}/response` → open
-   `responseRedirectUri` when returned. Transaction data (SCA / QES / data
-   agreements) is shown before consent and signed through the response call
-   itself.
-3. **Notifications** drive both flows: the SSE inbox derives each row's next
-   action (decision table in `igrantio-holder-notifications`); deleting the
-   notification is the "handled" signal.
+1. **Receive**: paste an `openid-credential-offer://` link, then
+   `POST .../holder/credentials` with `{credentialOffer}`, then follow the
+   record (the first match wins): deferred (`acceptanceToken` set,
+   `.../deferred-credential`, again after `deferredIntervalSeconds` until
+   `credential_acked`), transaction code (`requiresTransactionCode`,
+   `.../transaction-code`), front channel (`oauthFlow` `frontchannel`: open
+   `authorisationRequest`; when the portal is the `redirectUrl`, exchange
+   `?code`, `?state` and `?iss` with `.../authorisation-code-exchanges`),
+   then review: accept (`.../acceptance`) or refuse (`DELETE`).
+2. **Share**: paste or deep-link an `openid4vp://` request, then
+   `POST .../holder/presentations` with `{requestUrl}`, then
+   `.../matching-credentials`, the pre-flight check, the selection wizard,
+   and `.../response` with `{credentials: [...]}`. The first item decides the
+   form of all items: when a chosen query has `multiple: true`, every item
+   has `credentialIds`; else every item has `credentialId`. `claimIds` is
+   only on the items of a query with `claim_sets`. Open
+   `responseRedirectUri` when it is not empty. Show the transaction data
+   before consent; the response call signs it. A request with `status`
+   `request_refused` shows `refusalReason`.
+3. **Notifications** drive both flows: the inbox takes the next action of
+   each row from its content (table in `igrantio-holder-notifications`).
+   Delete a notification only as that table says: a delete of a
+   `credential_acked` notification of a credential that is not accepted
+   refuses the offer and deletes the credential.
+4. **Trust badges**: a held credential shows
+   `credentialSignerTrustedListCheck` next to the issuer name (the detail
+   view also shows `issuerTrustedListCheck` and
+   `statusIssuerTrustedListCheck` when they are set); a presentation shows
+   `relyingPartyTrustedListCheck` next to the verifier name. `trusted` is
+   green, `not_trusted` and `not_found` are red, `not_applicable` (the trust
+   setting is off) and a missing check are a neutral grey "Not checked",
+   `error` is orange. The detail panel shows the listed name
+   (`entry.provider.tSPName`), the trust source (`entry.source.name`), the
+   reason or warning (`message`), and the signer certificate.
 
 ## Steps
 1. Host app: recommend **Next.js (App Router) + TypeScript**
-   (`npx create-next-app@latest --typescript`) unless the integrator has a
-   standing stack. The holder views run in client components
-   (`"use client"`) - they use `EventSource`, the clipboard, and `window`.
-   For portal sign-in, recommend **Better Auth** passwordless (magic link /
-   email OTP); see `igrantio-business-wallet-portal` for the full stack
-   recipe. Portal login is separate from wallet auth - the OWS key still
-   never reaches the browser.
+   (`npx create-next-app@latest --typescript`) when the integrator has no
+   stack yet. The holder views run in client components (`"use client"`):
+   they use `EventSource`, the clipboard and `window`. For the portal
+   sign-in, recommend **Better Auth** passwordless (magic link or email
+   one-time code); see `igrantio-business-wallet-portal`. The portal login is
+   separate from the wallet: the OWS key never reaches the browser.
 2. Vendor `igrantio-frontend-client/references/lib/ows` into `src/lib/ows/`.
 3. Copy [`./references/features/holder`](./references/features/holder) into
-   `src/features/holder/` (includes the vendored `notificationsClient.ts`).
+   `src/features/holder/` (it has the vendored `notificationsClient.ts`).
 4. Wire it up:
    ```tsx
-   <HolderPortal proxyBaseUrl="https://host/ows/acme" />
+   <HolderPortal proxyBaseUrl="https://wallet-portal.example.com/ows/acme" />
    ```
-   or compose the individual views/hooks into your own shell - every view
-   needs only `proxyBaseUrl`.
+   or put the single views and hooks in your own shell: every view needs
+   only `proxyBaseUrl`.
+5. For a front-channel issuance that returns to the portal, set
+   `redirectUrl` of the holder configuration to the portal page that mounts
+   `ReceivePanel`. With an empty `redirectUrl`, the wallet exchanges the
+   code on its own callback URL, and the inbox row changes to
+   `credential_acked` on its own.
 
 ## Clean-code notes
-- Flow logic lives in hooks, selection rules in `shareSelection.ts` (pure,
-  unit-testable), display chains in `credentialDisplay.ts`; components carry
-  no OWS specifics and take no styling dependency - restyle or replace them
-  freely (pair with `igrantio-usecase-ui` for the default look).
-- Personal data renders blurred until the user toggles the eye - keep that
+- The flow logic is in hooks, the selection rules in `shareSelection.ts`
+  (pure, easy to unit test), the display chains in `credentialDisplay.ts`.
+  The components have no OWS specifics and no style dependency: change or
+  replace them (use `igrantio-usecase-ui` for the default look).
+- Personal data shows blurred until the user toggles the eye. Keep that
   default in custom views.
-- Show the `TrustBadge` wherever an issuer or verifier name appears.
+- Show the `TrustBadge` wherever an issuer or verifier name appears. Use
+  plain words, not algorithm names.
 
 ## Related skills
-- `igrantio-api-holder` - the normative endpoint/field/enum dictionary for
-  every call this UI makes (paths, SSE frame protocol, sandbox call style).
-- `igrantio-holder-backend` - the tenant backend this UI talks to (proxy +
-  notifications SSE relay); its `holder-api-reference.md` is the narrative
-  contract.
+- `igrantio-api-holder` - the field and enum dictionary of every call of
+  this user interface (paths, SSE frames, sandbox call style).
+- `igrantio-holder-backend` - the tenant backend of this user interface
+  (proxy and notification stream relay); its `holder-api-reference.md` is
+  the contract in flow order.
 - `igrantio-holder-notifications` - the notification decision table and the
   vendored `notificationsClient.ts`.
+- `igrantio-api-trust-anchor` - the trust sources and the `TrustedListCheck`
+  shape behind the trust badges.
 - `igrantio-usecase-ui` - the default iGrant.io look (theme, app shell,
-  primitives) if the integrator wants it; the components here are unstyled
-  on purpose.
+  primitives); the components here have no style on purpose.
 - `igrantio-dcql-*` workflow skills (claim sets, credential sets, multiple
-  statements, KYC, student pass) - ready-made verifier requests to exercise
-  every branch of the share wizard.
+  statements, student pass, trusted authority) - ready verifier requests
+  that test every branch of the share wizard.
 - `igrantio-credential-schema-*` - the claim structures of the credentials
-  the wallet will hold (PID, mDL, Photo ID, …).
+  that the wallet holds (PID, mDL, LPID, and more).
 
 ## Validation / done criteria
 - `npm run typecheck` passes.
-- Receiving a pre-authorised offer with a transaction code lands the
-  credential after the code is entered; rejecting deletes it.
-- A DCQL request with credential sets renders OPTION groups, a claim-set
-  request previews exactly the selected profile's claims, and the send
-  payload matches the uniform shape rules.
-- A verifier on the trust list shows the green badge with provider details;
-  one not on it shows the red badge.
-- No OWS API key is present anywhere in the browser bundle.
+- A pre-authorised offer with a transaction code lands the credential after
+  the code; a deferred offer shows the deferred step and keeps the inbox row
+  (it changes to `credential_acked`); refuse deletes the credential.
+- A DCQL request with credential sets shows the options; a claim set
+  request previews exactly the claims of the chosen option; a request with
+  a `multiple: true` query sends `credentialIds` in every item.
+- A verifier whose signer a trust source holds shows a green badge with the
+  listed name; with the trust setting off, the badge is grey "Not checked".
+- No OWS API key is anywhere in the browser bundle.
 
-## Documentation & workflows
+## Documentation
+When anything is unclear, consult the iGrant.io documentation before you
+guess. If this skill and the documentation disagree, the documentation wins.
 
-When anything is unclear, consult the iGrant.io documentation before guessing:
-
-- iGrant.io developer APIs (index): https://docs.igrant.io/docs/developer-apis
+- iGrant.io developer APIs (index): https://docs.igrant.io/docs/developer-apis/
+- Holder API group: https://docs.igrant.io/docs/category/openid4vc-api/holder/
 - Getting started: https://docs.igrant.io/docs/get-started/
-- OpenID4VC API (issuer / verifier / webhook): https://docs.igrant.io/docs/category/openid4vc-api/issuer
-- Workflow: issue a credential (OID4VCI): https://docs.igrant.io/docs/openID4vci-issue-credential-intime/
-- Workflow: send and verify credentials (OID4VP): https://docs.igrant.io/docs/openID4vc-send-verify-credentials/
+- Workflow: issue a credential (OpenID4VCI): https://docs.igrant.io/docs/openID4vci-issue-credential-intime/
+- Workflow: send and verify credentials (OpenID4VP): https://docs.igrant.io/docs/openID4vc-send-verify-credentials/

@@ -1,41 +1,57 @@
 /**
- * Receive panel: paste a credential offer (there is no camera scanning in the
- * reference wallet - input is a plain textarea), then walk the follow-up the
- * offer demands: transaction code, front-channel authorization, deferred
- * retry, or review (accept/reject).
+ * Receive panel: paste a credential offer (the reference wallet has no
+ * camera scan: the input is a plain textarea), then walk the next step that
+ * each record asks for: a deferred fetch, a transaction code, a
+ * front-channel authorisation, or the review (accept or refuse). Each step
+ * answer replaces the record, so a transaction code that leads to a deferred
+ * credential shows the deferred step next.
+ *
+ * `useReceiveCredential().receive` also takes a wallet-initiated issuance:
+ * `{credentialIssuer, credentialConfigurationIds}` (read the configuration
+ * ids with `client.issuerMetadata`).
  */
 
 import { useEffect, useState } from "react";
-import type { PendingCredential } from "../useHolder";
-import { captureAuthorizationCode, useReceiveCredential } from "../useHolder";
+import type { CredentialRecord } from "../holderClient";
+import { captureAuthorizationCode, useReceiveCredential, type PendingCredential } from "../useHolder";
 import { COLORS } from "../credentialDisplay";
 import { CredentialDetail } from "./CredentialDetail";
 import { Button, card } from "./ui";
 
-function TransactionCodeInput({
-  pending,
+/**
+ * The transaction code input, sized and typed by `txCode` of the record. The
+ * wallet trims the code and accepts 4 to 12 characters. `txCode.length` is 0
+ * when the issuer gives no length.
+ */
+export function TransactionCodeInput({
+  txCode,
   onSubmit,
 }: {
-  pending: PendingCredential;
-  onSubmit: (pin: string) => void;
+  txCode: CredentialRecord["txCode"];
+  onSubmit: (code: string) => void;
 }) {
-  const [pin, setPin] = useState("");
-  const length = pending.record.txCode?.length ?? 6;
-  const numeric = pending.record.txCode?.input_mode !== "text";
+  const [code, setCode] = useState("");
+  const length = txCode?.length && txCode.length > 0 ? txCode.length : undefined;
+  const numeric = txCode?.input_mode !== "text";
+  const value = code.trim();
+  const valid = length ? value.length === length : value.length >= 4 && value.length <= 12;
   return (
     <div style={{ marginTop: 10 }}>
       <div style={{ fontSize: 13, color: COLORS.secondary, marginBottom: 6 }}>
-        Enter the {length}-character transaction code the issuer sent you.
+        {txCode?.description ||
+          (length
+            ? `Enter the ${length}-character transaction code that the issuer sent you.`
+            : "Enter the transaction code that the issuer sent you.")}
       </div>
       <input
-        value={pin}
+        value={code}
         inputMode={numeric ? "numeric" : "text"}
-        maxLength={length}
-        onChange={(e) => setPin(numeric ? e.target.value.replace(/\D/g, "") : e.target.value)}
+        maxLength={length ?? 12}
+        onChange={(e) => setCode(numeric ? e.target.value.replace(/\D/g, "") : e.target.value)}
         style={{ letterSpacing: 6, fontSize: 18, padding: 8, width: 180 }}
       />
       <span style={{ marginLeft: 10 }}>
-        <Button disabled={pin.length !== length} onClick={() => onSubmit(pin)}>
+        <Button disabled={!valid} onClick={() => onSubmit(value)}>
           Submit
         </Button>
       </span>
@@ -54,19 +70,27 @@ export function ReceivePanel({
   const receive = useReceiveCredential({ proxyBaseUrl });
   const [offer, setOffer] = useState("");
   const [reviewing, setReviewing] = useState<PendingCredential | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
-  // Front-channel return leg: the issuer redirected back with ?code&state.
+  // Front-channel return: the issuer redirected back to the portal with ?code&state.
   useEffect(() => {
     const captured = captureAuthorizationCode();
-    if (captured) {
-      void receive.exchangeCode(captured).then((ok) => ok && onDone?.());
-    }
+    if (captured) void receive.exchangeCode(captured);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const submit = async () => {
-    const pending = await receive.receive(offer.trim());
-    if (pending?.every((p) => p.action === "none")) onDone?.();
+    setNotice(null);
+    await receive.receive({ credentialOffer: offer.trim() });
+  };
+
+  const fetchDeferred = async (p: PendingCredential) => {
+    setNotice(null);
+    const record = await receive.receiveDeferred(p.record.id);
+    if (record && record.credentialStatus !== "credential_acked") {
+      const wait = record.deferredIntervalSeconds;
+      setNotice(`The issuer is not ready yet.${wait ? ` Try again in ${wait} seconds.` : ""}`);
+    }
   };
 
   return (
@@ -86,36 +110,35 @@ export function ReceivePanel({
       </div>
 
       {receive.error && <div style={{ color: COLORS.red, fontSize: 13, marginTop: 8 }}>{receive.error}</div>}
+      {notice && <div style={{ color: COLORS.orange, fontSize: 13, marginTop: 8 }}>{notice}</div>}
       {receive.status === "done" && (
-        <div style={{ color: COLORS.green, fontSize: 13, marginTop: 8 }}>Credential received.</div>
+        <div style={{ color: COLORS.green, fontSize: 13, marginTop: 8 }}>The credential is in the wallet.</div>
       )}
 
       {receive.pending.map((p) => (
         <div key={p.record.id} style={{ marginTop: 12, fontSize: 13 }}>
+          {p.action === "deferred_credential" && (
+            <Button kind="secondary" onClick={() => void fetchDeferred(p)}>
+              Get the credential
+            </Button>
+          )}
           {p.action === "transaction_code" && (
             <TransactionCodeInput
-              pending={p}
-              onSubmit={(pin) =>
-                void receive.submitTransactionCode(p.record.id, pin).then((ok) => ok && onDone?.())
-              }
+              txCode={p.record.txCode}
+              onSubmit={(code) => void receive.submitTransactionCode(p.record.id, code)}
             />
           )}
-          {p.action === "authorization" && p.record.authorizationRequest && (
-            <Button onClick={() => window.open(p.record.authorizationRequest, "_blank")}>
-              Authorise credential issuance
+          {p.action === "authorization" && p.record.authorisationRequest && (
+            <Button onClick={() => window.open(p.record.authorisationRequest ?? "", "_blank")}>
+              Authorise the credential issuance
             </Button>
           )}
-          {p.action === "deferred_credential" && (
-            <Button
-              kind="secondary"
-              onClick={() => void receive.receiveDeferred(p.record.id).then((ok) => ok && onDone?.())}
-            >
-              Get the credential issued
-            </Button>
+          {p.action === "verification" && (
+            <div style={{ color: COLORS.secondary }}>
+              The issuer asks for a presentation first. Answer it from the notifications.
+            </div>
           )}
-          {p.action === "review_credential" && (
-            <Button onClick={() => setReviewing(p)}>Review credential</Button>
-          )}
+          {p.action === "review_credential" && <Button onClick={() => setReviewing(p)}>Review the credential</Button>}
         </div>
       ))}
 
@@ -125,13 +148,15 @@ export function ReceivePanel({
             record={reviewing.record}
             reviewMode
             onAccept={() =>
-              void receive.accept(reviewing.record.id).then(() => {
+              void receive.accept(reviewing.record.id).then((ok) => {
+                if (!ok) return;
                 setReviewing(null);
                 onDone?.();
               })
             }
             onReject={() =>
-              void receive.reject(reviewing.record.id).then(() => {
+              void receive.reject(reviewing.record.id).then((ok) => {
+                if (!ok) return;
                 setReviewing(null);
                 onDone?.();
               })

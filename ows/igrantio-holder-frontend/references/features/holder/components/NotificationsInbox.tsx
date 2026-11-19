@@ -1,15 +1,24 @@
 /**
- * Notifications inbox: the holder's action centre. Each row derives its
- * next action from the content (transaction code / authorize / deferred /
- * respond to verification / review) - informational types
- * (credential_revoked, credential_expired) render text only. Deleting a
- * notification is the "handled" signal.
+ * Notifications inbox: the action centre of the holder. Each row takes its
+ * next action from the content (deferred credential, transaction code,
+ * authorisation, presentation during issuance, review). The informational
+ * types (`credential_revoked`, `credential_expired`) show text only.
+ *
+ * When a row is handled:
+ * - deferred credential and authorisation: the wallet changes the same
+ *   notification in place to `credential_acked`. Do NOT delete it: a delete
+ *   of a `credential_acked` notification refuses the offer and deletes the
+ *   credential.
+ * - transaction code and presentation during issuance: the wallet makes a
+ *   new notification for the result, so delete the pending one.
+ * - review: accept (or refuse), then delete the notification.
  */
 
 import { useState } from "react";
 import type { HolderNotification } from "../notificationsClient";
 import { getNotificationContent, type NotificationAction } from "../notificationsClient";
 import { useHolderNotifications, useReceiveCredential, useShareFlow } from "../useHolder";
+import type { CredentialRecord } from "../holderClient";
 import {
   COLORS,
   notificationIssuer,
@@ -20,6 +29,7 @@ import {
 } from "../credentialDisplay";
 import { CredentialDetail } from "./CredentialDetail";
 import { ShareWizard } from "./ShareWizard";
+import { TransactionCodeInput } from "./ReceivePanel";
 import { Avatar, Button, Chip, SearchInput, card } from "./ui";
 
 const STATE_FILTERS: Array<[string, string]> = [
@@ -31,17 +41,17 @@ const STATE_FILTERS: Array<[string, string]> = [
 ];
 
 const ACTION_TEXT: Record<NotificationAction, string> = {
-  transaction_code: "Click to enter transaction code to continue.",
-  authorization: "Authorise credential issuance",
-  deferred_credential: "Get the credential issued",
+  transaction_code: "Enter the transaction code to continue",
+  authorization: "Authorise the credential issuance",
+  deferred_credential: "Get the credential",
   verification: "Provide additional details to continue",
-  review_credential: "Get the credential issued",
+  review_credential: "Review the credential",
   none: "No action required",
 };
 
 const INFO_TEXT: Record<string, string> = {
-  credential_revoked: "Credential revoked by issuer.",
-  credential_expired: "Credential expired and cannot be used.",
+  credential_revoked: "The issuer revoked the credential.",
+  credential_expired: "The credential expired and cannot be used.",
 };
 
 export function NotificationsInbox({
@@ -56,10 +66,12 @@ export function NotificationsInbox({
   const receive = useReceiveCredential({ proxyBaseUrl });
   const flow = useShareFlow({ proxyBaseUrl });
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [pinFor, setPinFor] = useState<HolderNotification | null>(null);
-  const [pin, setPin] = useState("");
   const [reviewing, setReviewing] = useState<HolderNotification | null>(null);
+  const [sharingFor, setSharingFor] = useState<HolderNotification | null>(null);
 
+  /** The pending notification is done: the wallet made a new one for the result. */
   const finish = async (n: HolderNotification) => {
     await inbox.remove(n.id);
     onWalletChanged?.();
@@ -67,8 +79,10 @@ export function NotificationsInbox({
 
   const act = async (n: HolderNotification) => {
     const content = getNotificationContent(n);
-    if (!content) return;
+    if (!content?.id) return;
+    const credentialId = content.id;
     const action = inbox.actionOf(n);
+    setNotice(null);
     setBusyId(n.id);
     try {
       switch (action) {
@@ -76,14 +90,26 @@ export function NotificationsInbox({
           setPinFor(n);
           break;
         case "authorization":
-          if (content.authorizationRequest) window.open(content.authorizationRequest, "_blank");
+          // The notification changes in place after the code exchange: keep it.
+          if (content.authorisationRequest) window.open(content.authorisationRequest, "_blank");
           break;
-        case "deferred_credential":
-          // Delete the notification only once the credential actually arrived.
-          if (content.id && (await receive.receiveDeferred(content.id))) await finish(n);
+        case "deferred_credential": {
+          // The notification changes in place to credential_acked: keep it.
+          const record = await receive.receiveDeferred(credentialId);
+          if (record?.credentialStatus === "credential_acked") {
+            await inbox.refresh();
+            onWalletChanged?.();
+          } else if (record) {
+            const wait = record.deferredIntervalSeconds ?? content.deferredIntervalSeconds;
+            setNotice(`The issuer is not ready yet.${wait ? ` Try again in ${wait} seconds.` : ""}`);
+          }
           break;
+        }
         case "verification":
-          if (content.presentationId) await flow.start({ presentationId: content.presentationId });
+          if (content.presentationId) {
+            setSharingFor(n);
+            await flow.start({ presentationId: content.presentationId });
+          }
           break;
         case "review_credential":
           setReviewing(n);
@@ -94,6 +120,11 @@ export function NotificationsInbox({
     } finally {
       setBusyId(null);
     }
+  };
+
+  const reviewRecord = (n: HolderNotification): CredentialRecord => {
+    const content = getNotificationContent(n) ?? {};
+    return { ...content, id: content.id ?? "" } as CredentialRecord;
   };
 
   return (
@@ -125,6 +156,9 @@ export function NotificationsInbox({
         />
       </div>
 
+      {notice && <div style={{ color: COLORS.orange, fontSize: 13, marginBottom: 8 }}>{notice}</div>}
+      {receive.error && <div style={{ color: COLORS.red, fontSize: 13, marginBottom: 8 }}>{receive.error}</div>}
+
       {!inbox.notifications.length && (
         <div style={{ color: COLORS.secondary, fontSize: 13 }}>
           {inbox.search || inbox.typeFilter
@@ -144,10 +178,25 @@ export function NotificationsInbox({
             <Avatar src={issuer.logo} alt={issuer.name} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: "flex", gap: 8 }}>
-                <div style={{ fontWeight: 600, fontSize: 13, color: COLORS.text, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <div
+                  style={{
+                    fontWeight: n.status === "unread" ? 700 : 500,
+                    fontSize: 13,
+                    color: COLORS.text,
+                    flex: 1,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
                   {notificationTitle(n)}
                 </div>
-                <span style={{ cursor: "pointer", color: COLORS.secondary }} onClick={() => void inbox.remove(n.id)} title="Delete">
+                {/* A delete of an unaccepted credential_acked notification refuses the offer. */}
+                <span
+                  style={{ cursor: "pointer", color: COLORS.secondary }}
+                  onClick={() => void inbox.remove(n.id).then(() => onWalletChanged?.())}
+                  title={action === "review_credential" ? "Refuse and delete" : "Delete"}
+                >
                   ✕
                 </span>
               </div>
@@ -160,7 +209,11 @@ export function NotificationsInbox({
                     {busyId === n.id ? "Processing..." : ACTION_TEXT[action]}
                   </Button>
                 ) : (
-                  <span style={{ fontSize: 12, color: COLORS.secondary }}>
+                  <span
+                    style={{ fontSize: 12, color: COLORS.secondary, cursor: n.status === "unread" ? "pointer" : undefined }}
+                    title={n.status === "unread" ? "Mark as read" : undefined}
+                    onClick={n.status === "unread" ? () => void inbox.markRead(n.id) : undefined}
+                  >
                     {info ?? ACTION_TEXT.none}
                   </span>
                 )}
@@ -172,48 +225,42 @@ export function NotificationsInbox({
 
       {pinFor && (
         <div style={{ marginTop: 12, fontSize: 13 }}>
-          <div style={{ marginBottom: 6 }}>Enter the transaction code:</div>
-          <input
-            value={pin}
-            maxLength={getNotificationContent(pinFor)?.txCode?.length ?? 6}
-            onChange={(e) => setPin(e.target.value)}
-            style={{ letterSpacing: 6, fontSize: 18, padding: 8, width: 180 }}
-          />{" "}
-          <Button
-            onClick={() => {
-              const content = getNotificationContent(pinFor);
-              if (!content?.id) return;
-              void receive.submitTransactionCode(content.id, pin).then(async (ok) => {
-                if (ok) {
+          <TransactionCodeInput
+            txCode={getNotificationContent(pinFor)?.txCode}
+            onSubmit={(code) => {
+              const credentialId = getNotificationContent(pinFor)?.id;
+              if (!credentialId) return;
+              void receive.submitTransactionCode(credentialId, code).then(async (result) => {
+                if (result) {
                   await finish(pinFor);
                   setPinFor(null);
-                  setPin("");
                 }
               });
             }}
-          >
-            Submit
-          </Button>
+          />
         </div>
       )}
 
       {reviewing && (
         <div style={{ marginTop: 12 }}>
           <CredentialDetail
-            record={{ id: getNotificationContent(reviewing)?.id ?? "", ...getNotificationContent(reviewing) }}
+            record={reviewRecord(reviewing)}
             reviewMode
             onAccept={() => {
-              const id = getNotificationContent(reviewing)?.id;
-              if (!id) return;
-              void receive.accept(id).then(async () => {
+              const credentialId = getNotificationContent(reviewing)?.id;
+              if (!credentialId) return;
+              void receive.accept(credentialId).then(async (ok) => {
+                if (!ok) return;
+                // The credential is accepted, so this delete does not touch it.
                 await finish(reviewing);
                 setReviewing(null);
               });
             }}
             onReject={() => {
-              const id = getNotificationContent(reviewing)?.id;
-              if (!id) return;
-              void receive.reject(id).then(async () => {
+              const credentialId = getNotificationContent(reviewing)?.id;
+              if (!credentialId) return;
+              void receive.reject(credentialId).then(async (ok) => {
+                if (!ok) return;
                 await finish(reviewing);
                 setReviewing(null);
               });
@@ -228,7 +275,11 @@ export function NotificationsInbox({
           <ShareWizard
             flow={flow}
             onClose={() => {
+              const shared = flow.status === "shared";
               flow.reset();
+              // After the share, the wallet receives the credential and makes a new notification.
+              if (shared && sharingFor) void finish(sharingFor);
+              setSharingFor(null);
               onWalletChanged?.();
             }}
           />

@@ -1,19 +1,22 @@
 /**
- * Trust-list verification badge, shown next to every issuer and verifier
- * name. Rules from the reference wallet:
- * - verified → green (#2e7d32) shield, clickable, opens the trust-service
- *   -provider details; long text "Trusted Service Provider".
- * - unverified → red (#d32f2f) shield, not clickable; long text
- *   "Untrusted Service Provider".
- * Tooltips: "This is a verified organisation" / "This organisation is not verified".
+ * Trust badge, shown next to every issuer and verifier name. It reads one
+ * `TrustedListCheck` of the record:
+ * - a held credential: `credentialSignerTrustedListCheck` (the issuer that
+ *   signed it); the detail view also shows `issuerTrustedListCheck` and
+ *   `statusIssuerTrustedListCheck`;
+ * - a presentation request: `relyingPartyTrustedListCheck` (the verifier).
+ *
+ * `trusted` is a green shield ("Trusted"); `not_trusted` and `not_found` are
+ * a red shield; `not_applicable` (the trust setting is off) and a missing
+ * check are a grey shield ("Not checked"); `error` is an orange shield. A
+ * click opens the details: the listed name, the trust source, the reason or
+ * the warning, and the signer certificate.
  */
 
 import { useState } from "react";
-import { COLORS } from "../credentialDisplay";
+import type { TrustedListCheck } from "../holderClient";
+import { COLORS, formatDate, trustCheckView } from "../credentialDisplay";
 import { card } from "./ui";
-
-const VERIFIED_GREEN = "#2e7d32";
-const UNVERIFIED_RED = "#d32f2f";
 
 function Shield({ color }: { color: string }) {
   return (
@@ -23,62 +26,71 @@ function Shield({ color }: { color: string }) {
   );
 }
 
-/** Generic renderer for the trust-service-provider record (shape varies by trust list). */
-function ProviderDetails({ provider }: { provider: unknown }) {
-  if (!provider || typeof provider !== "object") {
-    return <div style={{ color: COLORS.secondary, fontSize: 13 }}>No provider details available.</div>;
-  }
-  const entries = Object.entries(provider as Record<string, unknown>).filter(
-    ([, v]) => v !== null && v !== undefined && typeof v !== "object",
-  );
+function Row({ label, value }: { label: string; value?: string }) {
+  if (!value) return null;
   return (
-    <table style={{ fontSize: 13, borderCollapse: "collapse" }}>
-      <tbody>
-        {entries.map(([k, v]) => (
-          <tr key={k}>
-            <td style={{ padding: "4px 12px 4px 0", color: COLORS.secondary, whiteSpace: "nowrap" }}>{k}</td>
-            <td style={{ padding: "4px 0", color: COLORS.text }}>{String(v)}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <tr>
+      <td style={{ padding: "4px 12px 4px 0", color: COLORS.secondary, whiteSpace: "nowrap", verticalAlign: "top" }}>
+        {label}
+      </td>
+      <td style={{ padding: "4px 0", color: COLORS.text }}>{value}</td>
+    </tr>
   );
 }
 
 export function TrustBadge({
-  verified,
-  provider,
+  check,
   showText = false,
+  title = "Trust check",
 }: {
-  verified: boolean | undefined;
-  /** The record's `trustServiceProvider` - rendered when the badge is clicked. */
-  provider?: unknown;
-  /** Also print "Trusted/Untrusted Service Provider" next to the shield. */
+  /** The trust check of the record; null or undefined when no check ran. */
+  check: TrustedListCheck | null | undefined;
+  /** Also print the label next to the shield. */
   showText?: boolean;
+  /** The heading of the detail panel, for example "Issuer" or "Verifier". */
+  title?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const isVerified = verified === true;
-  const color = isVerified ? VERIFIED_GREEN : UNVERIFIED_RED;
-  const title = isVerified ? "This is a verified organisation" : "This organisation is not verified";
+  const view = trustCheckView(check);
 
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 6, position: "relative" }}>
       <span
-        title={title}
-        onClick={isVerified ? () => setOpen((o) => !o) : undefined}
-        style={{ cursor: isVerified ? "pointer" : "not-allowed", display: "inline-flex" }}
+        role="button"
+        tabIndex={0}
+        title={view.label}
+        onClick={() => setOpen((o) => !o)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") setOpen((o) => !o);
+        }}
+        style={{ cursor: "pointer", display: "inline-flex" }}
       >
-        <Shield color={color} />
+        <Shield color={view.color} />
       </span>
-      {showText && (
-        <span style={{ fontSize: 12, color }}>
-          {isVerified ? "Trusted Service Provider" : "Untrusted Service Provider"}
-        </span>
-      )}
+      {showText && <span style={{ fontSize: 12, color: view.color }}>{view.label}</span>}
       {open && (
-        <div style={{ ...card, position: "absolute", top: 22, left: 0, zIndex: 10, minWidth: 280 }}>
-          <div style={{ fontWeight: 600, marginBottom: 8, color: COLORS.text }}>Trust Service Provider</div>
-          <ProviderDetails provider={provider} />
+        <div style={{ ...card, position: "absolute", top: 22, left: 0, zIndex: 10, minWidth: 300, maxWidth: 420 }}>
+          <div style={{ fontWeight: 600, marginBottom: 8, color: COLORS.text }}>
+            {title}: {view.label}
+          </div>
+          <table style={{ fontSize: 13, borderCollapse: "collapse" }}>
+            <tbody>
+              <Row label="Listed name" value={view.name} />
+              <Row label="Trust source" value={view.source} />
+              <Row label="Role" value={view.role} />
+              <Row label="Reason" value={view.reason} />
+              <Row label="Warning" value={view.warning} />
+              <Row label="Certificate" value={view.certificateSubject} />
+              <Row label="Issued by" value={view.certificateIssuer} />
+              <Row
+                label="Valid until"
+                value={view.certificateValidUntil ? formatDate(view.certificateValidUntil) : undefined}
+              />
+            </tbody>
+          </table>
+          {!check && (
+            <div style={{ color: COLORS.secondary, fontSize: 13 }}>No trust check is recorded for this signer.</div>
+          )}
         </div>
       )}
     </span>

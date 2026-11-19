@@ -1,7 +1,8 @@
 # igrantio-holder-backend (reference)
 
-Runnable OWS **holder** (wallet-side) tenant backend: API-key-hiding proxy
-scoped to holder endpoints + notifications SSE relay.
+A runnable OWS **holder** (wallet-side) tenant backend: a proxy that hides
+the API key and forwards only the holder routes, plus the relay of the
+notification stream.
 
 ```sh
 cp .env.example .env      # set OWS_ENV, CORS_ORIGINS, OWS_TENANT_<SLUG>_API_KEY
@@ -12,19 +13,21 @@ npm run dev               # http://localhost:6003
 ## Endpoints
 | Method | Path | Purpose |
 | --- | --- | --- |
-| GET | `/healthz` | liveness |
-| GET/POST/PUT/PATCH/DELETE | `/ows/:tenant/*` | proxy to OWS holder routes (injects ApiKey) |
-| GET | `/ows/:tenant/v4/config/ows/holder/notification-stream` | relayed holder notifications SSE stream |
+| `GET` | `/healthz` | liveness |
+| `GET`, `POST`, `PUT`, `PATCH`, `DELETE` | `/ows/:tenant/*` | proxy to the OWS holder routes (adds the API key) |
+| `GET` | `/ows/:tenant/v4/config/ows/holder/notification-stream` | relayed holder notification stream (SSE) |
 
-Allow-listed OWS paths (proxy), all under `v4/config/ows/holder/`:
-`credentials` and `credentials/{id}` (+ `transaction-code`,
+Allowed OWS paths (proxy), all under `v4/config/ows/holder/`:
+`credentials` and `credentials/{credentialId}` (with `transaction-code`,
 `deferred-credential`, `acceptance`, `reissuance`, `revocation-status`),
-`authorisation-code-exchanges`, `presentations` and `presentations/{id}`
-(+ `matching-credentials`, `response`), `notifications` and
-`notifications/{id}`, `configuration`, `wallet-unit/status`. The issuer and
-verifier routes are excluded (least privilege).
+`authorisation-code-exchanges`, `credential-issuer-metadata`,
+`presentations` and `presentations/{presentationId}` (with
+`matching-credentials`, `response`), `notifications` and
+`notifications/{notificationId}`, `configuration`, `wallet-unit/status`. The
+issuer and verifier routes stay out (least privilege).
 
-No webhooks: holder events arrive on the notifications stream.
+The holder role needs no webhook URL: the browser gets its events on the
+notification stream.
 
-See the parent `SKILL.md`, `holder-api-reference.md` (endpoint contract), and
-`igrantio-holder-notifications` (notification decision table).
+See the parent `SKILL.md`, `holder-api-reference.md` (the holder contract)
+and `igrantio-holder-notifications` (the notification decision table).

@@ -1,10 +1,10 @@
 /**
- * Dependency-free browser client for iGrant.io OWS holder notifications.
+ * Dependency-free browser client for the iGrant.io OWS holder notifications.
  *
  * REST goes through the tenant backend proxy (`igrantio-backend-proxy`) and
- * the SSE stream through the relay (`notificationsSse.ts`), so the browser
- * holds no OWS API key. `baseUrl` is the proxy tenant base, e.g.
- * `https://your-backend.example.com/ows/acme`.
+ * the SSE stream goes through the relay (`notificationsSse.ts`), so the
+ * browser holds no OWS API key. `baseUrl` is the proxy tenant base, for
+ * example `https://your-backend.example.com/ows/acme`.
  */
 
 const NOTIFICATIONS_PATH = "v4/config/ows/holder/notifications";
@@ -17,19 +17,32 @@ export type NotificationType =
   | "credential_expired"
   | (string & {});
 
-/** The credential / presentation record carried inside a notification. */
+/**
+ * One item of `notificationContent`: the held credential record at the time
+ * of the notification, with the keys of the credential read operation. The
+ * wallet never puts a secret of the flow (a transaction code, an access or
+ * refresh token) in it.
+ */
 export interface NotificationContent {
+  /** The credential id: the `{credentialId}` of the follow-up calls. */
   id?: string;
   credentialStatus?: string;
+  /** Set while the issuer prepares a deferred credential. */
   acceptanceToken?: string | null;
-  oAuthFlow?: string;
-  authorizationRequest?: string;
-  userPinRequired?: boolean;
-  userPin?: string | null;
+  /** The wait in seconds that the issuer asks for before the next deferred fetch. */
+  deferredIntervalSeconds?: number | null;
+  /** `frontchannel` or `backchannel`. */
+  oauthFlow?: string | null;
+  /** The Authorization Request to open in the browser of the user (front channel). */
+  authorisationRequest?: string | null;
+  /** True when the issuer asks for a transaction code. */
+  requiresTransactionCode?: boolean;
+  txCode?: { length?: number | null; input_mode?: string | null; description?: string | null } | null;
+  /** The presentation that the issuer asks for during the issuance. */
   presentationId?: string | null;
-  txCode?: { length?: number; input_mode?: "numeric" | "text"; description?: string };
-  version?: string;
-  issuer?: { name?: string; logo?: string };
+  issuer?: { name?: string | null; logo?: string | null } | null;
+  /** The number of copies of a batch issuance. */
+  batchInstanceCount?: number;
   [key: string]: unknown;
 }
 
@@ -38,9 +51,10 @@ export interface HolderNotification {
   notificationType: NotificationType;
   /** The id of the credential record that the notification is about. */
   notificationTypeRelatedId?: string;
-  /** An object, or an array whose first entry is the content. */
-  notificationContent?: NotificationContent | NotificationContent[];
-  status?: string; // "unread"
+  /** A list with one item for each credential of the offer (an older item can be an object). */
+  notificationContent?: NotificationContent | NotificationContent[] | null;
+  /** `unread` or `read`. */
+  status?: string;
   /** Unix time in seconds. */
   createdAt?: number;
   updatedAt?: number;
@@ -49,53 +63,64 @@ export interface HolderNotification {
 
 export function getNotificationContent(n: HolderNotification): NotificationContent | undefined {
   const c = n.notificationContent;
-  return Array.isArray(c) ? c[0] : c;
+  return (Array.isArray(c) ? c[0] : c) ?? undefined;
 }
 
 /** What the holder must do next for a notification. */
 export type NotificationAction =
-  | "transaction_code" // PUT  …/holder/credentials/{id}/transaction-code
-  | "authorization" // open content.authorizationRequest, then POST …/holder/authorisation-code-exchanges
-  | "deferred_credential" // PUT  …/holder/credentials/{id}/deferred-credential
-  | "verification" // POST …/holder/presentations/{presentationId}/matching-credentials, then …/{presentationId}/response
-  | "review_credential" // PUT  …/holder/credentials/{id}/acceptance (or DELETE to reject)
+  | "deferred_credential" // PUT .../holder/credentials/{id}/deferred-credential
+  | "transaction_code" // PUT .../holder/credentials/{id}/transaction-code
+  | "authorization" // open content.authorisationRequest, then POST .../holder/authorisation-code-exchanges
+  | "verification" // POST .../holder/presentations/{presentationId}/matching-credentials, then .../response
+  | "review_credential" // PUT .../holder/credentials/{id}/acceptance, or DELETE to refuse
   | "none";
 
-const absent = (v: string | null | undefined) => v == null || v === "";
+const absent = (v: unknown) => v === null || v === undefined || v === "";
 
 /**
  * Decision table from the notification content to the next holder call.
- * (OWS marks an absent acceptanceToken as null in notifications and as "" in
- * the credential/receive response; treat both as absent.)
+ * The first match wins. An absent value is `null` in a notification and
+ * `""` in a credential answer: treat both as absent. The function also
+ * works on a credential record of the receive answer.
+ *
+ * The deferred check comes first: after a transaction code, a deferred
+ * credential keeps `requiresTransactionCode` true.
  */
 export function deriveNotificationAction(
   content: NotificationContent | undefined,
 ): NotificationAction {
   if (!content) return "none";
   const pending = content.credentialStatus === "credential_pending";
-  if (pending && content.userPinRequired === true && absent(content.userPin))
-    return "transaction_code";
-  if (
-    pending &&
-    absent(content.acceptanceToken) &&
-    content.oAuthFlow === "frontchannel" &&
-    content.authorizationRequest
-  )
-    return "authorization";
   if (pending && !absent(content.acceptanceToken)) return "deferred_credential";
-  if (pending && !absent(content.presentationId) && absent(content.acceptanceToken))
-    return "verification";
+  if (pending && content.requiresTransactionCode === true) return "transaction_code";
+  if (pending && content.oauthFlow === "frontchannel" && !absent(content.authorisationRequest))
+    return "authorization";
+  if (pending && !absent(content.presentationId)) return "verification";
   if (content.credentialStatus === "credential_acked") return "review_credential";
   return "none";
 }
 
-async function parseJson(res: Response): Promise<any> {
-  const text = await res.text();
+/** The text of an error answer: `errorDescription`, else the relay `detail`, else the status. */
+async function errorText(res: Response): Promise<string> {
+  const text = await res.text().catch(() => "");
   try {
-    return text ? JSON.parse(text) : undefined;
+    const json = text ? JSON.parse(text) : undefined;
+    return json?.errorDescription ?? json?.detail ?? `HTTP ${res.status}`;
   } catch {
-    return undefined;
+    return `HTTP ${res.status}`;
   }
+}
+
+export interface NotificationListParams {
+  /** At most 100 (the default of this client); the API default is 10. */
+  limit?: number;
+  offset?: number;
+  search?: string;
+  notificationType?: string;
+  /** `read` or `unread`. */
+  status?: string;
+  /** `asc`, or newest first (the default). */
+  sortOrder?: "asc" | "desc";
 }
 
 export class NotificationsClient {
@@ -120,63 +145,66 @@ export class NotificationsClient {
       headers: body !== undefined ? { "content-type": "application/json" } : undefined,
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
-    const json = await parseJson(res);
-    if (!res.ok) {
-      throw new Error(json?.errorDescription ?? json?.detail ?? `HTTP ${res.status}`);
-    }
-    return json;
+    if (!res.ok) throw new Error(await errorText(res));
+    const text = await res.text();
+    return text ? JSON.parse(text) : undefined;
   }
 
-  /** GET …/notifications - the array lives under the response's `notification` key. */
-  async list(params?: {
-    limit?: number;
-    offset?: number;
-    search?: string;
-    notificationType?: string;
-  }): Promise<HolderNotification[]> {
+  /** GET .../notifications: the answer has the list in `notification`, and `pagination`. */
+  async list(params: NotificationListParams = {}): Promise<HolderNotification[]> {
     const json = await this.request(
       "GET",
       this.url(NOTIFICATIONS_PATH, {
-        limit: params?.limit ?? 100,
-        offset: params?.offset ?? 0,
-        search: params?.search,
-        notificationType: params?.notificationType,
+        limit: params.limit ?? 100,
+        offset: params.offset ?? 0,
+        search: params.search,
+        notificationType: params.notificationType,
+        status: params.status,
+        sortOrder: params.sortOrder,
       }),
     );
     return (json?.notification ?? []) as HolderNotification[];
   }
 
-  /** GET …/notifications/{id} - read one notification. */
+  /** GET .../notifications/{id}: the answer is `{ notification }`. */
   async get(id: string): Promise<HolderNotification> {
-    const json = await this.request("GET", this.url(`${NOTIFICATIONS_PATH}/${id}`));
-    return (json?.notification ?? json) as HolderNotification;
+    const json = await this.request("GET", this.url(`${NOTIFICATIONS_PATH}/${encodeURIComponent(id)}`));
+    return json?.notification as HolderNotification;
   }
 
-  /** PUT …/notifications/{id} - update the status; response is `{ notification: … }`. */
-  async update(id: string, body: { status: string }): Promise<any> {
-    return this.request("PUT", this.url(`${NOTIFICATIONS_PATH}/${id}`), body);
+  /** PUT .../notifications/{id} with `{ status: "read" }`, the only status that a holder sets. */
+  async markRead(id: string): Promise<HolderNotification> {
+    const json = await this.request("PUT", this.url(`${NOTIFICATIONS_PATH}/${encodeURIComponent(id)}`), {
+      status: "read",
+    });
+    return json?.notification as HolderNotification;
   }
 
-  /** DELETE …/notifications/{id}. */
+  /**
+   * DELETE .../notifications/{id} (204). Caution: when the notification is
+   * `credential_acked` and its credential is still `credential_acked`, the
+   * wallet also deletes the credential. This refuses the offer.
+   */
   async delete(id: string): Promise<void> {
-    await this.request("DELETE", this.url(`${NOTIFICATIONS_PATH}/${id}`));
+    await this.request("DELETE", this.url(`${NOTIFICATIONS_PATH}/${encodeURIComponent(id)}`));
   }
 
-  /** DELETE …/notifications - clears the whole inbox. */
+  /** DELETE .../notifications (204): clears the whole inbox. */
   async deleteAll(): Promise<void> {
     await this.request("DELETE", this.url(NOTIFICATIONS_PATH));
   }
 }
 
 export interface NotificationsStreamOptions {
-  /** Proxy tenant base, e.g. https://your-backend.example.com/ows/acme */
+  /** Proxy tenant base, for example https://your-backend.example.com/ows/acme */
   baseUrl: string;
   /**
-   * One notification frame. A notification can change in place (a pending
-   * credential that arrives): the same `id` then comes again with the new
-   * type and content, so replace the stored entry by `id`.
+   * One notification frame. A pending notification changes in place when
+   * its next state arrives: the same `id` comes again with the new type and
+   * content, so replace the stored entry by `id`.
    */
   onNotification: (n: HolderNotification) => void;
+  /** Called on each (re)connect. Read the list again here: a replay has a size limit. */
   onConnected?: () => void;
   onError?: (err: unknown) => void;
   /** Reconnect policy: exponential backoff with jitter. */
@@ -187,10 +215,10 @@ export interface NotificationsStreamOptions {
 
 /**
  * Opens the relayed holder notifications SSE stream. Returns a close()
- * function. Handles the named `connected` / `notification` / `error` events,
- * drops a frame that it has already delivered (by the frame `id`), and
- * reconnects with exponential backoff. A reconnect sends the `id` of the last
- * frame as `lastEventId`, so OWS replays the frames that were missed.
+ * function. Handles the named `connected`, `notification` and `error`
+ * events, drops a frame that it has already delivered (by the frame `id`),
+ * and reconnects with exponential backoff. A reconnect sends the `id` of the
+ * last frame as `lastEventId`, so the wallet sends the missed frames first.
  */
 export function openNotificationsStream(opts: NotificationsStreamOptions): () => void {
   const seen: string[] = [];
@@ -230,8 +258,8 @@ export function openNotificationsStream(opts: NotificationsStreamOptions): () =>
     source.addEventListener("notification", (e) => deliver(e as MessageEvent));
     source.onerror = (err) => {
       // A server-sent `event: error` arrives here as a MessageEvent with data
-      // (for example an organisation without a wallet); report it. The server
-      // then ends the stream, which arrives here again without data.
+      // (for example an organisation without a wallet). The server then ends
+      // the stream, which arrives here again without data.
       if ((err as MessageEvent).data !== undefined) {
         opts.onError?.((err as MessageEvent).data);
         return;
