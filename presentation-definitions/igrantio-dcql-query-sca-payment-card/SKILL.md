@@ -6,7 +6,7 @@ metadata:
   categories: [dcql-query, education]
   provider: iGrant.io
   keywords: DCQL, SCA, Strong Customer Authentication, TS12, payment card, pan_last_four, card scheme, PSD2, transaction data, presentation definition, OpenID4VP, SD-JWT VC, EUDIW, eIDAS2
-  version: 2026.11.01
+  version: 2026.11.02
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/presentationDefinitions/dcqlQuery/scaPaymentCard
   registry-version: 2025.7.1
   requires-skills: igrantio-api-verifier
@@ -38,10 +38,11 @@ in `igrantio-dcql-query-sca-payment-user`.
 - An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
   [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
   an environment variable or a secret manager. The browser never sees it.
-- The **OWS environment** the key belongs to. The default is **demo**
-  (`https://demo-api.igrant.io`). Use **staging**
-  (`https://staging-api.igrant.io`) only when the integrator asks for it.
-  A key works only in its own environment.
+- The **environment** the key belongs to: demo (`https://demo-api.igrant.io`,
+  the default), staging (`https://staging-api.igrant.io`) or production
+  (`https://api.igrant.io`). A key works only in its own environment.
+- A **signing key** with an X.509 certificate chain in Key Management (see
+  `igrantio-api-key-management`). Every signed request needs one.
 
 ## Ask the integrator first
 Ask one question at a time. Wait for the answer. Give the recommended
@@ -49,7 +50,7 @@ default with each question. Look up facts in the project (framework,
 environment variables, an existing backend) instead of asking for them.
 Record the answers before you write code.
 
-1. **Environment** - demo or staging? _Default demo
+1. **Environment** - demo, staging or production? _Default demo
    (`https://demo-api.igrant.io`); a switch later is a configuration
    change._
 2. **API key** - do you have the OWS API key for that environment? If not,
@@ -61,11 +62,16 @@ Record the answers before you write code.
 5. **Channel** - cross-device QR, same-device Digital Credentials API, or
    both? _Recommend QR first; `igrantio-dcapi-android` and
    `igrantio-dcapi-ios` cover the DC API._
-6. **Trusted authorities** - accept any issuer, or only issuers on a trust
-   list?
-7. **Transaction data** - does the wallet sign over transaction details
+6. **Trusted issuers** - accept any issuer, or only the issuers of a trust
+   source of the organisation? _Default any issuer: no check runs. For live
+   use, set `requiresTrustedCredentialSigner` in `credentialQueryOptions` (see
+   `igrantio-api-verifier`)._
+7. **Signing key** - which key of Key Management signs the requests? _It must
+   be an active key of the organisation with a certificate chain. The verifier
+   signs with no other key._
+8. **Transaction data** - does the wallet sign over transaction details
    (payment, e-mandate, QES)? _Only when the use case needs it._
-8. **Trust list** - is your Wallet-Relying Party Access Certificate (WRPAC)
+9. **Trust list** - is your Wallet-Relying Party Access Certificate (WRPAC)
    registered in the trust list? If not, contact
    [support@igrant.io](mailto:support@igrant.io) and follow
    <https://docs.igrant.io/docs/trust-relying-party-registration/>. Until then
@@ -85,18 +91,25 @@ Record the answers before you write code.
 The registry gives no `mso_mdoc` file and no `jwt_vc_json` file for this
 template. The Payment Card Credential is an SD-JWT VC only.
 
-**`{baseUrl}` is a placeholder.** Replace it with the OpenID4VC service URL of
-the issuer. For a credential that an iGrant.io organisation issues, that is
-`https://oid4vc.igrant.io` on demo and `https://staging-oid4vc.igrant.io` on
-staging, so the demo vct is
-`https://oid4vc.igrant.io/service/vct-metadata/card`.
-The templates operation
-`GET /v4/config/ows/verifier/presentation-definition-templates`
-returns the value with `{baseUrl}` already replaced. Do not send the literal
-text `{baseUrl}` in a query.
+**`{baseUrl}` is a placeholder.** Replace it with the wallet service URL of
+the issuer. For a credential that an iGrant.io organisation issues, the values
+are:
 
-The metadata flag `isScaCredential: true` tells the platform that this
-template belongs to an SCA flow, and that the request needs transaction data.
+| Environment | `{baseUrl}` | `vct` |
+| --- | --- | --- |
+| Demo | `https://oid4vc.igrant.io` | `https://oid4vc.igrant.io/service/vct-metadata/card` |
+| Staging | `https://staging-oid4vc.igrant.io` | `https://staging-oid4vc.igrant.io/service/vct-metadata/card` |
+| Production | `https://wallet.igrant.io` | `https://wallet.igrant.io/service/vct-metadata/card` |
+
+The templates operation
+`GET /v4/config/ows/verifier/presentation-definition-templates` returns the
+value with `{baseUrl}` already replaced. Do not send the literal text
+`{baseUrl}` in a query.
+
+The registry metadata marks the template with `isScaCredential: true`. The
+verifier finds an SCA attestation by its type metadata: it reads the document
+at the `vct` URL, and the category `urn:eu:europa:ec:eudi:sua:sca` of that
+document makes the definition need a transaction data type.
 
 ## Claims
 
@@ -142,7 +155,8 @@ definition must name a transaction data template.
 `POST /v4/config/ows/verifier/presentation-definitions`.
 Set `version` to `version_01`. Set `transactionDataDefinitionType`. Put one
 entry in `dcqlQuery.credentials` with the `dc+sd-jwt` format and the
-`vct_values` meta.
+`vct_values` meta. The example uses the demo `vct`. Take the value of
+your environment from the table above.
 
 ```json
 {
@@ -151,6 +165,7 @@ entry in `dcqlQuery.credentials` with the `dc+sd-jwt` format and the
   "responseType": "vp_token",
   "responseMode": "direct_post",
   "cryptographicKeyFormat": "x509",
+  "cryptographicKeyIdentifier": "<KEY_ID_WITH_CERTIFICATE_CHAIN>",
   "transactionDataDefinitionType": "payment",
   "dcqlQuery": {
     "credentials": [
@@ -173,9 +188,11 @@ entry in `dcqlQuery.credentials` with the `dc+sd-jwt` format and the
 }
 ```
 
-`cryptographicKeyFormat: "x509"` signs the request with the default key of the
-organisation and its X.509 certificate chain, and `clientIdScheme` then
-defaults to `x509_hash`. Name another key with `cryptographicKeyIdentifier`.
+`cryptographicKeyIdentifier` names the key that signs the request. It must be
+an active key of the organisation with an X.509 certificate chain
+(`igrantio-api-key-management`). A create without it gets HTTP 400: the
+verifier signs with no default key. `cryptographicKeyFormat` is `x509`, the
+only format, and `clientIdScheme` defaults to `x509_hash`.
 
 `dc+sd-jwt` takes only `vct_values` in `meta`. It refuses `type_values`
 (W3C formats) and `doctype_value` (`mso_mdoc`).
@@ -202,12 +219,18 @@ payment travel there, not in the DCQL query. The server answers HTTP 400 when
 the presentation definition sets a `transactionDataDefinitionType` and the
 request carries no `transactionData`, and also in the opposite case.
 
-**Step 3.** Read `vpTokenQrCode` for the deep link and
-`presentationExchangeId` for the correlation id. The finished record holds
-`transactionData` and `transactionDataBase64`.
+**Step 3.** The answer is `{"verificationHistory": {...}}`. Read `requestUrl`
+for the QR code or the deep link, and `presentationExchangeId` for the
+correlation id. When the wallet has answered, read the verification with
+`GET /v4/config/ows/verifier/verifications/{verificationId}`, where
+`{verificationId}` is the `presentationExchangeId`. `isVerified` is `true`
+when every check passed, also the check of the transaction data. The finished
+record holds `presentation`, `transactionData` and `transactionDataBase64`.
 
-`label` must hold 3 to 100 characters. The server refuses the labels that
-extensions reserve.
+`label` has 3 to 100 characters and is unique in the organisation: a second
+create with the same label gets HTTP 400. Before you run the sample again,
+change the label, or reuse the `presentationDefinitionId` of the first run.
+The server also refuses the labels that extensions reserve.
 
 For the full operation reference, the transaction data rules and the response
 shape, read the `igrantio-api-verifier` skill.

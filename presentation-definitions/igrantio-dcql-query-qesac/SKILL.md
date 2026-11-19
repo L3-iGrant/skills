@@ -6,7 +6,7 @@ metadata:
   categories: [dcql-query]
   provider: iGrant.io
   keywords: DCQL, QESAC, qualified electronic signature, remote signing, QES, qes_data, transaction data, credentialId, presentation definition, OpenID4VP, SD-JWT VC, EUDIW, eIDAS2
-  version: 2026.11.01
+  version: 2026.11.02
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/presentationDefinitions/dcqlQuery/qesac
   registry-version: 2025.7.1
   requires-skills: igrantio-api-verifier
@@ -23,7 +23,7 @@ credential that a qualified trust service provider holds.
 The query is small on purpose. It asks for one claim, `credentialId`, which
 names the signing credential to use. The document that the holder signs does
 not travel in the DCQL query. It travels in the **transaction data** of the
-verification request, as a hash.
+verification request: a link to the uploaded PDF, with an optional hash.
 
 Use this skill when you build:
 
@@ -35,10 +35,11 @@ Use this skill when you build:
 - An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
   [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
   an environment variable or a secret manager. The browser never sees it.
-- The **OWS environment** the key belongs to. The default is **demo**
-  (`https://demo-api.igrant.io`). Use **staging**
-  (`https://staging-api.igrant.io`) only when the integrator asks for it.
-  A key works only in its own environment.
+- The **environment** the key belongs to: demo (`https://demo-api.igrant.io`,
+  the default), staging (`https://staging-api.igrant.io`) or production
+  (`https://api.igrant.io`). A key works only in its own environment.
+- A **signing key** with an X.509 certificate chain in Key Management (see
+  `igrantio-api-key-management`). Every signed request needs one.
 
 ## Ask the integrator first
 Ask one question at a time. Wait for the answer. Give the recommended
@@ -46,7 +47,7 @@ default with each question. Look up facts in the project (framework,
 environment variables, an existing backend) instead of asking for them.
 Record the answers before you write code.
 
-1. **Environment** - demo or staging? _Default demo
+1. **Environment** - demo, staging or production? _Default demo
    (`https://demo-api.igrant.io`); a switch later is a configuration
    change._
 2. **API key** - do you have the OWS API key for that environment? If not,
@@ -58,11 +59,16 @@ Record the answers before you write code.
 5. **Channel** - cross-device QR, same-device Digital Credentials API, or
    both? _Recommend QR first; `igrantio-dcapi-android` and
    `igrantio-dcapi-ios` cover the DC API._
-6. **Trusted authorities** - accept any issuer, or only issuers on a trust
-   list?
-7. **Transaction data** - does the wallet sign over transaction details
+6. **Trusted issuers** - accept any issuer, or only the issuers of a trust
+   source of the organisation? _Default any issuer: no check runs. For live
+   use, set `requiresTrustedCredentialSigner` in `credentialQueryOptions` (see
+   `igrantio-api-verifier`)._
+7. **Signing key** - which key of Key Management signs the requests? _It must
+   be an active key of the organisation with a certificate chain. The verifier
+   signs with no other key._
+8. **Transaction data** - does the wallet sign over transaction details
    (payment, e-mandate, QES)? _Only when the use case needs it._
-8. **Trust list** - is your Wallet-Relying Party Access Certificate (WRPAC)
+9. **Trust list** - is your Wallet-Relying Party Access Certificate (WRPAC)
    registered in the trust list? If not, contact
    [support@igrant.io](mailto:support@igrant.io) and follow
    <https://docs.igrant.io/docs/trust-relying-party-registration/>. Until then
@@ -118,6 +124,7 @@ format and the `vct_values` meta.
   "label": "Sign the loan contract",
   "version": "version_01",
   "cryptographicKeyFormat": "x509",
+  "cryptographicKeyIdentifier": "<KEY_ID_WITH_CERTIFICATE_CHAIN>",
   "responseType": "vp_token",
   "responseMode": "direct_post",
   "transactionDataDefinitionType": "qes_data",
@@ -136,35 +143,52 @@ format and the `vct_values` meta.
 }
 ```
 
-`cryptographicKeyFormat: "x509"` signs the request with the default key of the
-organisation and its X.509 certificate chain, and `clientIdScheme` then
-defaults to `x509_hash`. Name another key with `cryptographicKeyIdentifier`.
+`cryptographicKeyIdentifier` names the key that signs the request. It must be
+an active key of the organisation with an X.509 certificate chain
+(`igrantio-api-key-management`). A create without it gets HTTP 400: the
+verifier signs with no default key. `cryptographicKeyFormat` is `x509`, the
+only format, and `clientIdScheme` defaults to `x509_hash`.
 
 `dc+sd-jwt` takes only `vct_values` in `meta`. It refuses `type_values`
 (W3C formats) and `doctype_value` (`mso_mdoc`).
 
-**Step 2.** Send the request with the send operation,
+The API refuses a QESAC query without `qes_data`, and `qes_data` without
+exactly one QESAC query (HTTP 400 each).
+
+**Step 2.** Upload the PDF with `POST /v4/config/ows/verifier/files`
+(`multipart/form-data`, part `file`). The answer gives `fileExternalLink`.
+Then send the request with the send operation,
 `POST /v4/config/ows/verifier/verifications`. Send the
 `presentationDefinitionId`, and send `transactionData` that follows the JSON
-Schema of the `qes_data` type. The server answers HTTP 400 when the
-presentation definition sets a `transactionDataDefinitionType` and the
-request carries no `transactionData`, and also in the opposite case.
+Schema of the `qes_data` type, for example
+`{"qes_data": {"type": "pdf", "external_link": "<fileExternalLink>"}}`. The
+server answers HTTP 400 when the presentation definition sets a
+`transactionDataDefinitionType` and the request carries no `transactionData`,
+and also in the opposite case.
 
 Read the schema of the type with
 `GET /v4/config/ows/verifier/transaction-data-templates`
 before you build the payload.
 
-The send operation also takes `signatureStamp` and `signatureCoordinate` for
-a signed PDF. `signatureCoordinate` holds exactly four integers,
-`[x1, y1, x2, y2]`, in points. The finished record holds a `files` array,
-with `signedFile`, `unsignedFile` and any error for each credential.
+The send operation also takes `hasSignatureStamp` and `signatureCoordinate` for
+a visible signature stamp on the signed PDF. `signatureCoordinate` holds
+exactly four integers, `[x1, y1, x2, y2]`, in points. The finished record holds
+a `files` array, with `signedFile`, `unsignedFile` and any error for each
+credential.
 
-**Step 3.** Read `vpTokenQrCode` for the deep link and
-`presentationExchangeId` for the correlation id, then poll the read
-operation or wait for the webhook event.
+**Step 3.** The answer is `{"verificationHistory": {...}}`. Read `requestUrl`
+for the QR code or the deep link, and `presentationExchangeId` for the
+correlation id. Then read the verification with
+`GET /v4/config/ows/verifier/verifications/{verificationId}`, where
+`{verificationId}` is the `presentationExchangeId`, or wait for the webhook
+event `ows.verifier.verification.presentation_received`. `isVerified` is `true`
+when every check passed.
 
-`label` must hold 3 to 100 characters. The server refuses the labels that
-extensions reserve, for example `Document Signing`. Name the contract instead.
+`label` has 3 to 100 characters and is unique in the organisation: a second
+create with the same label gets HTTP 400. Before you run the sample again,
+change the label, or reuse the `presentationDefinitionId` of the first run.
+The server also refuses the labels that extensions reserve, for example
+`Document Signing`. Name the contract instead.
 
 For the full operation reference, the transaction data rules and the response
 shape, read the `igrantio-api-verifier` skill.

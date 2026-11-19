@@ -6,7 +6,7 @@ metadata:
   categories: [dcql-query, education]
   provider: iGrant.io
   keywords: DCQL, PID, Person Identification Data, urn:eu.europa.ec.eudi:pid:1, eu.europa.ec.eudi.pid.1, age_over_18, is_over_18, presentation definition, OpenID4VP, mso_mdoc, SD-JWT VC, jwt_vc_json, EUDIW, eIDAS2
-  version: 2026.11.01
+  version: 2026.11.02
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/presentationDefinitions/dcqlQuery/pid
   registry-version: 2025.7.1
   requires-skills: igrantio-api-verifier
@@ -32,16 +32,18 @@ Ask only for the claims that your use case needs. An age check needs one
 boolean claim, not the birth date.
 
 This template follows the earlier PID rules. For the PID of the current PID
-Rulebook (vct `urn:eudi:pid:1`), read `igrantio-dcql-query-pid-v2`.
+Rulebook (vct `urn:eudi:pid:1`), read `igrantio-dcql-query-pid-v2`. The
+iGrant.io API issues only the current PID shape.
 
 ## Prerequisites
 - An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
   [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
   an environment variable or a secret manager. The browser never sees it.
-- The **OWS environment** the key belongs to. The default is **demo**
-  (`https://demo-api.igrant.io`). Use **staging**
-  (`https://staging-api.igrant.io`) only when the integrator asks for it.
-  A key works only in its own environment.
+- The **environment** the key belongs to: demo (`https://demo-api.igrant.io`,
+  the default), staging (`https://staging-api.igrant.io`) or production
+  (`https://api.igrant.io`). A key works only in its own environment.
+- A **signing key** with an X.509 certificate chain in Key Management (see
+  `igrantio-api-key-management`). Every signed request needs one.
 
 ## Ask the integrator first
 Ask one question at a time. Wait for the answer. Give the recommended
@@ -49,7 +51,7 @@ default with each question. Look up facts in the project (framework,
 environment variables, an existing backend) instead of asking for them.
 Record the answers before you write code.
 
-1. **Environment** - demo or staging? _Default demo
+1. **Environment** - demo, staging or production? _Default demo
    (`https://demo-api.igrant.io`); a switch later is a configuration
    change._
 2. **API key** - do you have the OWS API key for that environment? If not,
@@ -61,9 +63,14 @@ Record the answers before you write code.
 5. **Channel** - cross-device QR, same-device Digital Credentials API, or
    both? _Recommend QR first; `igrantio-dcapi-android` and
    `igrantio-dcapi-ios` cover the DC API._
-6. **Trusted authorities** - accept any issuer, or only issuers on a trust
-   list?
-7. **Trust list** - is your Wallet-Relying Party Access Certificate (WRPAC)
+6. **Trusted issuers** - accept any issuer, or only the issuers of a trust
+   source of the organisation? _Default any issuer: no check runs. For live
+   use, set `requiresTrustedCredentialSigner` in `credentialQueryOptions` (see
+   `igrantio-api-verifier`)._
+7. **Signing key** - which key of Key Management signs the requests? _It must
+   be an active key of the organisation with a certificate chain. The verifier
+   signs with no other key._
+8. **Trust list** - is your Wallet-Relying Party Access Certificate (WRPAC)
    registered in the trust list? If not, contact
    [support@igrant.io](mailto:support@igrant.io) and follow
    <https://docs.igrant.io/docs/trust-relying-party-registration/>. Until then
@@ -199,6 +206,7 @@ to `version_01`.
   "label": "Prove age over 18",
   "version": "version_01",
   "cryptographicKeyFormat": "x509",
+  "cryptographicKeyIdentifier": "<KEY_ID_WITH_CERTIFICATE_CHAIN>",
   "responseType": "vp_token",
   "responseMode": "direct_post",
   "dcqlQuery": {
@@ -216,9 +224,11 @@ to `version_01`.
 }
 ```
 
-`cryptographicKeyFormat: "x509"` signs the request with the default key of the
-organisation and its X.509 certificate chain, and `clientIdScheme` then
-defaults to `x509_hash`. Name another key with `cryptographicKeyIdentifier`.
+`cryptographicKeyIdentifier` names the key that signs the request. It must be
+an active key of the organisation with an X.509 certificate chain
+(`igrantio-api-key-management`). A create without it gets HTTP 400: the
+verifier signs with no default key. `cryptographicKeyFormat` is `x509`, the
+only format, and `clientIdScheme` defaults to `x509_hash`.
 
 `mso_mdoc` takes `doctype_value` only:
 
@@ -237,14 +247,26 @@ defaults to `x509_hash`. Name another key with `cryptographicKeyIdentifier`.
 so it is an array of arrays:
 `{ "type_values": [["urn:eu.europa.ec.eudi:pid:1"]] }`.
 
+A presentation definition that asks for a PID cannot name a
+`transactionDataDefinitionType`: the API refuses it with HTTP 400. A PID key
+does not sign transaction data (PID Rulebook v1.7, section 5).
+
 **Step 2.** Send the request with the send operation,
 `POST /v4/config/ows/verifier/verifications`. Send the
-`presentationDefinitionId` of the record from step 1. Read `vpTokenQrCode`
-for the deep link and `presentationExchangeId` for the correlation id.
+`presentationDefinitionId` of the record from step 1. The answer is
+`{"verificationHistory": {...}}`. Read `requestUrl` for the QR code or the deep
+link, and `presentationExchangeId` for the correlation id. When the wallet has
+answered, read the verification with
+`GET /v4/config/ows/verifier/verifications/{verificationId}`, where
+`{verificationId}` is the `presentationExchangeId`. `isVerified` is `true`
+when every check passed, and `presentation` holds the disclosed claims.
 
-`label` must hold 3 to 100 characters. The server refuses the labels that
-extensions reserve, for example `Age Verification`. Give an age check a
-different label, such as `Prove age over 18`.
+`label` has 3 to 100 characters and is unique in the organisation: a second
+create with the same label gets HTTP 400. Before you run the sample again,
+change the label, or reuse the `presentationDefinitionId` of the first run.
+The server also refuses the labels that extensions reserve, for example `Age
+Verification`. Give an age check a different label, such as `Prove age over
+18`.
 
 For the full operation reference, the transport fields and the response
 shape, read the `igrantio-api-verifier` skill.
