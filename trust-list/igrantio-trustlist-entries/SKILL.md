@@ -6,8 +6,8 @@ metadata:
   categories: [trust-list, education]
   provider: iGrant.io
   keywords: trust list, NXD Foundation, WRPAC, WRPRC, QEAA, EAA, Pub-EAA, PID, wallet provider, registrars, ETSI TS 119 612, ETSI TS 119 602, participant, trust anchor, OAuth2 client_credentials, approvals, write:review, x509 certificate, eIDAS2
-  version: 2026.10.01
-  source-doc: https://github.com/NXD-Foundation/nxd-trust-list-backend
+  version: 2026.11.02
+  source-doc: https://github.com/NXD-Foundation/nxd-trust-list
   protocols: OAuth-2.0-client-credentials, JWT
   auth: Bearer access token from POST /auth/token with grant_type=client_credentials
 ---
@@ -29,11 +29,11 @@ Use this skill when the task is one of these:
 - When the certificate belongs to a key in the iGrant.io Organisation Wallet
   Suite (OWS): an **OWS API key** from
   [support@igrant.io](mailto:support@igrant.io), kept on the server, and the
-  **OWS environment** of the key (default **demo**,
-  `https://demo-api.igrant.io`; **staging**, `https://staging-api.igrant.io`,
-  only when the integrator asks for it). The key must already hold its
-  certificate chain (`igrantio-api-key-management`). The trust-list API
-  itself does not use the OWS API key.
+  **environment** of the key: demo (`https://demo-api.igrant.io`, the
+  default), staging (`https://staging-api.igrant.io`) or production
+  (`https://api.igrant.io`). The key must already hold its certificate chain
+  (`igrantio-api-key-management`). The trust-list API itself does not use
+  the OWS API key.
 
 ## Ask the integrator first
 Ask one question at a time. Wait for the answer. Give the recommended
@@ -394,5 +394,6 @@ to human admins. An unknown id is a `404`.
 ## Cross-references
 - `igrantio-api-key-management` - create the CSR and upload the certificate
   chain in OWS that this skill then registers in the trust list.
-- `igrantio-api-trust-anchor` - the OWS-side trust lists that consume what
-  this skill publishes.
+- `igrantio-api-trust-anchor` - the OWS trust sources: an organisation adds
+  a list that this skill publishes as a trust source, and its wallet then
+  checks signers against it.
