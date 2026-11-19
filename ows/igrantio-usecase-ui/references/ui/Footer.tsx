@@ -1,9 +1,8 @@
 /**
- * Default iGrant.io footer. A 1:1 port of the landing-page Footer.astro chrome
- * (black #000 bar, muted #e5e5e5 text, copyright, ISO/IEC 27001 badge, social
- * icons separated by #464646 divider borders, legal links, and the mobile
- * WhatsApp float). Exact values live in theme.css (.igr-footer); source of
- * truth is landing-page src/components/Footer.astro.
+ * Default iGrant.io footer. A 1:1 port of the footer of the iGrant.io landing
+ * page (black #000 bar, muted #e5e5e5 text, copyright, ISO/IEC 27001 badge,
+ * social icons separated by #464646 divider borders, legal links, and the
+ * mobile WhatsApp float). Exact values live in theme.css (.igr-footer).
  */
 import whatsapp from "../assets/whatsapp.png";
 import { en, formatCopyright, type SocialPlatform, type UiStrings } from "./strings";

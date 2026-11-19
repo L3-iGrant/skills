@@ -2,8 +2,8 @@ import type { ReactNode } from "react";
 import { QRCodeSVG } from "qrcode.react"; // peer dependency: `npm i qrcode.react`
 
 /**
- * The wallet QR panel every iGrant.io demonstrator shows, and the OWS
- * passwordless-login page: the wallet URI (credentialOffer / vpTokenQrCode)
+ * The wallet QR panel every iGrant.io demonstrator shows: the wallet URI
+ * (`offer.uri` of an issue answer, or `requestUrl` of a verification)
  * as a 240 px code at error-correction level H, in a bordered, rounded 12 px
  * frame, with the logo on a white disc in the centre (26% of the code); then
  * the optional transaction code, the small refresh pill, the bordered white
@@ -15,13 +15,13 @@ import { QRCodeSVG } from "qrcode.react"; // peer dependency: `npm i qrcode.reac
  *
  * Refresh: `onRefresh` must mint a NEW exchange (re-call issue / send via
  * your backend proxy), close the old SSE session, and open one on the new
- * exchange id. Never re-render an expired URI.
+ * resource ids. Never re-render an expired URI.
  *
  * Scanned: once the wallet has answered (`isScanned`), the frame gives way to
  * a spinner and one line, as the demonstrators do. There is no tick overlay.
  */
 export interface WalletQrPanelProps {
-  /** The wallet URI to encode (credentialOffer or vpTokenQrCode). */
+  /** The wallet URI to encode (`offer.uri` or `requestUrl`). */
   uri?: string;
   /** The logo on the white disc in the centre. Your brand mark, or the iGrant.io logo. */
   logoSrc: string;

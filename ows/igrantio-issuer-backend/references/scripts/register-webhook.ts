@@ -40,3 +40,6 @@ const result = await registerWebhook({
 });
 
 console.log(JSON.stringify({ tenant, payloadUrl: `${config.publicBaseUrl}/webhook`, ...result }, null, 2));
+if (result.missingTopics.length) {
+  console.warn("The webhook exists without these event types. Update the webhook to add them.");
+}

@@ -54,9 +54,11 @@ function isWebhookEvent(body: unknown): body is WebhookEvent {
 
 /**
  * POST /webhook - receive a webhook event of the wallet, verify the signature
- * over the raw bytes, and store the event under its resource id for the SSE
- * stream. Answer 2xx for each event that you do not need: any other answer is
- * a failure, and the service sends the event again (up to 7 attempts).
+ * over the raw bytes, and store the event under its resource id (`subject.id`)
+ * for the SSE stream. The store ignores a second delivery of an event (the same
+ * event id and `subject.sequence`) and an older event of the resource. Answer
+ * 2xx in 10 seconds, also for each event that you do not need: any other answer
+ * is a failure, and the service sends the event again (up to 7 attempts).
  */
 export function webhookReceiver(store: EventStore): Router {
   const r = Router();

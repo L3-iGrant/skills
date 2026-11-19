@@ -1,14 +1,12 @@
 /*
- * The wallet QR panel every iGrant.io demonstrator shows, and the OWS
- * passwordless-login page: a 240 px code in a bordered, rounded 12 px frame,
- * the logo on a white disc in the centre (63 px, 26% of the code), the small
- * refresh pill, the bordered white "Open in EUDI Wallet" button at QR width
- * (266 px) and a 12 px wallet hint.
+ * The wallet QR panel every iGrant.io demonstrator shows: a 240 px code in a
+ * bordered, rounded 12 px frame, the logo on a white disc in the centre
+ * (63 px, 26% of the code), the small refresh pill, the bordered white
+ * "Open in EUDI Wallet" button at QR width (266 px) and a 12 px wallet hint.
  *
- * Ported at exact values from the demonstrators (sme-business-wallet,
- * piggy-bank-demo, infogreffe-ebwoid-issuer, webuild-shop-demo). Do not
- * invent new numbers. Import this file once, or paste the rules into your
- * global stylesheet.
+ * Ported at exact values from the iGrant.io demonstrators. Do not invent new
+ * numbers. Import this file once, or paste the rules into your global
+ * stylesheet.
  */
 
 /* The column: frame, transaction code, refresh pill, wallet button, hint. */

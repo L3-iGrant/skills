@@ -1,18 +1,25 @@
 import "dotenv/config";
 
 /**
- * OWS environments. Integrators pick one via OWS_ENV (default: demo).
- * OWS_BASE_URL overrides the mapping if set (e.g. an in-cluster service URL).
+ * The iGrant.io environments: the API host of each. Select one with OWS_ENV
+ * (demo, staging or production; default demo). An API key works only in its
+ * own environment. OWS_BASE_URL, when set, replaces the mapping (for example a
+ * local mock server for tests).
  */
 export const OWS_ENVIRONMENTS: Record<string, string> = {
   demo: "https://demo-api.igrant.io",
   staging: "https://staging-api.igrant.io",
+  production: "https://api.igrant.io",
 };
 
 function resolveOwsBaseUrl(): string {
   if (process.env.OWS_BASE_URL) return process.env.OWS_BASE_URL.replace(/\/$/, "");
   const env = (process.env.OWS_ENV ?? "demo").toLowerCase();
-  return (OWS_ENVIRONMENTS[env] ?? OWS_ENVIRONMENTS.demo).replace(/\/$/, "");
+  const url = OWS_ENVIRONMENTS[env];
+  if (!url) {
+    throw new Error(`Unknown OWS_ENV "${env}": use demo, staging or production.`);
+  }
+  return url;
 }
 
 /**
@@ -23,7 +30,7 @@ export const config = {
   /** Port the tenant backend listens on. */
   port: Number(process.env.PORT ?? 6001),
 
-  /** OWS base URL, from OWS_ENV (demo|staging, default demo) or OWS_BASE_URL. */
+  /** The API host, from OWS_ENV (demo|staging|production, default demo) or OWS_BASE_URL. */
   owsBaseUrl: resolveOwsBaseUrl(),
 
   /** Shared HMAC secret - MUST equal the secretKey used at webhook registration. */

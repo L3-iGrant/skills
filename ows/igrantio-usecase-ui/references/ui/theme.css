@@ -2,10 +2,9 @@
  * iGrant.io use-case UI theme.
  * Design tokens plus the default shell layout and primitive styles. Import once
  * (AppShell does this for you). Chrome values (navbar/footer) are ported from
- * the iGrant.io landing page (Navbar.astro, Footer.astro, _variables.scss);
- * use-case values (layout, stepper, buttons, headings, content card) are ported
- * from the iGrant.io use-case SDK (@igrant/usecase-sdk styles/_variables.scss
- * and its component styles). Do not invent new numbers, reuse these.
+ * the iGrant.io landing page; use-case values (layout, stepper, buttons,
+ * headings, content card) are ported from the iGrant.io use-case SDK (its style
+ * variables and component styles). Do not invent new numbers, reuse these.
  */
 
 @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap");
@@ -51,7 +50,7 @@
   --igr-btn-border: #dfdfdf;
   --igr-link: #228be6;
 
-  /* Status (usecase-sdk) */
+  /* Status (use-case SDK) */
   --igr-success: #28a745;
   --igr-success-dark: #155724; /* completed-step tick circle */
   --igr-success-bg: #dcfce7;
@@ -91,7 +90,7 @@
 }
 
 /* Buttons ------------------------------------------------------------- */
-/* Ported from usecase-sdk Button.module.scss: 32px, uppercase, 2px tracking.
+/* Ported from the use-case SDK button: 32px, uppercase, 2px tracking.
    Default is white with a light border; hover inverts to black. */
 .btn {
   display: inline-flex;
@@ -149,7 +148,7 @@
   color: var(--igr-white);
 }
 
-/* Split layout (usecase-sdk SplitLayout: stepper sidebar + main) ------- */
+/* Split layout (use-case SDK SplitLayout: stepper sidebar + main) ------- */
 .igr-layout {
   display: grid;
   grid-template-columns: 1fr;
@@ -194,7 +193,7 @@
   min-width: 0;
 }
 
-/* Stepper (usecase-sdk VerticalStepper + StepIndicator cards) ---------- */
+/* Stepper (use-case SDK VerticalStepper + StepIndicator cards) ---------- */
 .stepper {
   list-style: none;
   margin: 0;
@@ -324,7 +323,7 @@
   padding-left: 49px;
 }
 
-/* Headings (usecase-sdk Typography: Byrd) ------------------------------ */
+/* Headings (use-case SDK Typography: Byrd) ------------------------------ */
 .igr-h1,
 .igr-h2,
 .igr-h3,
@@ -344,7 +343,7 @@
 .igr-h5 { font-size: 1.125rem; font-weight: 600; } /* 18px */
 .igr-h6 { font-size: 1rem; font-weight: 700; }     /* 16px, section title */
 
-/* Content card (usecase-sdk ContentCard: a step's main column) --------- */
+/* Content card (use-case SDK ContentCard: a step's main column) --------- */
 .content-card {
   width: 100%;
   min-height: 0;
@@ -379,7 +378,7 @@
   margin: 0 0 0.6rem;
 }
 
-/* Step navigation (usecase-sdk StepNavigation) ------------------------- */
+/* Step navigation (use-case SDK StepNavigation) ------------------------- */
 .step-nav {
   display: flex;
   justify-content: space-between;
@@ -489,7 +488,7 @@
   color: var(--igr-alert);
 }
 
-/* Navbar chrome (ported from Navbar.astro + _variables.scss) ----------- */
+/* Navbar chrome (ported from the landing-page navbar) ------------------ */
 .igr-navbar {
   height: var(--igr-navbar-height); /* 5.4375rem = 87px */
   background: var(--igr-black);
@@ -619,7 +618,7 @@
   }
 }
 
-/* Footer chrome (ported from Footer.astro) ---------------------------- */
+/* Footer chrome (ported from the landing-page footer) ------------------ */
 .igr-footer {
   position: relative;
   background: var(--igr-black);

@@ -3,17 +3,22 @@ import type { OwsWebhookEvent } from "./types";
 /**
  * Framework-agnostic SSE session against the tenant backend.
  *
- * Opens `${webhookBaseUrl}/sse/${exchangeId}` and calls `onMessage` for each
- * event. By default it consumes-and-deletes (`DELETE ${webhookBaseUrl}/${id}`)
- * so a reconnect/refresh doesn't replay a handled event. Reconnects on drop.
+ * Opens `${webhookBaseUrl}/sse/${resourceIds}` (the ids separated by commas)
+ * and calls `onMessage` for each event. By default it consumes-and-deletes
+ * each handled event (`DELETE ${webhookBaseUrl}/${subject.id}?sequence=<n>`),
+ * so a reconnect or a refresh does not replay it; a newer event of the same
+ * resource stays for the stream. Reconnects on drop.
  *
  * Wrap this in a framework hook (see react/useSSE.ts) or use it directly.
  */
 export interface SseSessionOptions {
   /** The backend webhook base, e.g. `https://host/webhook` (no trailing slash needed). */
   webhookBaseUrl: string;
-  /** The `subject.id` of the events: the issuance id or the verification id. */
-  exchangeId: string;
+  /**
+   * The `subject.id` of the events to follow: the credential exchange ids of
+   * the issuance histories of one offer (1 to 20), or one presentationExchangeId.
+   */
+  resourceIds: string[];
   onMessage: (event: OwsWebhookEvent) => void;
   onError?: (event: Event) => void;
   /** Consume-and-delete after each message (default: true). */
@@ -30,17 +35,17 @@ export function openSseSession(options: SseSessionOptions): SseSession {
   const base = options.webhookBaseUrl.replace(/\/$/, "");
   const autoDelete = options.autoDelete ?? true;
   const reconnectDelayMs = options.reconnectDelayMs ?? 1000;
+  const streamUrl = `${base}/sse/${options.resourceIds.map(encodeURIComponent).join(",")}`;
 
   let source: EventSource | null = null;
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   let closed = false;
-  const deleted = new Set<string>();
 
-  const deleteEvent = async (id: string): Promise<void> => {
-    if (!autoDelete || deleted.has(id)) return;
-    deleted.add(id);
+  const deleteEvent = async (event: OwsWebhookEvent): Promise<void> => {
+    if (!autoDelete) return;
+    const { id, sequence } = event.subject;
     try {
-      await fetch(`${base}/${id}`, { method: "DELETE" });
+      await fetch(`${base}/${encodeURIComponent(id)}?sequence=${sequence}`, { method: "DELETE" });
     } catch {
       // best-effort; the backend TTL sweep is the safety net
     }
@@ -48,17 +53,17 @@ export function openSseSession(options: SseSessionOptions): SseSession {
 
   const connect = (): void => {
     if (closed) return;
-    source = new EventSource(`${base}/sse/${options.exchangeId}`);
+    source = new EventSource(streamUrl);
 
-    source.onmessage = (event) => {
+    source.onmessage = (message) => {
       let parsed: OwsWebhookEvent;
       try {
-        parsed = JSON.parse(event.data) as OwsWebhookEvent;
+        parsed = JSON.parse(message.data) as OwsWebhookEvent;
       } catch {
         return;
       }
       options.onMessage(parsed);
-      void deleteEvent(options.exchangeId);
+      void deleteEvent(parsed);
     };
 
     source.onerror = (event) => {

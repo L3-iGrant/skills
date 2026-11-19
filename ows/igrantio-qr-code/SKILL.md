@@ -1,13 +1,13 @@
 ---
 name: igrantio-qr-code
-description: 'Wallet QR code panel for EUDI Wallet (EUDIW) and European Business Wallet (EUBW) flows on the iGrant.io Organisation Wallet Suite, at the exact look of the iGrant.io demonstrators and the OWS passwordless-login page: a 240 px credential-offer or presentation-request QR at error-correction level H in a bordered, rounded 12 px frame, the logo on a white disc in the centre, the small refresh pill that mints a new exchange, the bordered white "Open in EUDI Wallet" button at QR width, a transaction-code box, the wallet hint, and the initialising / refreshing / scanned / error states. Use whenever an issuer or verifier frontend renders a wallet QR.'
+description: 'Wallet QR code panel for EUDI Wallet (EUDIW) and European Business Wallet (EUBW) flows on the iGrant.io Organisation Wallet Suite, at the exact look of the iGrant.io demonstrators: a 240 px credential-offer or presentation-request QR at error-correction level H in a bordered, rounded 12 px frame, the logo on a white disc in the centre, the small refresh pill that mints a new exchange, the bordered white "Open in EUDI Wallet" button at QR width, a transaction-code box, the wallet hint, and the initialising / refreshing / scanned / error states. Use whenever an issuer or verifier frontend renders a wallet QR.'
 license: Apache-2.0
 metadata:
   categories: [frontend, education]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, QR code, credential offer, OpenID4VCI, OpenID4VP, deep link, open in wallet, logo disc, refresh, transaction code, EUDI Wallet
-  version: 2026.11.01
-  design-source: iGrant.io demonstrators (sme-business-wallet WalletInvite, piggy-bank-demo and infogreffe-ebwoid-issuer WalletQr, webuild-shop-demo CheckoutFlow) and the OWS passwordless-login QR panel
+  version: 2026.11.02
+  design-source: iGrant.io demonstrators
   auth: none
   requires-skills: igrantio-ows-overview
 ---
@@ -15,22 +15,21 @@ metadata:
 # iGrant.io wallet QR panel
 
 ## When to use
-Any time a frontend renders a wallet QR: the issuance `offer.uri` or
-the verification `vpTokenQrCode` URI. This skill is the single QR pattern
+Any time a frontend renders a wallet QR: the `offer.uri` of an issue answer
+or the `requestUrl` of a verification. This skill is the single QR pattern
 for `igrantio-issuer-frontend` and `igrantio-verifier-frontend`; both vendor
 it. Use it instead of a hand-rolled QR component, so every QR code a user
-meets looks the same as in the iGrant.io demonstrators and the OWS
-passwordless-login page. For the bare URI-to-image helper only,
+meets looks the same as in the iGrant.io demonstrators. For the bare
+URI-to-image helper only,
 `igrantio-frontend-client` ships a minimal `QrCode`.
 
 ## Prerequisites
 - An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
   [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
   an environment variable or a secret manager. The browser never sees it.
-- The **OWS environment** the key belongs to. The default is **demo**
-  (`https://demo-api.igrant.io`). Use **staging**
-  (`https://staging-api.igrant.io`) only when the integrator asks for it.
-  A key works only in its own environment.
+- The **environment** the key belongs to: demo (`https://demo-api.igrant.io`,
+  the default), staging (`https://staging-api.igrant.io`) or production
+  (`https://api.igrant.io`). A key works only in its own environment.
 - A tenant backend that mints the exchange (`igrantio-issuer-backend` or
   `igrantio-verifier-backend`). The panel never calls OWS itself.
 - A logo image for the disc in the centre of the code (PNG or SVG, square).
@@ -41,7 +40,7 @@ default with each question. Look up facts in the project (framework,
 environment variables, an existing backend) instead of asking for them.
 Record the answers before you write code.
 
-1. **Environment** - demo or staging? _Default demo
+1. **Environment** - demo, staging or production? _Default demo
    (`https://demo-api.igrant.io`); a switch later is a configuration
    change._
 2. **API key** - do you have the OWS API key for that environment? If not,
@@ -59,7 +58,7 @@ Record the answers before you write code.
    download link if you ship your own wallet._
 6. **Transaction code** - does the issuance use a pre-authorised code the
    user types into the wallet? _Only for issuance with a transaction code;
-   pass `offer.transactionCode` of the create issuance answer as `txCode`._
+   pass `offer.transactionCode` of the issue answer as `txCode`._
 7. **Same-device** - does the page also run on the phone that holds the
    wallet? _The "Open in EUDI Wallet" button handles it; no separate
    same-device view is needed._
@@ -107,7 +106,7 @@ default black). Everything else is fixed.
    `igrantio-verifier-frontend`:
    ```tsx
    <WalletQrPanel
-     uri={verificationHistory?.vpTokenQrCode}
+     uri={verificationHistory?.requestUrl}
      logoSrc="/your-logo.png"
      isLoading={isCreating}
      isRefreshing={isRecreating}
@@ -116,14 +115,16 @@ default black). Everything else is fixed.
      onRefresh={recreateExchange}
    />
    ```
-5. For issuance, pass `offer.uri` of the create issuance answer as `uri`.
+5. For issuance, pass `offer.uri` of the issue answer as `uri`.
    When the request asked for a transaction code (`transactionCode: {length,
    inputMode}`), the issuer makes the code: pass `offer.transactionCode` of
    the same answer as `txCode`.
 
 ## Behaviour rules (from the demonstrators)
-- `onRefresh` mints a **new** exchange: make a new issuance or verification through the
-  backend proxy, close the old SSE session, open SSE on the new exchange id.
+- `onRefresh` mints a **new** exchange: make a new credential offer or
+  verification through the backend proxy, close the old SSE session, open SSE
+  on the new resource ids (the credential exchange ids of the offer, or the
+  presentationExchangeId).
   Never re-render an expired URI. The wallet link carries `key={uri}` so a
   stale `href` is never kept.
 - The "Open in EUDI Wallet" button is a plain link to the URI. It works on
@@ -136,7 +137,7 @@ default black). Everything else is fixed.
 ## Validation / done criteria
 - `cd references && npm install && npm run typecheck` passes.
 - A phone camera scans the code from the screen with the logo disc in place.
-- Refresh produces a new exchange id (old SSE closed, new one open).
+- Refresh produces new resource ids (old SSE closed, new one open).
 - The panel matches the demonstrator side by side: frame, disc, pill,
   button, hint.
 

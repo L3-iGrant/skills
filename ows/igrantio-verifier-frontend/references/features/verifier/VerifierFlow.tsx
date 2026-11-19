@@ -4,7 +4,7 @@ import { useVerification, type VerificationConfig } from "./useVerification";
 /**
  * Minimal end-to-end verifier demo: send a DCQL presentation request, show
  * the QR in the iGrant.io wallet QR panel (vendored from `igrantio-qr-code`),
- * and display the disclosed claims + verified decision after the verifier event on SSE.
+ * and display the disclosed claims and the `isVerified` decision after the verifier event on SSE.
  *
  * Import `./walletQr/walletQr.css` once in your app (or paste its rules into
  * your global stylesheet) so the panel renders at the demonstrator look.
@@ -21,7 +21,7 @@ export function VerifierFlow({ presentationDefinitionId, logoSrc = "/igrant-logo
   const request = () => requestPresentation({ requestByReference: true, presentationDefinitionId });
 
   // Refresh makes a NEW verification: the hook closes the old SSE session and
-  // opens one on the new exchange id. An expired request is never re-rendered.
+  // opens one on the new presentationExchangeId. An expired request is never re-rendered.
   const refresh = () => {
     reset();
     request();
@@ -47,13 +47,14 @@ export function VerifierFlow({ presentationDefinitionId, logoSrc = "/igrant-logo
     );
   }
 
-  // waiting | error
+  // waiting | scanned | error
   return (
     <div>
       {status === "waiting" && <p>Scan to present your credential</p>}
       <WalletQrPanel
         uri={qrUri ?? undefined}
         logoSrc={logoSrc}
+        isScanned={status === "scanned"}
         errorMessage={status === "error" ? `Verification failed: ${error ?? "unknown error"}` : ""}
         onRefresh={refresh}
         labels={{ scanned: "Wallet connected. Confirming your presentation." }}

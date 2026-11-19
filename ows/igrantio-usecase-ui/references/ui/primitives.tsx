@@ -9,7 +9,7 @@ function cx(...parts: Array<string | false | undefined>): string {
 }
 
 /* Split layout ---------------------------------------------------------- */
-/** usecase-sdk SplitLayout: sticky stepper sidebar (4fr) + main column (8fr). */
+/** Use-case SDK SplitLayout: sticky stepper sidebar (4fr) + main column (8fr). */
 export function SplitLayout({ sidebar, children }: { sidebar: ReactNode; children: ReactNode }) {
   return (
     <div className="igr-layout">
@@ -35,7 +35,7 @@ export interface StepProps {
   children?: ReactNode;
 }
 
-/** usecase-sdk StepIndicator: a white card with the number box, a Byrd
+/** Use-case SDK StepIndicator: a white card with the number box, a Byrd
  *  title, and a dark-green tick circle once done. */
 export function Step({ title, detail, number, done, active, onClick, children }: StepProps) {
   return (
@@ -62,7 +62,7 @@ export function Step({ title, detail, number, done, active, onClick, children }:
 }
 
 /* Content card ---------------------------------------------------------- */
-/** usecase-sdk ContentCard: the step's main column, content capped at 800px. */
+/** Use-case SDK ContentCard: the step's main column, content capped at 800px. */
 export function ContentCard({ children }: { children: ReactNode }) {
   return (
     <section className="content-card">

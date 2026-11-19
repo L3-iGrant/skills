@@ -6,8 +6,8 @@ metadata:
   categories: [frontend, education]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, UI theme, design tokens, React, i18n
-  version: 2026.09.01
-  design-source: iGrant.io landing page (Navbar.astro, Footer.astro, _variables.scss) + use-case SDK (@igrant/usecase-sdk styles and components)
+  version: 2026.11.02
+  design-source: iGrant.io landing page and the iGrant.io use-case SDK (styles and components)
   font: Plus Jakarta Sans
   auth: none
   requires-skills: igrantio-frontend-client
@@ -30,10 +30,9 @@ No component-library sprawl, and no runtime deps beyond what
 - An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
   [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
   an environment variable or a secret manager. The browser never sees it.
-- The **OWS environment** the key belongs to. The default is **demo**
-  (`https://demo-api.igrant.io`). Use **staging**
-  (`https://staging-api.igrant.io`) only when the integrator asks for it.
-  A key works only in its own environment.
+- The **environment** the key belongs to: demo (`https://demo-api.igrant.io`,
+  the default), staging (`https://staging-api.igrant.io`) or production
+  (`https://api.igrant.io`). A key works only in its own environment.
 
 ## Ask the integrator first
 Ask one question at a time. Wait for the answer. Give the recommended
@@ -41,7 +40,7 @@ default with each question. Look up facts in the project (framework,
 environment variables, an existing backend) instead of asking for them.
 Record the answers before you write code.
 
-1. **Environment** - demo or staging? _Default demo
+1. **Environment** - demo, staging or production? _Default demo
    (`https://demo-api.igrant.io`); a switch later is a configuration
    change._
 2. **API key** - do you have the OWS API key for that environment? If not,
@@ -68,8 +67,8 @@ Record the answers before you write code.
   for the numbers; do not invent new ones. The QR box carries the frame
   values of the demonstrator wallet QR panel (`igrantio-qr-code`); render
   `WalletQrPanel` from that skill for the full panel.
-- **`ui/Header.tsx`** and **`ui/Footer.tsx`** - a 1:1 port of the landing-page
-  `Navbar.astro` and `Footer.astro` (navbar 5.4375rem = 87px, logo 3.4375rem =
+- **`ui/Header.tsx`** and **`ui/Footer.tsx`** - a 1:1 port of the navbar and
+  the footer of the iGrant.io landing page (navbar 5.4375rem = 87px, logo 3.4375rem =
   55px, black `#000` bar, nav links 16px with 0.125rem letter-spacing and
   carets, bordered language `<select>`, rounded 1.25rem Demo CTA; footer with
   copyright, ISO/IEC 27001 badge, social icons with `#464646` divider borders,

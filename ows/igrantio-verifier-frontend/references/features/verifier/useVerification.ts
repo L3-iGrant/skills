@@ -14,10 +14,10 @@ export interface VerificationConfig {
   webhookBaseUrl: string;
 }
 
-export type VerificationStatus = "idle" | "waiting" | "verified" | "rejected" | "error";
+export type VerificationFlowStatus = "idle" | "waiting" | "scanned" | "verified" | "rejected" | "error";
 
 export interface VerificationResult {
-  /** The accept/reject decision. */
+  /** The accept/reject decision (`isVerified` of the verification). */
   verified: boolean;
   /** Disclosed claims from the first presented credential (or null). */
   claims: Record<string, unknown> | null;
@@ -25,21 +25,22 @@ export interface VerificationResult {
   presentations: Record<string, unknown>[];
 }
 
-/** The verifier events that end the flow. */
+/** The verifier events that the flow uses. */
+const REQUEST_RETRIEVED = "ows.verifier.verification.request_retrieved";
 const PRESENTATION_RECEIVED = "ows.verifier.verification.presentation_received";
 const DECLINED = "ows.verifier.verification.declined";
 
 /**
  * Verifier flow (OpenID4VP + DCQL): send a presentation request, expose the QR
- * (or same-device DC API request), wait for the verifier event over SSE, then
- * read the verification for the disclosed claims + `verified` decision. The
- * event body holds no presented claims.
+ * (`requestUrl`) or the same-device DC API request, wait for the verifier event
+ * over SSE, then read the verification for the disclosed claims (`presentation`)
+ * and the `isVerified` decision. The event body holds no presented claims.
  */
 export function useVerification({ proxyBaseUrl, webhookBaseUrl }: VerificationConfig) {
   const client = useOwsClient(proxyBaseUrl);
   const { open, close } = useSSE();
 
-  const [status, setStatus] = useState<VerificationStatus>("idle");
+  const [status, setStatus] = useState<VerificationFlowStatus>("idle");
   const [qrUri, setQrUri] = useState<string | null>(null);
   const [presentationExchangeId, setPresentationExchangeId] = useState<string | null>(null);
   const [result, setResult] = useState<VerificationResult | null>(null);
@@ -50,6 +51,11 @@ export function useVerification({ proxyBaseUrl, webhookBaseUrl }: VerificationCo
       const verification = (event.data as VerificationEventData).verification;
       if (!verification) return;
 
+      if (event.type === REQUEST_RETRIEVED) {
+        // The wallet fetched the request: show the scanned state.
+        setStatus((s) => (s === "waiting" ? "scanned" : s));
+        return;
+      }
       if (event.type === DECLINED) {
         setResult({ verified: false, claims: null, presentations: [] });
         setStatus("rejected");
@@ -60,12 +66,12 @@ export function useVerification({ proxyBaseUrl, webhookBaseUrl }: VerificationCo
       if (event.type !== PRESENTATION_RECEIVED) return;
       close();
 
-      // The event has the decision only; the record has the disclosed claims.
+      // The event has the decision only; the verification has the disclosed claims.
       client.verification
         .readHistory(verification.id)
         .then(({ verificationHistory }) => {
-          const presentations = verificationHistory?.presentation ?? [];
-          const verified = !!verificationHistory?.verified;
+          const presentations = verificationHistory.presentation ?? [];
+          const verified = verificationHistory.isVerified === true;
           setResult({ verified, claims: presentations[0] ?? null, presentations });
           setStatus(verified ? "verified" : "rejected");
         })
@@ -87,15 +93,15 @@ export function useVerification({ proxyBaseUrl, webhookBaseUrl }: VerificationCo
       setResult(null);
       try {
         const { verificationHistory } = await client.verification.sendRequest(payload);
-        // A Digital Credentials API request has a dcApiRequest and an empty vpTokenQrCode.
+        // A Digital Credentials API request has a dcApiRequest and an empty requestUrl.
         if (
           !verificationHistory?.presentationExchangeId ||
-          (!verificationHistory.vpTokenQrCode && !verificationHistory.dcApiRequest)
+          (!verificationHistory.requestUrl && !verificationHistory.dcApiRequest)
         ) {
-          throw new Error("Verification response missing presentationExchangeId/vpTokenQrCode");
+          throw new Error("The send answer has no presentationExchangeId, or no requestUrl and no dcApiRequest");
         }
         setPresentationExchangeId(verificationHistory.presentationExchangeId);
-        setQrUri(verificationHistory.vpTokenQrCode || null);
+        setQrUri(verificationHistory.requestUrl || null);
         setStatus("waiting");
         open(verificationHistory.presentationExchangeId, webhookBaseUrl, handleEvent);
         return verificationHistory;

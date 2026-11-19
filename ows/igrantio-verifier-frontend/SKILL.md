@@ -1,12 +1,12 @@
 ---
 name: igrantio-verifier-frontend
-description: Build the browser UI for an OpenID4VP + DCQL credential VERIFIER / relying party against the iGrant.io Organisation Wallet Suite. Send a presentation request through your tenant backend proxy, render the QR (cross-device) or invoke the same-device Digital Credentials API to reach the EUDI Wallet (EUDIW) or European Business Wallet (EUBW), and read the disclosed claims + verified decision live over SSE. Composes igrantio-frontend-client; talks to igrantio-verifier-backend.
+description: Build the browser UI for an OpenID4VP + DCQL credential VERIFIER / relying party against the iGrant.io Organisation Wallet Suite. Send a presentation request through your tenant backend proxy, render the requestUrl QR (cross-device) or invoke the same-device Digital Credentials API to reach the EUDI Wallet (EUDIW) or European Business Wallet (EUBW), and read the disclosed claims + isVerified decision live over SSE. Composes igrantio-frontend-client; talks to igrantio-verifier-backend.
 license: Apache-2.0
 metadata:
   categories: [frontend]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VP, DCQL, Digital Credentials API, credential verification, QR code, transaction data, SCA
-  version: 2026.11.01
+  version: 2026.11.02
   api: https://docs.igrant.io/docs/category/openid4vc-api/verifier
   protocols: OpenID4VP-1.0, DCQL, SD-JWT-VC, Digital-Credentials-API
   auth: none in the browser - the verifier backend injects the OWS API key
@@ -18,7 +18,7 @@ metadata:
 ## When to use
 Build the relying-party UI: request a verifiable presentation, let the user scan
 a QR (or use the same-device wallet), and show the disclosed claims and the
-`verified` decision the instant the wallet responds. Depends on
+`isVerified` decision the instant the wallet responds. Depends on
 `igrantio-frontend-client` (vendored at `src/lib/ows/`) and an
 `igrantio-verifier-backend` deployment. Issuer UI is a separate skill
 (`igrantio-issuer-frontend`).
@@ -27,10 +27,9 @@ a QR (or use the same-device wallet), and show the disclosed claims and the
 - An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
   [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
   an environment variable or a secret manager. The browser never sees it.
-- The **OWS environment** the key belongs to. The default is **demo**
-  (`https://demo-api.igrant.io`). Use **staging**
-  (`https://staging-api.igrant.io`) only when the integrator asks for it.
-  A key works only in its own environment.
+- The **environment** the key belongs to: demo (`https://demo-api.igrant.io`,
+  the default), staging (`https://staging-api.igrant.io`) or production
+  (`https://api.igrant.io`). A key works only in its own environment.
 
 ## Ask the integrator first
 Ask one question at a time. Wait for the answer. Give the recommended
@@ -38,7 +37,7 @@ default with each question. Look up facts in the project (framework,
 environment variables, an existing backend) instead of asking for them.
 Record the answers before you write code.
 
-1. **Environment** - demo or staging? _Default demo
+1. **Environment** - demo, staging or production? _Default demo
    (`https://demo-api.igrant.io`); a switch later is a configuration
    change._
 2. **API key** - do you have the OWS API key for that environment? If not,
@@ -65,8 +64,9 @@ Record the answers before you write code.
   `{ status, qrUri, presentationExchangeId, result, error, requestPresentation, reset }`.
   - `requestPresentation(payload)` - send a DCQL request; returns the full
     `verificationHistory` (so you can also drive same-device DC API).
-  - `result`: `{ verified, claims, presentations }` once the wallet responds.
-  - `status`: `idle → waiting → verified | rejected` (or `error`).
+  - `result`: `{ verified, claims, presentations }` once the wallet responds
+    (`verified` is `isVerified` of the verification).
+  - `status`: `idle → waiting → scanned → verified | rejected` (or `error`).
 - **`dcApi.ts`** - same-device Digital Credentials API helpers (`supportsDcApi`,
   `getPlatformRequest`, `invokeWallet`, `buildReceivePayload`) for the
   protocols `openid4vp-v1-signed`, `openid4vp-v1-unsigned` and `org-iso-mdoc`.
@@ -78,7 +78,7 @@ Record the answers before you write code.
 ## Flow (what happens)
 1. `POST /v4/config/ows/verifier/verifications` with `presentationDefinitionId` → read
    `verificationHistory.presentationExchangeId` (SSE key) and
-   `verificationHistory.vpTokenQrCode` (QR URI). Include `transactionData`
+   `verificationHistory.requestUrl` (QR URI). Include `transactionData`
    (SCA payment, e-mandate, login/risk, account access, or QES signing - typed
    as `TransactionData` in `lib/ows/types.ts`; shapes in
    `igrantio-ows-overview` api-reference §2.1) when the presentation
@@ -90,12 +90,16 @@ Record the answers before you write code.
    logo disc, the refresh pill, the "Open in EUDI Wallet" button and the
    hint, at the exact look of the iGrant.io demonstrators.
    `igrantio-qr-code` holds the values and the questions.
-3. SSE verifier event: on `ows.verifier.verification.presentation_received`,
-   read the verification (`GET /v4/config/ows/verifier/verifications/{id}`):
-   `presentation[0]` (disclosed claims) and `verified` (decision). The event
-   holds no claims. Accept only when `verified === true` (plus your trust
-   rules). On `ows.verifier.verification.declined` the holder declined or the
-   wallet answered with an error: the result is rejected.
+3. SSE verifier events:
+   - `ows.verifier.verification.request_retrieved` → scanned (the wallet
+     fetched the request).
+   - `ows.verifier.verification.presentation_received` → read the
+     verification (`GET /v4/config/ows/verifier/verifications/{id}`):
+     `presentation` (the disclosed claims, `presentation[0]` for the first
+     credential) and `isVerified` (the decision). The event holds no claims.
+     Accept only when `isVerified === true`.
+   - `ows.verifier.verification.declined` → the holder declined or the wallet
+     answered with an error: the result is rejected.
 
 ## Steps
 1. Vendor `igrantio-frontend-client/references/lib/ows` into `src/lib/ows/`.
@@ -116,23 +120,24 @@ Record the answers before you write code.
    ```
 
 ## Same-device (optional)
-When the presentation definition uses a `dc_api` response mode,
-`requestPresentation` returns a `verificationHistory.dcApiRequest` and
-`dcApiProtocol`, and `vpTokenQrCode` is empty. Call
+When the presentation definition uses a `dc_api` or `dc_api.jwt` response
+mode (or the version `iso18013_7_annex_c`), `requestPresentation` returns a `verificationHistory.dcApiRequest` and
+`dcApiProtocol`, and `requestUrl` is empty. Call
 `invokeWallet(dcApiRequest)` from `dcApi.ts`, then post
 `buildReceivePayload(data, dcApiProtocol)` back with
 `client.verification.receiveDcApiResponse(presentationExchangeId, payload)`
 (`POST /v4/config/ows/verifier/verifications/{verificationId}/response`
 through the proxy). The SSE stream then delivers the verifier event of the
-result, so the render path is the same as for the QR.
+result, so the render path is the same as for the QR. A request takes one
+response.
 Platform-specific end-to-end recipes: `igrantio-dcapi-android` (OpenID4VP) and
 `igrantio-dcapi-ios` (ISO 18013-7 Annex C, signed).
 
 ## Clean-code notes
-- No `@igrant/*` SDK; OWS specifics live in the client, flow logic in the hook,
+- No iGrant.io SDK; OWS specifics live in the client, flow logic in the hook,
   DC-API concerns isolated in `dcApi.ts`.
-- Read the decision from `verified` and claims from `presentation[0]` - the only
-  fields the UI needs.
+- Read the decision from `isVerified` and the claims from `presentation` - the
+  only fields the UI needs.
 
 ## Validation / done criteria
 - Presenting a valid credential drives `status` to `verified` with the disclosed

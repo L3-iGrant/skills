@@ -6,7 +6,7 @@ metadata:
   categories: [backend, education]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VP, DCQL, relying party, credential verification, verifiable presentations, transaction data, SCA, e-mandate, QES
-  version: 2026.11.01
+  version: 2026.11.02
   api: https://docs.igrant.io/docs/category/openid4vc-api/verifier
   protocols: OpenID4VP-1.0, DCQL, SD-JWT-VC
   auth: OWS API key (Authorization "ApiKey <key>") injected by the proxy; browser sends no key
@@ -26,10 +26,9 @@ issuer equivalent use `igrantio-issuer-backend` (separate skill). Read
 - An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
   [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
   an environment variable or a secret manager. The browser never sees it.
-- The **OWS environment** the key belongs to. The default is **demo**
-  (`https://demo-api.igrant.io`). Use **staging**
-  (`https://staging-api.igrant.io`) only when the integrator asks for it.
-  A key works only in its own environment.
+- The **environment** the key belongs to: demo (`https://demo-api.igrant.io`,
+  the default), staging (`https://staging-api.igrant.io`) or production
+  (`https://api.igrant.io`). A key works only in its own environment.
 
 ## Ask the integrator first
 Ask one question at a time. Wait for the answer. Give the recommended
@@ -37,7 +36,7 @@ default with each question. Look up facts in the project (framework,
 environment variables, an existing backend) instead of asking for them.
 Record the answers before you write code.
 
-1. **Environment** - demo or staging? _Default demo
+1. **Environment** - demo, staging or production? _Default demo
    (`https://demo-api.igrant.io`); a switch later is a configuration
    change._
 2. **API key** - do you have the OWS API key for that environment? If not,
@@ -69,8 +68,8 @@ Record the answers before you write code.
 - **Receive** `POST /webhook`, verify the `X-IGrant-Signature` HMAC over the
   raw body, store the event under its `subject.id` (the verification id, equal
   to `presentationExchangeId`).
-- **SSE** `GET /webhook/sse/{presentationExchangeId}` streams the event to the
-  browser; `DELETE /webhook/{id}` consume-and-delete.
+- **SSE** `GET /webhook/sse/{presentationExchangeId}` streams the events to
+  the browser; `DELETE /webhook/{id}?sequence=<n>` consume-and-delete.
 
 ## Reference implementation
 Runnable Express + TypeScript app in [`./references`](./references). Same modules as
@@ -79,19 +78,22 @@ the issuer backend; the only role differences are in `src/server.ts`
 Default `PORT=6002` so it can run alongside an issuer backend.
 
 ## Steps
-1. `cd references && cp .env.example .env`; set `OWS_ENV` (demo|staging,
-   default demo), `WEBHOOK_SECRET_KEY`, `PUBLIC_BASE_URL`, `CORS_ORIGINS`, and one
-   `OWS_TENANT_<SLUG>_API_KEY` per organisation.
+1. `cd references && cp .env.example .env`; set `OWS_ENV`
+   (demo|staging|production, default demo), `WEBHOOK_SECRET_KEY`,
+   `PUBLIC_BASE_URL`, `CORS_ORIGINS`, and one `OWS_TENANT_<SLUG>_API_KEY` per
+   organisation. Each key must belong to the `OWS_ENV` environment.
 2. `npm install && npm run dev` - backend on `:6002`.
 3. Register the webhook once per tenant: `npm run register-webhook -- <tenant>`
-   (idempotent).
+   (idempotent; it warns about event types that an existing webhook does not
+   have).
 4. Point the verifier frontend base URL at `${PUBLIC_BASE_URL}${PROXY_PREFIX}/<tenant>`
    and the webhook base at `${PUBLIC_BASE_URL}/webhook`.
 
 ## Verification contract (what the frontend drives through this backend)
-- `POST /v4/config/ows/verifier/verifications` → response
-  `verificationHistory.presentationExchangeId` (SSE key) +
-  `verificationHistory.vpTokenQrCode` (QR URI).
+- `POST /v4/config/ows/verifier/verifications` → HTTP 200
+  `{"verificationHistory": {...}}` with `presentationExchangeId` (the SSE key)
+  and `requestUrl` (the QR URI), or `dcApiRequest` for the same-device Digital
+  Credentials API (then `requestUrl` is empty).
 - The send body may carry `transactionData` - wallet-displayed and
   wallet-signed transaction data (SCA): simple `payment_data`, an EUDI SCA
   rulebook (TS12) `payload` (payment / e-mandate / login-risk / account
@@ -99,12 +101,14 @@ Default `PORT=6002` so it can run alongside an issuer backend.
   must name the type in `transactionDataDefinitionType`; then the send needs
   the data, and without that type OWS refuses it. The proxy passes it through
   unchanged; see `igrantio-ows-overview/references/api-reference.md` §2.1 for
-  the exact shapes and §2.2 for verifying the returned
-  `transaction_data_hashes`.
+  the exact shapes. The check of the transaction data hashes is part of
+  `isVerified`.
+- `ows.verifier.verification.request_retrieved`: the wallet fetched the
+  request (the frontend shows the scanned state).
 - Done on `ows.verifier.verification.presentation_received`; the SSE event
   carries `data.verification.isVerified`, but no claims: the frontend then
   reads `GET /v4/config/ows/verifier/verifications/{presentationExchangeId}`
-  for `verified` and the disclosed claims (`presentation[0]`). Rejected on
+  for `isVerified` and the disclosed claims (`presentation`). Rejected on
   `ows.verifier.verification.declined` (`data.reason`).
 See `igrantio-ows-overview/references/api-reference.md` §2 and §4.
 
@@ -115,6 +119,9 @@ See `igrantio-ows-overview/references/api-reference.md` §2 and §4.
 - **Multi-instance**: replace `InMemoryEventStore` with a shared store.
 - **Key storage**: replace `EnvTenantStore` with a DB/secret-manager `TenantStore`.
 - **Path scope**: `VERIFIER_PERMITTED_PATHS` in `server.ts` is the allow-list.
+  The proxy does not check the method: the first rule also passes the list of
+  the verification history (`GET .../verifications`). Add a method check in
+  front of the proxy when the browser must not read the list.
 
 ## Validation / done criteria
 - `npm run typecheck` passes.

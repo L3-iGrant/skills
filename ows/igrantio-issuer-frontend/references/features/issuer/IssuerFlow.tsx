@@ -1,8 +1,9 @@
+import type { IssueCredentialEntry } from "../../lib/ows";
 import { WalletQrPanel } from "./walletQr/WalletQrPanel";
 import { useIssuance, type IssuanceConfig } from "./useIssuance";
 
 /**
- * Minimal end-to-end issuer demo: issue a credential in-time, show the offer
+ * Minimal end-to-end issuer demo: issue a credential in time, show the offer
  * QR in the iGrant.io wallet QR panel (vendored from `igrantio-qr-code`), and
  * reflect live status from SSE. Replace the hard-coded payload with your form.
  *
@@ -11,25 +12,26 @@ import { useIssuance, type IssuanceConfig } from "./useIssuance";
  */
 export interface IssuerFlowProps extends IssuanceConfig {
   credentialDefinitionId: string;
-  /** Required when the definition has more than one credential configuration. */
-  credentialConfigurationId?: string;
-  /** Claims for the credential being issued, in the form of its format. */
-  claims: Record<string, unknown>;
+  /**
+   * The claims of each credential configuration, in the form of its format.
+   * One entry for each configuration of the definition; an entry needs
+   * `credentialConfigurationId` when the definition has more than one.
+   */
+  credentials: IssueCredentialEntry[];
   /** The logo on the white disc in the centre of the QR code. */
   logoSrc?: string;
   /** The pre-authorised code flow (default true); false selects the authorisation code flow. */
   preAuthorised?: boolean;
   /**
    * Length of the transaction code (4 to 12), only with `preAuthorised`. The issuer makes the code; the
-   * panel shows the code of the create answer. Leave it out for no code.
+   * panel shows the code of the issue answer. Leave it out for no code.
    */
   txCodeLength?: number;
 }
 
 export function IssuerFlow({
   credentialDefinitionId,
-  credentialConfigurationId,
-  claims,
+  credentials,
   logoSrc = "/igrant-logo.png",
   preAuthorised = true,
   txCodeLength,
@@ -41,14 +43,13 @@ export function IssuerFlow({
   const issue = () =>
     issueInTime({
       credentialDefinitionId,
-      ...(credentialConfigurationId ? { credentialConfigurationId } : {}),
+      credentials,
       preAuthorised,
       ...(preAuthorised && txCodeLength ? { transactionCode: { length: txCodeLength, inputMode: "numeric" as const } } : {}),
-      claims,
     });
 
-  // Refresh makes a NEW issuance: the hook closes the old SSE session and
-  // opens one on the new issuance id. An expired offer is never re-rendered.
+  // Refresh makes a NEW offer: the hook closes the old SSE session and opens
+  // one on the new credential exchange ids. An expired offer is never re-rendered.
   const refresh = () => {
     reset();
     issue();

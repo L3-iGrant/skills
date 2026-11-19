@@ -1,10 +1,14 @@
 /**
- * Idempotent OWS webhook registration.
+ * Idempotent webhook registration.
  *
- * Lists existing webhooks for the org (by API key) and skips creation if one
- * already targets the same payloadUrl; otherwise POSTs a new webhook.
- * See igrantio-ows-overview api-reference §4.
+ * Lists the webhooks of the organisation (the API key selects it) and skips the
+ * create when a webhook already has the payloadUrl: the payload URL of a webhook
+ * is unique in the organisation. An organisation has at most 50 webhooks, so one
+ * page of 100 holds them all. See igrantio-ows-overview api-reference §4.
  */
+const LIST_PATH = "/v4/config/platform/webhooks?offset=0&limit=100";
+const CREATE_PATH = "/v4/config/platform/webhook";
+
 export interface RegisterOptions {
   owsBaseUrl: string;
   apiKey: string;
@@ -15,30 +19,47 @@ export interface RegisterOptions {
 
 export interface RegisterResult {
   created: boolean;
-  reason?: string;
-  webhook?: unknown;
+  webhookId: string;
+  /**
+   * Only for a webhook that exists: the topics that it does not subscribe to.
+   * The register does not change that webhook; update it to add them.
+   */
+  missingTopics: string[];
+}
+
+/** The members of a webhook answer that the register reads. The answer also holds the secret key. */
+interface WebhookRecord {
+  id: string;
+  payloadUrl: string;
+  subscribedEvents?: { digitalWalletWebhook?: string[] | null } | null;
 }
 
 export async function registerWebhook(o: RegisterOptions): Promise<RegisterResult> {
   const base = o.owsBaseUrl.replace(/\/$/, "");
+  const authorization = `ApiKey ${o.apiKey}`;
 
-  // 1. List - skip if a webhook already targets this payloadUrl (idempotency).
-  const listRes = await fetch(`${base}/v2/config/webhooks?limit=100&offset=0`, {
-    headers: { Authorization: `ApiKey ${o.apiKey}`, accept: "application/json" },
+  // 1. List: skip the create when a webhook already has this payloadUrl.
+  const listRes = await fetch(`${base}${LIST_PATH}`, {
+    headers: { Authorization: authorization, accept: "application/json" },
   });
-  if (listRes.ok) {
-    const body: unknown = await listRes.json();
-    const list = normaliseList(body);
-    const exists = list.some(
-      (w) => webhookPayloadUrl(w) === o.payloadUrl,
-    );
-    if (exists) return { created: false, reason: "already-exists" };
+  if (!listRes.ok) {
+    throw new Error(`list webhooks failed: ${listRes.status} ${await listRes.text()}`);
+  }
+  const { webhooks = [] } = (await listRes.json()) as { webhooks?: WebhookRecord[] };
+  const existing = webhooks.find((w) => w.payloadUrl === o.payloadUrl);
+  if (existing) {
+    const subscribed = new Set(existing.subscribedEvents?.digitalWalletWebhook ?? []);
+    return {
+      created: false,
+      webhookId: existing.id,
+      missingTopics: o.topics.filter((topic) => !subscribed.has(topic)),
+    };
   }
 
-  // 2. Create.
-  const res = await fetch(`${base}/v2/config/webhook`, {
+  // 2. Create. The answer is HTTP 200 with {"webhook": {...}}.
+  const res = await fetch(`${base}${CREATE_PATH}`, {
     method: "POST",
-    headers: { Authorization: `ApiKey ${o.apiKey}`, "content-type": "application/json" },
+    headers: { Authorization: authorization, "content-type": "application/json" },
     body: JSON.stringify({
       webhook: {
         payloadUrl: o.payloadUrl,
@@ -51,24 +72,8 @@ export async function registerWebhook(o: RegisterOptions): Promise<RegisterResul
     }),
   });
   if (!res.ok) {
-    throw new Error(`register failed: ${res.status} ${await res.text()}`);
+    throw new Error(`create webhook failed: ${res.status} ${await res.text()}`);
   }
-  return { created: true, webhook: await res.json() };
-}
-
-function normaliseList(body: unknown): Record<string, unknown>[] {
-  if (Array.isArray(body)) return body as Record<string, unknown>[];
-  if (body && typeof body === "object") {
-    const o = body as Record<string, unknown>;
-    const candidate = o.webhooks ?? o.items ?? o.data ?? o.result;
-    if (Array.isArray(candidate)) return candidate as Record<string, unknown>[];
-  }
-  return [];
-}
-
-function webhookPayloadUrl(w: Record<string, unknown>): string | undefined {
-  if (typeof w.payloadUrl === "string") return w.payloadUrl;
-  const nested = w.webhook as Record<string, unknown> | undefined;
-  if (nested && typeof nested.payloadUrl === "string") return nested.payloadUrl;
-  return undefined;
+  const { webhook } = (await res.json()) as { webhook: WebhookRecord };
+  return { created: true, webhookId: webhook.id, missingTopics: [] };
 }

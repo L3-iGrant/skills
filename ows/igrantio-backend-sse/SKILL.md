@@ -1,12 +1,12 @@
 ---
 name: igrantio-backend-sse
-description: 'Composable building block: stream stored iGrant.io OWS webhook events to a browser over Server-Sent Events, keyed by the resource id of the event (subject.id: the issuance id or the verification id), with consume-and-delete. Provides GET /webhook/sse/:resourceId and DELETE /webhook/:resourceId over an EventStore. Use to push live credential issuance (OpenID4VCI) and verification (OpenID4VP) status to a frontend without polling.'
+description: 'Composable building block: stream stored iGrant.io OWS webhook events to a browser over Server-Sent Events, keyed by the resource id of the event (subject.id: the credential exchange id of an issuance history, or the presentationExchangeId of a verification), with consume-and-delete. Provides GET /webhook/sse/:resourceIds (one id, or the ids of one credential offer) and DELETE /webhook/:resourceId?sequence=<n> over an EventStore. Use to push live credential issuance (OpenID4VCI) and verification (OpenID4VP) status to a frontend without polling.'
 license: Apache-2.0
 metadata:
   categories: [backend, education]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, OpenID4VCI, OpenID4VP, Server-Sent Events, SSE, live status
-  version: 2026.11.01
+  version: 2026.11.02
   api: https://docs.igrant.io/docs/developer-apis
   auth: none - reads only the local event store; correlation is by resource id
   requires-skills: igrantio-ows-overview, igrantio-backend-webhooks
@@ -16,7 +16,7 @@ metadata:
 
 ## When to use
 To notify the browser the moment an OWS webhook lands, instead of polling the OWS
-read endpoint of the issuance or the verification. Pairs with `igrantio-backend-webhooks` (which fills the store)
+read endpoint of the issuance history or the verification. Pairs with `igrantio-backend-webhooks` (which fills the store)
 and `igrantio-frontend-client`'s SSE consumer. Composed by the issuer/verifier
 backends.
 
@@ -24,10 +24,9 @@ backends.
 - An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
   [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
   an environment variable or a secret manager. The browser never sees it.
-- The **OWS environment** the key belongs to. The default is **demo**
-  (`https://demo-api.igrant.io`). Use **staging**
-  (`https://staging-api.igrant.io`) only when the integrator asks for it.
-  A key works only in its own environment.
+- The **environment** the key belongs to: demo (`https://demo-api.igrant.io`,
+  the default), staging (`https://staging-api.igrant.io`) or production
+  (`https://api.igrant.io`). A key works only in its own environment.
 
 ## Ask the integrator first
 Ask one question at a time. Wait for the answer. Give the recommended
@@ -35,7 +34,7 @@ default with each question. Look up facts in the project (framework,
 environment variables, an existing backend) instead of asking for them.
 Record the answers before you write code.
 
-1. **Environment** - demo or staging? _Default demo
+1. **Environment** - demo, staging or production? _Default demo
    (`https://demo-api.igrant.io`); a switch later is a configuration
    change._
 2. **API key** - do you have the OWS API key for that environment? If not,
@@ -46,16 +45,25 @@ Record the answers before you write code.
 
 ## What it does
 Mounted at `/webhook`:
-- `GET /webhook/sse/:resourceId` - opens a `text/event-stream`, checks the store
-  each second, emits `data: <event JSON>\n\n` when a new event for that id
-  appears, and sends comment heartbeats to keep the connection alive. The event
-  JSON is the webhook event body (`id`, `type`, `subject`, `data`, ...) plus
-  `receivedAt`.
-- `DELETE /webhook/:resourceId` - lets the browser consume-and-delete so a
-  refresh/reconnect doesn't replay a handled event.
+- `GET /webhook/sse/:resourceIds` - opens a `text/event-stream`, checks the
+  store each second, emits `data: <event JSON>\n\n` when a new event for one
+  of the ids appears, and sends comment heartbeats to keep the connection
+  alive. `:resourceIds` is one id, or 1 to 20 ids separated by commas. The
+  event JSON is the webhook event body (`id`, `type`, `subject`, `data`, ...)
+  plus `receivedAt`.
+- `DELETE /webhook/:resourceId?sequence=<n>` - lets the browser
+  consume-and-delete the event that it handled, so a refresh or a reconnect
+  does not replay it. The store deletes the event only when its
+  `subject.sequence` is not higher than `n`: a newer event that arrived in the
+  meantime stays for the stream.
 
-`resourceId` is the `subject.id` of the events: the issuance id (`id` of the
-create issuance answer) or the verification id (`presentationExchangeId`).
+A resource id is the `subject.id` of the events:
+- issuance: the credential exchange id of each issuance history
+  (`issuanceHistory[].credentialExchangeId` of the issue answer). One issue
+  call makes one issuance history for each credential configuration of the
+  definition, all in one credential offer, so one stream follows all the
+  credential exchange ids of the offer;
+- verification: the `presentationExchangeId` of the send answer.
 
 ## Reference
 [`./references`](./references):
@@ -72,7 +80,7 @@ import { webhookReceiver } from "./webhooks"; // from igrantio-backend-webhooks
 
 const store = new InMemoryEventStore();
 app.use("/webhook", webhookReceiver(store)); // POST /webhook fills the store
-app.use("/webhook", sseRouter(store));       // GET /sse/:id, DELETE /:id drain it
+app.use("/webhook", sseRouter(store));       // GET /sse/:ids, DELETE /:id?sequence=<n> drain it
 ```
 
 ## Scaling
@@ -89,6 +97,7 @@ app.use("/webhook", sseRouter(store));       // GET /sse/:id, DELETE /:id drain 
 - The stream stays open, emits within ~1s of the event landing, and stops on
   client disconnect.
 - After DELETE, reconnecting does not replay the event.
+- A DELETE with the sequence of an older event does not remove a newer event.
 
 ## Documentation & workflows
 

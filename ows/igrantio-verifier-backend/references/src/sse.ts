@@ -3,19 +3,38 @@ import type { EventStore } from "./eventStore";
 
 /**
  * Server-Sent Events transport, mounted at /webhook:
- *   GET    /webhook/sse/:resourceId  - hold open, emit the stored event when it appears
- *   DELETE /webhook/:resourceId      - browser consume-and-delete after processing
+ *   GET    /webhook/sse/:resourceIds              - hold open, emit each stored event when it appears
+ *   DELETE /webhook/:resourceId?sequence=<n>      - browser consume-and-delete after processing
  *
- * `resourceId` is the `subject.id` of the webhook events: the issuance id (`id`
- * of the create issuance answer) or the verification id (`presentationExchangeId`).
- * The frontend (igrantio-frontend-client) opens `${base}/sse/${id}` and deletes
- * `${base}/${id}` where base = the /webhook URL.
+ * A resource id is the `subject.id` of the webhook events: the credential
+ * exchange id of an issuance history, or the presentationExchangeId of a
+ * verification. `:resourceIds` is one id, or several ids separated by commas:
+ * one issue call makes one issuance history for each credential configuration,
+ * and one stream follows all of them. The frontend (igrantio-frontend-client)
+ * opens `${base}/sse/${ids}` and deletes `${base}/${id}?sequence=<n>`, where
+ * base = the /webhook URL.
  */
+
+/** One credential offer has at most 20 issuance histories. */
+const MAX_RESOURCE_IDS = 20;
+const RESOURCE_ID = /^[A-Za-z0-9._-]{1,128}$/;
+
+/** The distinct ids of the path parameter, or undefined when one is not valid. */
+function resourceIdsOf(param: string): string[] | undefined {
+  const ids = [...new Set(param.split(",").map((s) => s.trim()))];
+  if (ids.length > MAX_RESOURCE_IDS || !ids.every((id) => RESOURCE_ID.test(id))) return undefined;
+  return ids;
+}
+
 export function sseRouter(store: EventStore): Router {
   const r = Router();
 
-  r.get("/sse/:resourceId", (req, res) => {
-    const { resourceId } = req.params;
+  r.get("/sse/:resourceIds", (req, res) => {
+    const ids = resourceIdsOf(req.params.resourceIds);
+    if (!ids) {
+      res.status(400).json({ detail: `Give 1 to ${MAX_RESOURCE_IDS} resource ids, separated by commas` });
+      return;
+    }
 
     res.writeHead(200, {
       "Content-Type": "text/event-stream",
@@ -27,23 +46,28 @@ export function sseRouter(store: EventStore): Router {
 
     let closed = false;
     let ticks = 0;
-    let lastSent = "";
+    /** Resource id -> the id of the last event that this stream sent. */
+    const lastSent = new Map<string, string>();
 
     const interval = setInterval(async () => {
       if (closed) return;
       ticks += 1;
-      try {
-        const event = await store.latest(resourceId);
-        if (event && event.id !== lastSent) {
-          // The event body as the webhook delivered it, plus receivedAt.
-          res.write(`data: ${JSON.stringify(event)}\n\n`);
-          lastSent = event.id;
-        } else if (ticks % 20 === 0) {
-          res.write(":keepalive\n\n"); // comment heartbeat every ~20s
+      let wrote = false;
+      for (const id of ids) {
+        try {
+          const event = await store.latest(id);
+          if (closed) return;
+          if (event && lastSent.get(id) !== event.id) {
+            // The event body as the webhook delivered it, plus receivedAt.
+            res.write(`data: ${JSON.stringify(event)}\n\n`);
+            lastSent.set(id, event.id);
+            wrote = true;
+          }
+        } catch {
+          // transient store error - keep the connection open and retry next tick
         }
-      } catch {
-        // transient store error - keep the connection open and retry next tick
       }
+      if (!wrote && ticks % 20 === 0) res.write(":keepalive\n\n"); // comment heartbeat every ~20s
     }, 1000);
 
     req.on("close", () => {
@@ -53,8 +77,15 @@ export function sseRouter(store: EventStore): Router {
   });
 
   r.delete("/:resourceId", async (req, res) => {
-    await store.delete(req.params.resourceId);
-    res.json({ message: `Event of ${req.params.resourceId} deleted` });
+    const raw = req.query.sequence;
+    const sequence = typeof raw === "string" ? Number(raw) : undefined;
+    if (raw !== undefined && !Number.isInteger(sequence)) {
+      res.status(400).json({ detail: "sequence must be an integer" });
+      return;
+    }
+    // Only the event that the browser handled: a newer event stays for the stream.
+    await store.delete(req.params.resourceId, sequence);
+    res.status(204).end();
   });
 
   return r;

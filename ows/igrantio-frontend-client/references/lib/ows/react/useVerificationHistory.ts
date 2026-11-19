@@ -3,8 +3,9 @@ import type { VerificationHistoryResponse } from "../types";
 import { usePolledResource, type PollOptions, type PolledResource } from "./usePolledResource";
 
 /**
- * Read verification state for a presentationExchangeId (verified flag + disclosed
- * claims). Optional polling; prefer SSE for the completion signal.
+ * Read the verification of a presentationExchangeId (`isVerified` and the
+ * disclosed claims in `presentation`). Optional polling; prefer SSE for the
+ * completion signal.
  */
 export function useVerificationHistory(
   client: OwsClient,

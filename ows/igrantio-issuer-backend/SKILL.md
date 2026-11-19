@@ -6,7 +6,7 @@ metadata:
   categories: [backend, education]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, European Business Wallet, OpenID4VCI, credential issuance, verifiable credentials, SD-JWT VC, mso_mdoc
-  version: 2026.11.01
+  version: 2026.11.02
   api: https://docs.igrant.io/docs/category/openid4vc-api/issuer
   protocols: OpenID4VCI-1.0, SD-JWT-VC, W3C-VC-2.0, mso_mdoc
   auth: OWS API key (Authorization "ApiKey <key>") injected by the proxy; browser sends no key
@@ -26,10 +26,9 @@ For the verifier equivalent use `igrantio-verifier-backend` (separate skill). Re
 - An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
   [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
   an environment variable or a secret manager. The browser never sees it.
-- The **OWS environment** the key belongs to. The default is **demo**
-  (`https://demo-api.igrant.io`). Use **staging**
-  (`https://staging-api.igrant.io`) only when the integrator asks for it.
-  A key works only in its own environment.
+- The **environment** the key belongs to: demo (`https://demo-api.igrant.io`,
+  the default), staging (`https://staging-api.igrant.io`) or production
+  (`https://api.igrant.io`). A key works only in its own environment.
 
 ## Ask the integrator first
 Ask one question at a time. Wait for the answer. Give the recommended
@@ -37,7 +36,7 @@ default with each question. Look up facts in the project (framework,
 environment variables, an existing backend) instead of asking for them.
 Record the answers before you write code.
 
-1. **Environment** - demo or staging? _Default demo
+1. **Environment** - demo, staging or production? _Default demo
    (`https://demo-api.igrant.io`); a switch later is a configuration
    change._
 2. **API key** - do you have the OWS API key for that environment? If not,
@@ -59,14 +58,16 @@ Record the answers before you write code.
 
 ## What it does
 - **Proxy** `GET|POST|PUT|PATCH|DELETE ${PROXY_PREFIX}/{tenant}/...` → OWS, injecting the tenant's
-  `ApiKey`. Allow-lists only the OWS **issuance** routes that the issuer
-  frontend calls: create (and list), read, delete, and the deferred claims.
+  `ApiKey`. Allow-lists only the **issuance history** routes that the issuer
+  frontend calls: issue (and list), read, delete, and the deferred claims.
 - **Register** the issuer webhook idempotently (`ISSUER_TOPICS`) via
   `scripts/register-webhook.ts`.
 - **Receive** `POST /webhook`, verify the `X-IGrant-Signature` HMAC over the
-  raw body, store the event under its `subject.id` (the issuance id).
-- **SSE** `GET /webhook/sse/{issuanceId}` streams the event to the browser;
-  `DELETE /webhook/{id}` lets it consume-and-delete.
+  raw body, store the event under its `subject.id` (the credential exchange
+  id of the issuance history).
+- **SSE** `GET /webhook/sse/{credentialExchangeIds}` streams the events of
+  all the issuance histories of one offer to the browser (the ids separated
+  by commas); `DELETE /webhook/{id}?sequence=<n>` lets it consume-and-delete.
 
 ## Reference implementation
 Runnable Express + TypeScript app in [`./references`](./references):
@@ -79,7 +80,7 @@ references/
   src/proxy.ts           API-key-injecting reverse proxy (allow-list param)
   src/webhooks.ts        HMAC verify + receiver
   src/sse.ts             SSE stream + consume-and-delete
-  src/server.ts          composition (issuer allow-list = issuances only)
+  src/server.ts          composition (issuer allow-list = issuance history only)
   src/registerWebhook.ts idempotent register helper
   scripts/register-webhook.ts   CLI
   .env.example  Dockerfile  package.json  tsconfig.json
@@ -87,25 +88,32 @@ references/
 
 ## Steps
 1. `cd references && cp .env.example .env`, then set `OWS_ENV`
-   (demo|staging, default demo), `WEBHOOK_SECRET_KEY`, `PUBLIC_BASE_URL`, `CORS_ORIGINS`, and one
-   `OWS_TENANT_<SLUG>_API_KEY` per organisation.
+   (demo|staging|production, default demo), `WEBHOOK_SECRET_KEY`,
+   `PUBLIC_BASE_URL`, `CORS_ORIGINS`, and one `OWS_TENANT_<SLUG>_API_KEY` per
+   organisation. Each key must belong to the `OWS_ENV` environment.
 2. `npm install && npm run dev` - backend on `:6001`.
 3. Register the webhook once per tenant: `npm run register-webhook -- <tenant>`
-   (idempotent - safe to re-run; skips if the payloadUrl already exists).
+   (idempotent - safe to re-run; skips if the payloadUrl already exists, and
+   warns about event types that the existing webhook does not have).
 4. Point the issuer frontend base URL at `${PUBLIC_BASE_URL}${PROXY_PREFIX}/<tenant>`
    and the webhook base at `${PUBLIC_BASE_URL}/webhook`.
 
 ## Issuance contract (what the frontend drives through this backend)
-- `POST /v4/config/ows/issuer/issuances` (HTTP 201) → `id` (the issuance id,
-  the SSE key) + `offer.uri` (QR URI) + `offer.transactionCode` (one time,
-  for a pre-authorised offer with a transaction code).
+- `POST /v4/config/ows/issuer/issuance-history` (HTTP 201) with `mode`,
+  `credentialDefinitionId` and `credentials`
+  (`[{"credentialConfigurationId", "claims"}]`) → `offer.uri` (QR URI),
+  `offer.transactionCode` (one time, for a pre-authorised offer with a
+  transaction code), and `issuanceHistory[]`: one item for each credential
+  configuration, with its `credentialExchangeId` (the SSE key).
 - Deferred (`mode: "deferred"`): on the first event
-  `ows.issuer.issuance.offer_retrieved`, `token_issued` or
-  `credential_deferred`, `PUT /v4/config/ows/issuer/issuances/{issuanceId}/claims`
+  `ows.issuer.issuance_history.offer_retrieved`, `token_issued` or
+  `credential_deferred` of an issuance history,
+  `PUT /v4/config/ows/issuer/issuance-history/{credentialExchangeId}/claims`
   with `{"claims": {...}}`.
-- Done on `ows.issuer.issuance.credential_issued` (the wallet has the
+- Done when each issuance history has
+  `ows.issuer.issuance_history.credential_issued` (the wallet has the
   credential) or `credential_accepted` (the wallet confirmed it). Failed on
-  `ows.issuer.issuance.denied` (`data.reason`) or `expired`.
+  `ows.issuer.issuance_history.denied` (`data.reason`) or `expired`.
 See `igrantio-ows-overview/references/api-reference.md` §1 and §4.
 
 ## Adapting
@@ -113,13 +121,16 @@ See `igrantio-ows-overview/references/api-reference.md` §1 and §4.
   implementing `EventStore`.
 - **Key storage**: replace `EnvTenantStore` with a DB/secret-manager `TenantStore`.
 - **Path scope**: `ISSUER_PERMITTED_PATHS` in `server.ts` is the allow-list.
-  Add `/revocation` only for a trusted admin frontend: a revocation is final.
+  The proxy does not check the method: the first rule also passes the list
+  of the issuance history (`GET .../issuance-history`). Add a method check in
+  front of the proxy when the browser must not read the list. Add
+  `/revocation` only for a trusted admin frontend: a revocation is final.
 
 ## Validation / done criteria
 - `npm run typecheck` passes.
 - A wrong/absent `X-IGrant-Signature` yields 401; a valid one stores the event.
 - Hitting an OWS path outside the allow-list through the proxy yields 404 (least privilege).
-- The browser SSE fires within ~1s of the webhook arriving, keyed by the issuance id.
+- The browser SSE fires within ~1s of the webhook arriving, keyed by the credential exchange id.
 
 ## Register your certificate in the trust list
 Wallets show your organisation as verified only when your certificate is in

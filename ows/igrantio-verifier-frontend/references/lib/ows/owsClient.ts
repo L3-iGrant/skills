@@ -1,10 +1,10 @@
 import type {
-  CreateIssuanceRequest,
   DcApiReceivePayload,
-  IssuanceClaimsRequest,
-  IssuanceCreated,
-  IssuanceDetail,
-  IssuanceRevocation,
+  IssuanceHistoryClaimsRequest,
+  IssuanceHistoryCreated,
+  IssuanceHistoryDetail,
+  IssuanceHistoryRevocation,
+  IssueCredentialRequest,
   SendVerificationRequest,
   VerificationHistoryResponse,
   VerificationResponse,
@@ -34,34 +34,40 @@ export class OwsError extends Error {
   }
 }
 
-const ISSUANCES = "/v4/config/ows/issuer/issuances";
+const ISSUANCE_HISTORY = "/v4/config/ows/issuer/issuance-history";
 const VERIFICATIONS = "/v4/config/ows/verifier/verifications";
 
 const PATHS = {
-  issuances: ISSUANCES,
-  issuance: (id: string) => `${ISSUANCES}/${encodeURIComponent(id)}`,
+  issuanceHistory: ISSUANCE_HISTORY,
+  issuanceHistoryItem: (credentialExchangeId: string) =>
+    `${ISSUANCE_HISTORY}/${encodeURIComponent(credentialExchangeId)}`,
   verifications: VERIFICATIONS,
   verification: (id: string) => `${VERIFICATIONS}/${encodeURIComponent(id)}`,
 } as const;
 
 export interface OwsClient {
-  issuance: {
-    /** Make one issuance and its credential offer. `in_time` needs the claims now. */
-    create(payload: CreateIssuanceRequest): Promise<IssuanceCreated>;
-    /** Give the claims of a `deferred` issuance (PUT .../issuances/{id}/claims). */
-    supplyClaims(issuanceId: string, payload: IssuanceClaimsRequest): Promise<IssuanceDetail>;
-    /** Read the detail of the issuance; `includeClaims` adds the claims. */
-    read(issuanceId: string, options?: { includeClaims?: boolean }): Promise<IssuanceDetail>;
-    /** Delete the issuance and stop its offer (204). */
-    delete(issuanceId: string): Promise<void>;
-    /** Revoke every issued credential of the issuance. Final. */
-    revoke(issuanceId: string, reason?: string): Promise<IssuanceRevocation>;
+  issuanceHistory: {
+    /**
+     * Issue a credential: one credential offer for all the credential
+     * configurations of the definition, and one issuance history for each.
+     * `in_time` needs the claims of each configuration in `credentials`.
+     */
+    issue(payload: IssueCredentialRequest): Promise<IssuanceHistoryCreated>;
+    /** Give the claims of a `deferred` issuance history (PUT .../issuance-history/{id}/claims). */
+    supplyClaims(credentialExchangeId: string, payload: IssuanceHistoryClaimsRequest): Promise<IssuanceHistoryDetail>;
+    /** Read one issuance history; `includeClaims` adds the claims. */
+    read(credentialExchangeId: string, options?: { includeClaims?: boolean }): Promise<IssuanceHistoryDetail>;
+    /** Delete one issuance history and stop its offer (204). */
+    delete(credentialExchangeId: string): Promise<void>;
+    /** Revoke every issued credential of the issuance history. Final. */
+    revoke(credentialExchangeId: string, reason?: string): Promise<IssuanceHistoryRevocation>;
   };
   verification: {
-    /** Send a DCQL verification request; returns the QR URI + presentationExchangeId. */
+    /** Send a DCQL verification request; the answer has `requestUrl` (the QR URI) and the presentationExchangeId. */
     sendRequest(payload: SendVerificationRequest): Promise<VerificationResponse>;
-    /** Read the verification result (verified flag + disclosed claims). */
+    /** Read the verification: `isVerified` and the disclosed claims (`presentation`). */
     readHistory(presentationExchangeId: string): Promise<VerificationHistoryResponse>;
+    /** Delete the verification (200, empty body). */
     deleteHistory(presentationExchangeId: string): Promise<void>;
     /** Post the wallet answer of a same-device Digital Credentials API request back to OWS. */
     receiveDcApiResponse(presentationExchangeId: string, payload: DcApiReceivePayload): Promise<unknown>;
@@ -91,14 +97,14 @@ export function createOwsClient(config: OwsClientConfig): OwsClient {
   }
 
   return {
-    issuance: {
-      create: (payload) => request("POST", PATHS.issuances, payload),
-      supplyClaims: (id, payload) => request("PUT", `${PATHS.issuance(id)}/claims`, payload),
+    issuanceHistory: {
+      issue: (payload) => request("POST", PATHS.issuanceHistory, payload),
+      supplyClaims: (id, payload) => request("PUT", `${PATHS.issuanceHistoryItem(id)}/claims`, payload),
       read: (id, options) =>
-        request("GET", `${PATHS.issuance(id)}${options?.includeClaims ? "?include=claims" : ""}`),
-      delete: (id) => request("DELETE", PATHS.issuance(id)),
+        request("GET", `${PATHS.issuanceHistoryItem(id)}${options?.includeClaims ? "?include=claims" : ""}`),
+      delete: (id) => request("DELETE", PATHS.issuanceHistoryItem(id)),
       revoke: (id, reason) =>
-        request("POST", `${PATHS.issuance(id)}/revocation`, reason ? { reason } : {}),
+        request("POST", `${PATHS.issuanceHistoryItem(id)}/revocation`, reason ? { reason } : {}),
     },
     verification: {
       sendRequest: (payload) => request("POST", PATHS.verifications, payload),

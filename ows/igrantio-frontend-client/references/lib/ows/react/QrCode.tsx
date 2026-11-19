@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import QRCode from "qrcode"; // peer dependency: `npm i qrcode` (+ `@types/qrcode`)
 
 /**
- * Render a wallet URI (credentialOffer / vpTokenQrCode) as a scannable QR code
- * for cross-device flows. For same-device, use `openInWallet` instead.
+ * Render a wallet URI (`offer.uri` of an issue answer, or `requestUrl` of a
+ * verification) as a scannable QR code for cross-device flows. For
+ * same-device, use `openInWallet` instead.
  *
  * `qrcode` is a peer dependency so this stays swappable - replace with any QR
  * generator without touching the rest of the client.

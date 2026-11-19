@@ -1,9 +1,8 @@
 /**
- * Default iGrant.io navbar. A 1:1 port of the landing-page Navbar.astro chrome
- * (black #000 bar 87px tall, 55px logo, 16px nav links with 0.125rem letter
- * spacing and carets, bordered language select, rounded 1.25rem Demo CTA).
- * Exact values live in theme.css (.igr-navbar); source of truth is
- * landing-page src/components/Navbar.astro + src/styles/_variables.scss.
+ * Default iGrant.io navbar. A 1:1 port of the navbar of the iGrant.io landing
+ * page (black #000 bar 87px tall, 55px logo, 16px nav links with 0.125rem
+ * letter spacing and carets, bordered language select, rounded 1.25rem Demo
+ * CTA). Exact values live in theme.css (.igr-navbar).
  */
 import logo from "../assets/iGrant_210_55_BW.svg";
 import { en, type UiStrings } from "./strings";

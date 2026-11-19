@@ -6,7 +6,7 @@ metadata:
   categories: [backend, education]
   provider: iGrant.io
   keywords: EUDIW, EUBW, eIDAS2, EUDI Wallet, OpenID4VCI, OpenID4VP, reverse proxy, multi-tenant, API key security
-  version: 2026.11.01
+  version: 2026.11.02
   api: https://docs.igrant.io/docs/developer-apis
   auth: OWS API key held server-side; injected per request. Browser sends no key.
   requires-skills: igrantio-ows-overview
@@ -24,10 +24,9 @@ Compose it into an issuer or verifier backend (see `igrantio-issuer-backend` /
 - An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
   [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
   an environment variable or a secret manager. The browser never sees it.
-- The **OWS environment** the key belongs to. The default is **demo**
-  (`https://demo-api.igrant.io`). Use **staging**
-  (`https://staging-api.igrant.io`) only when the integrator asks for it.
-  A key works only in its own environment.
+- The **environment** the key belongs to: demo (`https://demo-api.igrant.io`,
+  the default), staging (`https://staging-api.igrant.io`) or production
+  (`https://api.igrant.io`). A key works only in its own environment.
 
 ## Ask the integrator first
 Ask one question at a time. Wait for the answer. Give the recommended
@@ -35,7 +34,7 @@ default with each question. Look up facts in the project (framework,
 environment variables, an existing backend) instead of asking for them.
 Record the answers before you write code.
 
-1. **Environment** - demo or staging? _Default demo
+1. **Environment** - demo, staging or production? _Default demo
    (`https://demo-api.igrant.io`); a switch later is a configuration
    change._
 2. **API key** - do you have the OWS API key for that environment? If not,
@@ -55,7 +54,9 @@ Record the answers before you write code.
 2. rejects any path not on the caller-supplied allow-list (least privilege, 404) -
    a string rule matches as a path prefix, a RegExp rule against the whole path;
    a path with a `.` or `..` segment (also percent-encoded) is always refused,
-3. sets `Authorization: ApiKey <key>` and forwards to OWS,
+3. sets `Authorization: ApiKey <key>` and forwards to the API host of the
+   environment (demo `https://demo-api.igrant.io`, staging
+   `https://staging-api.igrant.io`, production `https://api.igrant.io`),
 4. streams the response back, stripping hop-by-hop headers.
 
 The browser targets `${proxyPrefix}/{tenant}` as its base URL with **no** key.
@@ -64,7 +65,8 @@ The browser targets `${proxyPrefix}/{tenant}` as its base URL with **no** key.
 [`./references`](./references):
 - `proxy.ts` - `proxyRouter(store, permittedPrefixes)` Express router.
 - `tenants.ts` - `TenantStore` interface + `EnvTenantStore` / `MapTenantStore`.
-- `config.ts` - OWS base URL (OWS_ENV demo|staging, default demo) + timeout.
+- `config.ts` - the API host of the environment (`OWS_ENV` demo|staging|production,
+  default demo; an unknown value stops the start) + timeout.
 
 ## Usage
 ```ts
@@ -74,8 +76,8 @@ import { EnvTenantStore } from "./tenants";
 import { config } from "./config";
 
 const ISSUER: Array<string | RegExp> = [
-  /^v4\/config\/ows\/issuer\/issuances$/,
-  /^v4\/config\/ows\/issuer\/issuances\/[^/]+(\/claims)?$/,
+  /^v4\/config\/ows\/issuer\/issuance-history$/,
+  /^v4\/config\/ows\/issuer\/issuance-history\/[^/]+(\/claims)?$/,
 ];
 app.use(config.proxyPrefix, proxyRouter(new EnvTenantStore(), ISSUER));
 ```
@@ -91,7 +93,7 @@ app.use(config.proxyPrefix, proxyRouter(new EnvTenantStore(), ISSUER));
   path segment (`/v4/config/ows/issuer/...`, `/holder/...`, `/verifier/...`);
   RegExp rules also keep sub-resources such as `/revocation` out of a
   browser-facing backend.
-- OWS base URL lives only in `config.ts`; the proxy is transport, not policy.
+- The API host lives only in `config.ts`; the proxy is transport, not policy.
 
 ## Validation / done criteria
 - A request to a non-allow-listed path returns 404; the tenant key never appears
