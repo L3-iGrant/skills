@@ -1,14 +1,14 @@
 ---
 name: igrantio-api-wallet-provider
-description: 'Wallet Provider group of the iGrant.io OID4VC API: deploy the organisation wallet, turn on the wallet provider capability, register and manage wallet units (the records behind a Wallet Unit Attestation, WUA), list organisation wallet units with their EBWOID and WUA status, and read wallet provider performance statistics. Use when you act as an EUDI Wallet (EUDIW) or European Business Wallet (EUBW) wallet provider under eIDAS 2.0, or when you must read or change the OID4VC deployment of an organisation.'
+description: 'Wallet Provider group of the iGrant.io OID4VC API: deploy and read the organisation wallet, read the performance statistics of the organisation, and, in the wallet provider organisation, manage the individual wallet units (register, read, change, revoke, delete, history), the wallet apps, the device policy, the keystore types and the key attestation rules, the two wallet provider configurations, and the organisation wallet units with their pool of Wallet Instance Attestations (WIA). Use when you deploy an organisation wallet, or when you operate the wallet provider of an EUDI Wallet (EUDIW) or European Business Wallet (EUBW) installation under eIDAS 2.0.'
 license: Apache-2.0
 metadata:
   categories: [ows-api]
   provider: iGrant.io
-  keywords: wallet provider, wallet unit, Wallet Unit Attestation, WUA, LPID, assertionToken, client assertion, EUDIW, EUBW, eIDAS2, OpenID4VCI, OpenID4VP, wallet deployment, performance statistics
-  version: 2026.11.01
+  keywords: wallet provider, wallet unit, individual wallet unit, organisation wallet unit, Wallet Instance Attestation, WIA, Wallet Unit Attestation, WUA, key attestation, keystore type, wallet app, device policy, Wallet Unit History, EBWOID, EUDIW, EUBW, eIDAS2, TS3, wallet deployment, performance statistics
+  version: 2026.11.02
   source-doc: https://docs.igrant.io/docs/developer-apis/
-  protocols: OpenID4VCI-1.0, OpenID4VP-1.0, OAuth-2.0-client-assertion
+  protocols: OpenID4VCI-1.0, OpenID4VP-1.0, OAuth-2.0-client-attestation, IETF-Token-Status-List
   auth: OWS API key (Authorization "ApiKey <YOUR_API_KEY>") - the key is held only by the tenant backend, never the browser
 ---
 
@@ -18,30 +18,32 @@ metadata:
 Use this skill when the task is one of these:
 
 - Deploy the OID4VC wallet of an organisation, or read the deployment status
-  and the well-known metadata URLs.
-- Turn on the **wallet provider** capability of the organisation.
-- Register a wallet instance as a **wallet unit**, so that the wallet provider
-  can give it a **Wallet Unit Attestation (WUA)**.
-- Read, update, delete, or list wallet units.
-- Read the status of the organisation wallet units (EBWOID and WUA), or read the
-  performance statistics of the wallet provider.
+  and the service URLs.
+- Read the performance statistics of the organisation wallet.
+- In the wallet provider organisation: manage the **individual wallet units**
+  (the wallets of natural persons in a mobile app), the **wallet apps**, the
+  **device policy**, the **keystore types** and the **wallet provider
+  configurations**.
+- In the wallet provider organisation: read, authorise, revoke or delete the
+  **organisation wallet units** (the wallets of organisations), and fill their
+  pool of Wallet Instance Attestations (WIA).
 
 For issuance and verification, use the issuer and the verifier skills. For the
 architecture and the glossary, read `igrantio-ows-overview` first.
 
-**Order of work.** Deploy the wallet, then turn on the wallet provider
-capability, then register wallet units. Every wallet unit operation and the
-statistics operation give HTTP 400 when the organisation is not a wallet
-provider.
+**Who is the wallet provider.** The wallet provider is the organisation of the
+platform operator of the installation. Its wallet gets the wallet provider
+capability (`isWalletProvider: true`) when it is deployed. No operation turns
+the capability on or off. In every other organisation, each
+`/v4/config/ows/wallet-provider/...` operation gives HTTP 400.
 
 ## Prerequisites
 - An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
   [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
   an environment variable or a secret manager. The browser never sees it.
-- The **OWS environment** the key belongs to. The default is **demo**
-  (`https://demo-api.igrant.io`). Use **staging**
-  (`https://staging-api.igrant.io`) only when the integrator asks for it.
-  A key works only in its own environment.
+- The **environment** the key belongs to: demo (`https://demo-api.igrant.io`,
+  the default), staging (`https://staging-api.igrant.io`) or production
+  (`https://api.igrant.io`). A key works only in its own environment.
 
 ## Ask the integrator first
 Ask one question at a time. Wait for the answer. Give the recommended
@@ -49,195 +51,335 @@ default with each question. Look up facts in the project (framework,
 environment variables, an existing backend) instead of asking for them.
 Record the answers before you write code.
 
-1. **Environment** - demo or staging? _Default demo
+1. **Environment** - demo, staging or production? _Default demo
    (`https://demo-api.igrant.io`); a switch later is a configuration
    change._
 2. **API key** - do you have the OWS API key for that environment? If not,
    request it from [support@igrant.io](mailto:support@igrant.io) before you
    continue.
-3. **Organisation** - the wallet provider capability belongs to the main
-   wallet. _Use an API key of the main wallet: a sandbox organisation cannot
-   be a wallet provider._
-4. **Step** - deploy the wallet, turn on the wallet provider capability, or
-   manage wallet units? _Do them in that order._
-5. **Wallet units** - how are wallet instances registered, and by whom?
+3. **Organisation** - the main wallet. _Use an API key of the main wallet: a
+   sandbox organisation cannot be a wallet provider._
+4. **Step** - deploy the wallet and read it, or operate the wallet provider?
+   _Only the wallet provider organisation can do the second._
+5. **Wallet units** - individual wallet units (mobile apps), organisation
+   wallet units, or both?
 
 ## Endpoint reference
 
-Base URL for the demo environment: `https://demo-api.igrant.io`.
+Base URL: the API host of the environment, for example
+`https://demo-api.igrant.io`. A link is given when the documentation page
+exists. Every operation accepts an API key.
 
+### Wallet deployment and statistics
 | Method | Path | Purpose | Documentation |
 | --- | --- | --- | --- |
 | `POST` | `/v4/config/ows/wallet/deployment` | Deploy the OID4VC wallet of the organisation. One time only. | [Deploy digital wallet](https://docs.igrant.io/docs/openid4vc-api/config-deploy-digital-wallet-open-id/) |
-| `GET` | `/v4/config/ows/wallet/deployment` | Read the deployment status, the service endpoints, and the metadata URLs. | [Read digital wallet deployment](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id/) |
-| `PUT` | `/v4/config/ows/wallet/deployment` | Turn on the wallet provider capability. | [Enable wallet provider](https://docs.igrant.io/docs/openid4vc-api/config-update-digital-wallet-open-id/) |
-| `POST` | `/v4/config/ows/wallet-provider/individual-wallet-units` | Register a new individual wallet unit (a wallet instance on a mobile device). | [Create wallet unit](https://docs.igrant.io/docs/openid4vc-api/config-create-digital-wallet-open-id-individual-wallet-unit/) |
-| `GET` | `/v4/config/ows/wallet-provider/individual-wallet-units/{walletUnitId}` | Read one individual wallet unit. | [Read wallet unit](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-individual-wallet-unit/) |
-| `PUT` | `/v4/config/ows/wallet-provider/individual-wallet-units/{walletUnitId}` | Update one individual wallet unit. | [Update wallet unit](https://docs.igrant.io/docs/openid4vc-api/config-update-digital-wallet-open-id-individual-wallet-unit/) |
-| `DELETE` | `/v4/config/ows/wallet-provider/individual-wallet-units/{walletUnitId}` | Delete one individual wallet unit. HTTP 200 with an empty body. | [Delete wallet unit](https://docs.igrant.io/docs/openid4vc-api/config-delete-digital-wallet-open-id-individual-wallet-unit/) |
-| `GET` | `/v4/config/ows/wallet-provider/individual-wallet-units` | List the individual wallet units, with filters and pages. | [List wallet units](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-individual-wallet-unit/) |
-| `GET` | `/v4/config/ows/wallet-provider/organisation-wallet-units` | List organisation wallet units with the EBWOID status, the WUA status, and usage counts. | [List organisation wallet units](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-organisation-wallet-unit/) |
-| `GET` | `/v4/config/ows/wallet/performance-statistics` | Read the performance statistics of the wallet provider. | - |
+| `GET` | `/v4/config/ows/wallet/deployment` | Read the deployment status and the service URLs. | [Read digital wallet deployment](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id/) |
+| `PUT` | `/v4/config/ows/wallet/deployment` | Answer the deployment. It changes nothing. | [Update digital wallet deployment](https://docs.igrant.io/docs/openid4vc-api/config-update-digital-wallet-open-id/) |
+| `GET` | `/v4/config/ows/wallet/performance-statistics` | Read the counts of the organisation and its sandbox organisations. | [Read performance statistics](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-performance-statistics/) |
 
-Each operation accepts an API key. The wallet provider role has more routes
-under `/v4/config/ows/wallet-provider`, with the same rules:
+### Individual wallet units
+Every path starts with `/v4/config/ows/wallet-provider`.
 
-| Routes | Purpose |
-| --- | --- |
-| `GET`, `PUT`, `DELETE .../organisation-wallet-units/{walletUnitId}`, `POST .../organisation-wallet-units/{walletUnitId}/attestations` | One organisation wallet unit, and the attestations of its pool. |
-| `PUT .../<kind>-wallet-units/{walletUnitId}/revocation-status`, `PUT .../individual-wallet-units/{walletUnitId}/key-attestations/revocation-status` | Revoke or suspend the attestations of one unit. `<kind>` is `individual` or `organisation`. |
-| `GET .../<kind>-wallet-unit-attestations`, `GET .../<kind>-wallet-unit-attestations/{attestationId}`, `PUT .../{attestationId}/revocation-status` | The issued WUAs and WIAs of a kind of wallet unit. |
-| `GET`, `PATCH .../<kind>-wallet-unit-configuration` | The wallet provider configuration of a kind (partial update). |
-| `PUT .../<kind>-wallet-unit-keystore-types/revocation-status` | Revoke the attestations of one keystore type. |
-| `GET .../<kind>-wallet-unit-statistics` | The statistics of a kind of wallet unit. |
+| Method | Path | Purpose | Documentation |
+| --- | --- | --- | --- |
+| `POST` | `.../individual-wallet-units` | Register an individual wallet unit before its first WIA request (optional). | [Create individual wallet unit](https://docs.igrant.io/docs/openid4vc-api/config-create-digital-wallet-open-id-individual-wallet-unit/) |
+| `GET` | `.../individual-wallet-units` | List the individual wallet units. | [List individual wallet units](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-individual-wallet-unit/) |
+| `GET` | `.../individual-wallet-units/{walletUnitId}` | Read one individual wallet unit. | [Read individual wallet unit](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-individual-wallet-unit/) |
+| `PUT` | `.../individual-wallet-units/{walletUnitId}` | Change the client id, the public key or the authorisation (kill switch). | [Update individual wallet unit](https://docs.igrant.io/docs/openid4vc-api/config-update-digital-wallet-open-id-individual-wallet-unit/) |
+| `PUT` | `.../individual-wallet-units/{walletUnitId}/revocation-status` | Revoke the wallet unit and its WIAs. Final. | [Update individual wallet unit revocation status](https://docs.igrant.io/docs/openid4vc-api/config-update-digital-wallet-open-id-individual-wallet-unit-revocation-status/) |
+| `DELETE` | `.../individual-wallet-units/{walletUnitId}` | Revoke and delete the wallet unit. HTTP 200 with an empty body. | [Delete individual wallet unit](https://docs.igrant.io/docs/openid4vc-api/config-delete-digital-wallet-open-id-individual-wallet-unit/) |
+| `GET` | `.../individual-wallet-units/{walletUnitId}/history` | Read the Wallet Unit History of the wallet unit. | - |
+| `GET` | `.../individual-wallet-unit-statistics` | Count the individual wallet units. | [Read individual wallet unit statistics](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-individual-wallet-unit-statistics/) |
+| `GET` | `.../individual-wallet-unit-health` | Read the health of the individual wallet provider. | [Wallet provider API](https://docs.igrant.io/docs/category/openid4vc-api/wallet-provider/) |
+| `GET`, `PATCH` | `.../individual-wallet-unit-configuration` | Read or change the configuration of the individual wallet provider (partial). | [Read](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-individual-wallet-unit-global-configuration/), [Update](https://docs.igrant.io/docs/openid4vc-api/config-update-digital-wallet-open-id-individual-wallet-unit-global-configuration/) |
+
+### Wallet apps and device policy
+Every path starts with `/v4/config/ows/wallet-provider`.
+
+| Method | Path | Purpose | Documentation |
+| --- | --- | --- | --- |
+| `GET` | `.../individual-wallet-apps` | List the wallet apps. | [Wallet provider API](https://docs.igrant.io/docs/category/openid4vc-api/wallet-provider/) |
+| `POST` | `.../individual-wallet-apps` | Add an iOS or Android app of the wallet solution. | [Wallet provider API](https://docs.igrant.io/docs/category/openid4vc-api/wallet-provider/) |
+| `GET` | `.../individual-wallet-apps/{walletAppId}` | Read one wallet app. | [Wallet provider API](https://docs.igrant.io/docs/category/openid4vc-api/wallet-provider/) |
+| `PUT` | `.../individual-wallet-apps/{walletAppId}` | Replace the writable members of a wallet app. | [Wallet provider API](https://docs.igrant.io/docs/category/openid4vc-api/wallet-provider/) |
+| `DELETE` | `.../individual-wallet-apps/{walletAppId}` | Delete a wallet app. HTTP 204. | [Wallet provider API](https://docs.igrant.io/docs/category/openid4vc-api/wallet-provider/) |
+| `GET`, `PUT` | `.../individual-wallet-apps-configuration` | Read or replace the cut-off of protocol 1 of each platform. | - |
+| `GET`, `PUT` | `.../individual-wallet-unit-device-policy/configuration` | Read or replace the device rules on Android. | - |
+| `GET`, `POST` | `.../individual-wallet-unit-device-policy/vulnerable-device-classes` | List or add vulnerable device classes. | [Wallet provider API](https://docs.igrant.io/docs/category/openid4vc-api/wallet-provider/) |
+| `DELETE` | `.../individual-wallet-unit-device-policy/vulnerable-device-classes/{deviceClassId}` | Delete a vulnerable device class. HTTP 204. | [Wallet provider API](https://docs.igrant.io/docs/category/openid4vc-api/wallet-provider/) |
+| `GET`, `POST` | `.../individual-wallet-unit-device-policy/leaked-attestation-keys` | List or add leaked attestation keys. | [Wallet provider API](https://docs.igrant.io/docs/category/openid4vc-api/wallet-provider/) |
+| `DELETE` | `.../individual-wallet-unit-device-policy/leaked-attestation-keys/{leakedKeyId}` | Delete a leaked attestation key. HTTP 204. | [Wallet provider API](https://docs.igrant.io/docs/category/openid4vc-api/wallet-provider/) |
+| `POST` | `.../individual-wallet-unit-device-policy/scan` | Apply the device policy to the Android wallet units. | [Wallet provider API](https://docs.igrant.io/docs/category/openid4vc-api/wallet-provider/) |
+
+### Keystore types and key attestation
+Every path starts with `/v4/config/ows/wallet-provider`. `<kind>` is
+`individual` or `organisation`.
+
+| Method | Path | Purpose | Documentation |
+| --- | --- | --- | --- |
+| `GET` | `.../<kind>-wallet-unit-key-attestation/keystore-types` | List the keystore types. | - |
+| `GET` | `.../<kind>-wallet-unit-key-attestation/keystore-types/{keystoreTypeId}` | Read one keystore type, with its shared status entry. | - |
+| `PUT` | `.../<kind>-wallet-unit-key-attestation/keystore-types/{keystoreTypeId}/revocation-status` | Revoke the shared status entry of the keystore type. Final. | - |
+| `PUT` | `.../<kind>-wallet-unit-key-attestation/keystore-types/{keystoreTypeId}/acceptance` | Accept a revoked keystore type again. | - |
+| `GET`, `PUT` | `.../individual-wallet-unit-key-attestation/configuration` | Read or replace the lowest accepted security level of each platform. | - |
+
+### Organisation wallet units
+Every path starts with `/v4/config/ows/wallet-provider`. No operation makes an
+organisation wallet unit: the wallet provider registers one, not authorised,
+when an organisation deploys its wallet.
+
+| Method | Path | Purpose | Documentation |
+| --- | --- | --- | --- |
+| `GET` | `.../organisation-wallet-units` | List the organisation wallet units, with the EBWOID and WIA state and the usage counts. | [List organisation wallet units](https://docs.igrant.io/docs/openid4vc-api/config-list-digital-wallet-open-id-organisation-wallet-unit/) |
+| `GET` | `.../organisation-wallet-units/{walletUnitId}` | Read one organisation wallet unit. | [Read organisation wallet unit](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-organisation-wallet-unit/) |
+| `PUT` | `.../organisation-wallet-units/{walletUnitId}` | Authorise the wallet unit, or stop it (kill switch). | [Update organisation wallet unit](https://docs.igrant.io/docs/openid4vc-api/config-update-digital-wallet-open-id-organisation-wallet-unit/) |
+| `PUT` | `.../organisation-wallet-units/{walletUnitId}/revocation-status` | Revoke the WIAs of the wallet unit. Final. | [Update organisation wallet unit revocation status](https://docs.igrant.io/docs/openid4vc-api/config-update-digital-wallet-open-id-organisation-wallet-unit-revocation-status/) |
+| `POST` | `.../organisation-wallet-units/{walletUnitId}/attestations` | Fill the WIA pool of the wallet unit now. HTTP 201 with no body. | [Issue organisation wallet unit attestations](https://docs.igrant.io/docs/openid4vc-api/config-issue-digital-wallet-open-id-organisation-wallet-unit-credential/) |
+| `DELETE` | `.../organisation-wallet-units/{walletUnitId}` | Delete the wallet unit and schedule the deletion of the holder wallet. HTTP 200 with an empty body. | [Delete organisation wallet unit](https://docs.igrant.io/docs/openid4vc-api/config-delete-digital-wallet-open-id-organisation-wallet-unit/) |
+| `GET` | `.../organisation-wallet-units/{walletUnitId}/history` | Read the Wallet Unit History of the wallet unit. | - |
+| `GET` | `.../organisation-wallet-unit-statistics` | Count the organisation wallet units and their usage. | [Read organisation wallet unit statistics](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-organisation-wallet-unit-statistics/) |
+| `GET`, `PATCH` | `.../organisation-wallet-unit-configuration` | Read or change the configuration of the organisation wallet provider (partial). | [Read](https://docs.igrant.io/docs/openid4vc-api/config-read-digital-wallet-open-id-organisation-wallet-unit-global-configuration/), [Update](https://docs.igrant.io/docs/openid4vc-api/config-update-digital-wallet-open-id-organisation-wallet-unit-global-configuration/) |
 
 ## Key fields
 
+### Deployment
+- **Deploy.** `POST /v4/config/ows/wallet/deployment` needs a JSON body: send
+  `{}`. The only optional member is `infrastructureProvider`, with the only
+  value `iGrant.io`. An empty body or an unknown member gives HTTP 400. The
+  organisation must have no deployment and no open deployment request (else
+  HTTP 400). No operation removes a deployment. The answer holds `status` `2`
+  (`Deployed`) and `isWalletProvider` (`true` only for the wallet of the
+  platform operator organisation).
+- **Read.** `GET` gives HTTP 200 also when the organisation has no
+  deployment. Read `status` first: the read gives only `0` (`Not Configured`)
+  or `2` (`Deployed`). It reports every other state, for example `1`
+  (`Requested`), as `0`. Without a deployment, `agentServiceEndpoint`,
+  `credentialOfferEndpoint`, `credentialIssuerMetadata`,
+  `authorizationServerMetadata`, `notificationEndpoint`, `jwksEndpoint` and
+  `version` are empty strings. `previousDeletion` is `null`, or the last
+  deletion of a wallet of the organisation (`reason`, `markedAt`,
+  `purgeAt`).
+- **Constant fields.** `ledgerName`, `ledgerURL`, `deploymentRegion` and
+  `ledgerID` (`0`) are constant values, also without a deployment. Do not
+  read them as proof of a deployment.
+- **PUT** takes only `{}` and answers the deployment without the metadata
+  URLs. A body with `isWalletProvider` gives HTTP 400
+  `unknown field "isWalletProvider"`.
+
 ### Individual wallet unit (`individualWalletUnit`)
-The service always sends every field. A field with no value holds an empty
-string, `0`, `false`, or `null`.
+A mobile app registers its wallet unit itself, authorised, at its first WIA
+request. The create operation is optional: use it to register a wallet unit
+in advance, or with `isAuthorised: false` to hold its WIA requests.
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| `id` | string | Identifier of the record. Use it as the `walletUnitId` path parameter. |
-| `clientId` | string | Client identifier of the wallet instance: a DID or a URL. |
-| `clientUrl` | string | URL endpoint of the wallet instance. |
-| `clientPublicKey` | object, nullable | Public key of the wallet instance in JWK format. The wallet provider uses it to check the Wallet Unit Attestation Proof of Possession. |
-| `isAuthorised` | boolean | `true` when the wallet unit can get a Wallet Unit Attestation. |
-| `assertionToken` | string | **Secret.** The client assertion JWT of the wallet unit for OAuth 2.0 client authentication. |
-| `assertionTokenType` | string | Type of the client assertion token. |
-| `createdAt` / `updatedAt` | integer (int64) | Unix time in seconds. |
-| `devicePlatform` | string | `ios` or `android`. |
-| `deviceIntegrityToken` | string | Device integrity token, for example an App Attest or a Play Integrity token. |
-| `deviceKeyId` | string | Identifier of the attestation key of the wallet unit. |
-| `clientMetadata` | object, nullable | More data that the wallet unit gave at registration. |
-| `attestationStatus` / `attestationExpiresAt` | string / integer | The state and the end (Unix seconds) of the attestation of the unit. |
+| Field | Notes |
+| --- | --- |
+| `id` | The `walletUnitId` of the path. |
+| `clientId` | The client id of the wallet unit (the `sub` of its WIAs). |
+| `isAuthorised` | `true` when the wallet unit can get WIAs. |
+| `status`, `statusReason`, `statusSince` | `active` or `revoked`; the reason of the last revocation (for example `wallet_provider`, `kill_switch`, `device_policy`, `user_request`); its time (RFC 3339). |
+| `devicePlatform` | `ios` or `android`. |
+| `clientKeyThumbprint` | The RFC 7638 thumbprint of the key of the wallet unit. The wallet unit keeps no key. |
+| `deviceKeyId` | The device key id of the wallet unit. |
+| `protocol` | `1` or `2`: the request protocol of the app. |
+| `walletApp` | `{id, name, build}` of the wallet app, or `null`. `name` and `build` are `null` for a deleted app. |
+| `appVersion`, `appBuild`, `lastWiaAt`, `revocationCodeIssuedAt` | From the last accepted request; times in RFC 3339. |
+| `device` | `null`, or the device data: Android `{platform, model, osVersion, osPatchLevel, securityLevel, keyOrigin, attestedAt, checkedAt}`, iOS `{platform, appAttestKey, appId, environment, attestedAt, checkedAt}`. |
+| `lastKeystoreTypeId`, `lastKeyAttestationAt` | The keystore type and the time of the last key attestation, or `null`. |
+| `createdAt`, `updatedAt` | Unix time in seconds. |
 
-**`assertionToken` is a credential. Never send it to a browser, never write it
-to a log, and never keep it in version control.** Send it only to the wallet
-instance that owns it. Read, update, create, and list all give this field, so
-treat the full answer of every wallet unit operation as a secret.
+- **Create.** `clientId`, `clientPublicKey` and `devicePlatform` (`ios` or
+  `android`) are mandatory. `clientPublicKey` is a public EC JWK on P-256,
+  P-384 or P-521 with no private member. `isAuthorised` is optional (default
+  `false`). The client id must be new for the wallet provider, also over
+  deleted units: HTTP 400 `Wallet provider client exists`, or HTTP 409 when
+  an organisation wallet unit has it. The answer is HTTP 201.
+- **Update and the kill switch.** Every member is optional (`clientId`,
+  `clientPublicKey`, `isAuthorised`); a member that you leave out keeps its
+  value. **`isAuthorised: false` on an authorised wallet unit revokes every
+  WIA of the wallet unit in the same change.** An issuer that checks the
+  status list then refuses the wallet unit at once.
+- **Revocation is final.** `PUT .../revocation-status` takes
+  `{"revocationStatus": "Revoked"}`; no other value is accepted. The answer is
+  `{revocationStatus, walletUnitId, revokedEntries}`. A revoked wallet unit
+  cannot be authorised again: `isAuthorised: true` gives HTTP 400
+  (`individual_wallet_unit.reauthorisation_refused`). The user registers a
+  new wallet unit with the app. The key attestations of the wallet unit do
+  not change: revoke their keystore type.
+- **List.** Query parameters: `platform` (`ios`, `android`), `isAuthorised`
+  (`true`, `false`), `status` (`active`, `revoked`), `holderDid`,
+  `walletUnitId`, `offset` (default `0`) and `limit` (default `10`, at most
+  `100`). An empty or unknown filter value is no filter. The answer holds
+  `individualWalletUnit` (an array) and `pagination` (`currentPage`,
+  `totalItems`, `totalPages`, `limit`, `hasPrevious`, `hasNext`).
+- **Statistics.** `individualWalletUnitStatistics`: `total`, `active`,
+  `revoked`, `ios`, `android`.
 
-### Create a wallet unit
-`POST .../individual-wallet-units` body: `clientId` (mandatory), `clientPublicKey`
-(mandatory; a public JWK of `kty` `EC`, `RSA` or `OKP`; the service refuses an
-empty object and a JWK with a private member such as `d` with HTTP 400),
-`clientUrl` (optional), `isAuthorised` (optional, default `false`),
-`devicePlatform` (optional). The
-service refuses a `clientId` that another wallet unit of the organisation
-has (HTTP 400 `Wallet provider client exists`). The answer is HTTP 201 with
-the new record, and it holds the `assertionToken`.
+### Wallet Unit History
+`GET .../<kind>-wallet-units/{walletUnitId}/history` gives the events of one
+wallet unit, newest first: `items` (`id`, `eventType`, `occurredAt`, `actor`,
+`reasonCode`, `facts`), `nextCursor` (`null` on the last page) and
+`eventTypeCounts`. Query parameters: `eventType` (one value or a comma list),
+`limit` (1 to 100, default 20), `cursor`, `offset` (only without `cursor`) and
+`includeTotal` (`true` adds `total` and `totalCapped`). The event types:
+`registered`, `wiasIssued`, `keyAttestationIssued`, `requestRefused`,
+`revocationCodeIssued`, `devicePropertiesChanged`, `authorised`, `revoked`,
+`keystoreTypeRevoked`, `deleted`.
 
-### Update a wallet unit - the kill switch
-On `PUT .../individual-wallet-units/{walletUnitId}` every field is optional. A field that
-you leave out, or send empty, keeps the stored value; this is also true for
-`isAuthorised`.
+### Wallet apps and device policy
+- **Wallet app.** The body of `POST` and `PUT`: `name` and `platform` (`ios`
+  or `android`) are mandatory; the platform cannot change. iOS: `iosTeamId`
+  and `iosBundleId`. Android: `androidPackageName`,
+  `androidSigningCertificateDigests` (SHA-256 in hex),
+  `playIntegrityDecryptionKey` and `playIntegrityVerificationKey` (write-only;
+  send both or none; a `PUT` without them keeps them). Optional:
+  `minimumVersion`, `androidMinimumVersionCode`, `protocol1WalletVersion`,
+  `build` (`release`, the default, `development` or `simulator`). The answer
+  `walletApp` adds `ready`, `notReadyReason`, `playIntegrityKeysSet`,
+  `walletUnits` (`active`, `revoked`) and `source`. A wallet unit of protocol
+  2 gets WIAs only when its app is `ready`. The list holds `walletApps` and
+  `totalItems`.
+- **Wallet apps configuration.** `PUT` body
+  `{"protocol1CutOff": {"android": <time or null>, "ios": <time or null>}}`
+  (RFC 3339 with an offset). The answer is `{"walletAppsConfiguration": {...}}`.
+- **Device policy configuration.** `PUT` body: `patchAgeMonths` (6 to 36,
+  default 12, never `null`), `minimumAndroidVersion` (9 to 99, or `null` for
+  no minimum) and `applyToProtocol1` (boolean). Each member is mandatory. The
+  answer is `{"devicePolicyConfiguration": {...}}`.
+- **Vulnerable device class.** `deviceModel` (mandatory), `androidVersions`
+  (`null`: every version), `reason`. **Leaked attestation key.**
+  `fingerprint` (the SHA-256 of the certificate, 64 hex digits), `reason`.
+  HTTP 409 when the key is in the list already. The lists take `offset`,
+  `limit` and `search`.
+- **Scan.** The body is mandatory. `{"dryRun": true}` reports only. `{}`
+  revokes each matched wallet unit (reason `device_policy`). The
+  answer holds `matched`, `revoked`, `unknownDevice` and `matches` (the first
+  100: `walletUnitId`, `reason`).
+- **Health.** `deviceChecks`, `walletSolutionSet`,
+  `googleAttestationStatusList`, `walletApps` (`ready`, `total`),
+  `certificates` (the signing keys of the WIAs, the key attestations and the
+  status lists, with `expiresAt`), `statusListCapacity`, `walletUnits` and
+  `oldAppVersions` (the share of protocol 1 of each platform).
 
-**`isAuthorised: false` on an authorised wallet unit revokes every active
-Wallet Unit Attestation of that unit**, in the same change. Issuers that
-check the status list then refuse the unit at once, and the unit gets no new
-attestation until you set `isAuthorised: true` again. Send `false` only when
-you mean to stop the unit.
+### Keystore types and key attestation
+A keystore type id has the form
+`<devicePlatform or none>.<attestationType>.<securityLevel>`. All the key
+attestations of one keystore type share one status entry.
 
-### Deployment read - the status collapse
-`GET /v4/config/ows/wallet/deployment` gives HTTP 200 even when the
-organisation has no deployment. Read `status` before you use any URL.
+- A keystore type holds `id`, `devicePlatform`, `attestationType`,
+  `securityLevel`, `certificateId`, `certification`, `keyStorage`,
+  `accepted`, `status` (`operational` or `revoked`), `revokedAt`, `revokedBy`
+  and `lastIssuedAt`. The read adds `certifiedDevices`, `statusEntry` and
+  `revocationEffect`.
+- **Revoke.** Body `{"revocationStatus": "Revoked"}`. The answer holds
+  `keystoreType`, `revokedEntries` and `affectedWalletUnits`. HTTP 409
+  (`key_attestation.keystore_type_unused`) for a type with no key
+  attestation.
+- **Accept again.** Body `{"accepted": true}`. The next key attestation of
+  the type gets a new shared entry. HTTP 409
+  (`key_attestation.keystore_type_not_revoked`) for a type that is not
+  revoked.
+- **Key attestation configuration** (individual only). `PUT` body:
+  `android` (`minimumSecurityLevel`: `software`, `tee` or `strongbox`;
+  `certifiedOnly`: boolean) and `ios` (`minimumSecurityLevel`: `software` or
+  `secure_enclave`). Each member is mandatory. The rule applies to the next
+  key attestation request; it revokes nothing. The answer is
+  `{"keyAttestationConfiguration": {...}}`.
 
-- `status` gives **only `0` (Not Configured) or `2` (Deployed)**. The operation
-  reports every other state, for example Requested, as `0`. `statusStr` gives
-  only `Not Configured` or `Deployed`, for the same reason. Only `PUT` on the
-  same path gives the full set `0` Not Configured, `1` Requested, `2` Deployed.
-- When there is no deployment: `secureVaults` is `null`, and
-  `agentServiceEndpoint`, `credentialIssuerMetadata`,
-  `authorizationServerMetadata`, `notificationEndpoint`, and `jwksEndpoint` all
-  hold an empty string.
+### Wallet provider configuration
+Each kind has one configuration. The answer is
+`{"globalConfiguration": {...}, "signingKeyWarnings": [...]}`. `PATCH` is
+partial: a member that you leave out keeps its value.
 
-### Deployment read - the constants trap
-Some fields hold a constant value that the service gives **also when the
-organisation has no deployment**. Do not read them as proof of a deployment:
+- `walletUnitAttestationSigningConfig`, `keyAttestationSigningConfig`,
+  `statusListSigningConfig`: `{cryptographicKeyIdentifier,
+  cryptographicKeyFormat: "x509", trustAnchor}`. `trustAnchor` is
+  `{subject, ski}` of a certificate in the chain of the key, or `null`. The
+  key must be an active key of the organisation with a certificate chain.
+  `null` for the key attestation or the status list key means: the WIA key
+  signs.
+- `maxKeyAttestationBatchSize` (1 to 100) and `walletSolution`
+  (`walletName`, `walletLink`, `certification` with `status` `certified` or
+  `not_certified`, `certificateId`, `conformityAssessmentBody`,
+  `validUntil`, `certificateUri`).
+- Individual kind: `maxWiaBatchSize` (1 to 50). `walletSolution` cannot be
+  `null` and needs `walletName` and `walletLink`.
+- Organisation kind: `wiaPoolSize` (read-only, `10`).
+- Read-only: `id`, `wiaLifetimeSeconds` (`600` for the individual kind,
+  `2592000` for the organisation kind), `createdAt`, `updatedAt`. An unknown
+  member gives HTTP 400.
 
-- `deploymentRegion` - a constant region name.
-- `ledgerName` and `ledgerURL` - constant ledger values.
-- `infrastructureProvider` - always `iGrant.io`.
-- `ledgerID` - the service does not set this field and always gives `0`.
-
-`status` is the only correct test for "is the wallet deployed".
-
-### Deploy
-`POST /v4/config/ows/wallet/deployment` needs a JSON object as its body: send
-`{}` for a deployment without a seed. The optional members are
-`cryptographicSeed` and `infrastructureProvider` (only the value `iGrant.io`);
-the service refuses an empty body and an unknown member with HTTP 400. The
-service uses the seed only when it holds one character or more. **The seed is
-a secret**: keep it out of logs and out of version control. The organisation
-must have no deployment: if a deployment exists, or a deployment request is
-open, the service gives HTTP 400. There is no operation
-that removes a deployment, so you cannot deploy a second time. A good deploy
-always gives `status` `2` and `statusStr` `Deployed`, and `isWalletProvider`
-`false`.
-
-### Turn on the wallet provider capability
-`PUT /v4/config/ows/wallet/deployment` with `{"isWalletProvider": true}`. The
-service ignores the value `false` and keeps the current setting, so this
-operation cannot turn the capability off.
-
-**One organisation in an environment can be the wallet provider.** The
-service gives HTTP 400 `Wallet provider already exists` when another
-organisation of the environment has the capability, and also for an API key
-that is bound to a sandbox organisation. A second call for the organisation
-that has the capability succeeds.
-
-### List wallet units
-Query parameters: `holderDid`, `platform` (`ios` or `android`),
-`isAuthorised` (`true` or `false`), `offset` (default `0`), `limit` (default
-`10`). The service replaces an `offset` below 0 and a `limit` of 0 or less
-with the default. The answer holds `individualWalletUnit` (an array) and
-`pagination` (`currentPage`, `totalItems`,
-`totalPages`, `limit`, `hasPrevious`, `hasNext`). Each item also carries
-`totalCountOfCredentialHistory`.
-
-### List organisation wallet units
-Query parameters: `ebwoidStatus`, `wuaStatus` (`unauthorised`, `authorised`,
-`active`, `expired`, `revoked`), `organisationName`, `offset`, `limit`. The
-service compares a status value exactly, so an unknown value matches nothing.
-
-Each item of `organisationWalletUnit` holds `id`, `clientId`, `isAuthorised`,
-`holderOrganisationId`, `organisationName`, `ebwoidStatus`, `ebwoidExpiry`,
-`wuaStatus`, `wuaExpiry`, `issuedCredentials`, `verifications`, and
-`lastActivity`. `ebwoidStatus` and `wuaStatus` add an **empty string** to
-their value sets: the service gives an empty string when the lookup fails.
-`ebwoidExpiry` and `wuaExpiry` are Unix times in seconds, and hold `0` when
-there is no credential or no attestation. `lastActivity` is the last UTC day
-with activity (`YYYY-MM-DD`), or an empty string when the service recorded no
-activity.
+### Organisation wallet unit (`organisationWalletUnit`)
+- **Read and update answer.** `id`, `clientId`, `isAuthorised`, `clientUrl`,
+  `clientPublicKey`, `clientMetadata`, `attestationStatus`,
+  `attestationExpiresAt` (Unix seconds, `0` before the first WIA),
+  `holderOrganisationId`, `holderOrganisationName`, `lastKeystoreTypeId`,
+  `lastKeyAttestationAt`, `deletion` (`null`, or `{status: "scheduled",
+  reason, markedAt, purgeAt}`), `deleteRefusal` (`null`, or the reason that a
+  delete gets HTTP 409 now) and the times.
+- **Update.** The body is `{"isAuthorised": <boolean>}`; `isAuthorised` is
+  mandatory. `false` on an authorised wallet unit is the kill switch: it
+  revokes the active WIAs of the wallet unit and their holder copies.
+- **Revocation.** Body `{"revocationStatus": "Revoked"}`. The answer is
+  `{revocationStatus, organisationWalletUnitId, revokedEntries}`.
+- **Delete.** The wallet provider revokes the wallet unit, deactivates the
+  wallet of the holder organisation and its sandbox organisations, and
+  schedules the purge of their data. The wallet unit stays in the list with
+  `deletion` until the purge. HTTP 409 for the wallet unit of the wallet
+  provider organisation (`organisation_wallet_unit.own_organisation`), of the
+  platform operator organisation (`organisation_wallet_unit.platform_operator`)
+  and of a holder that is a wallet provider
+  (`organisation_wallet_unit.holder_is_wallet_provider`).
+- **List.** Query parameters: `wuaStatus`, `ebwoidStatus`,
+  `organisationName` (a part of the name, any case), `isAuthorised`,
+  `holderOrganisationIds` (a comma list of at most 100 UUIDs), `offset` and
+  `limit`. All filters apply together. Each row of `organisationWalletUnit`
+  holds `id`, `clientId`, `isAuthorised`, `holderOrganisationId`,
+  `organisationName`, `ebwoidStatus` (`inactive`, `active`, `expired`,
+  `revoked`, or an empty string before the first usage report),
+  `ebwoidExpiry`, `wuaStatus` (the `attestationStatus`: `unauthorised`,
+  `active` or `revoked`; it does not change when the WIAs expire),
+  `wuaExpiry`, `issuedCredentials`, `verifications`, `lastActivity`
+  (`YYYY-MM-DD`, or an empty string), `lastKeystoreTypeId`,
+  `lastKeyAttestationAt`, `deletion` and `deleteRefusal`. The times are Unix
+  seconds, `0` when there is no value.
+- **Statistics.** `organisationWalletUnitStatistics`: `total`, `active`,
+  `revoked`, `deletionScheduled`, `oid4vc` (`totalCredentialTypes`,
+  `totalIssuedCredentials`, `totalVerifications`),
+  `totalCredentialIssuanceHistory` (`currentMonth`, `last3Months`,
+  `last6Months`, `last12Months`, and `cumulative`, which is always `0`) and
+  `usageReportedUntil`.
 
 ### Performance statistics
-The answer holds one object, `performanceStatistics`, with four members:
+The answer is `{"performanceStats": {"all": {...}, "openid4vc": {...}}}`.
+Both objects hold the same counts: `totalCountOfIssuedCredentials`,
+`totalCountOfVerifications`, `totalCountOfCredentialTypes`,
+`totalCountOfPresentationDefinitions`, `issuanceBreakdown` (`total`,
+`accepted`, `inProgress`, `revoked`, `denied`) and `verificationBreakdown`
+(`total`, `presentationAcked`, `requestReceived`, `requestSent`). The counts
+cover the organisation and all its sandbox organisations. The issuance
+counts can be some seconds late. Without a deployment, or when the count
+fails, every count is `0` (HTTP 200). Do not use these numbers for billing
+or for an audit.
 
-- `oid4vc` - `totalCredentialTypes`, `totalIssuedCredentials`,
-  `totalVerifications`.
-- `totalCredentialIssuanceHistory` - `currentMonth`, `last3Months`,
-  `last6Months`, `last12Months` (arrays of monthly records, newest first, each
-  with `month` as the short month name in lower case and the year, for
-  example `jan-2026`), and `cumulative`. **The service does not calculate
-  `cumulative` today, so every count in it is `0`.** Add the monthly records
-  yourself if you need a total.
-- `individualWalletUnit` (the `ios` and `android` units) and
-  `organisationWalletUnit` - each with `total`, `active`, and `revoked`. A
-  unit is `active` while it holds an attestation that is not revoked, and
-  `revoked` when every attestation it got is revoked. A unit that never got
-  an attestation is in `total` only.
-
-The service keeps the statistics in a cache and refreshes them in the
-background, so a value can be some minutes old. When the calculation fails,
-the service answers with zero values and tries again in the background. Do not
-use these numbers for billing or for an audit.
+### Errors
+An error answer is `{"errorCode": <HTTP status>, "errorDescription": "..."}`.
+A wallet-provider operation in an organisation that is not the wallet
+provider gives HTTP 400, for example `Open id digital wallet is not a wallet
+provider` (`kit.not_a_wallet_provider`). An unknown wallet unit gives HTTP 404
+(`individual_wallet_unit.not_found`, `organisation_wallet_unit.not_found`).
 
 ## Sandbox organisations
 A sandbox organisation cannot be a wallet provider. Use an API key of the main
 wallet for this group. With an API key that is bound to a sandbox
-organisation, `POST` and `GET` on `/v4/config/ows/wallet/deployment` work on
-the main wallet, and the `PUT` and the wallet unit operations give HTTP 400.
+organisation:
+
+- `POST`, `GET` and `PUT` on `/v4/config/ows/wallet/deployment` act on the
+  main organisation.
+- `GET /v4/config/ows/wallet/performance-statistics` gives the counts of the
+  main organisation and all its sandbox organisations.
+- Every `/v4/config/ows/wallet-provider/...` operation gives HTTP 400.
+
 For sandbox organisations in general, read **`igrantio-api-sandboxes`**.
 
 ## Authentication
@@ -248,17 +390,23 @@ Authorization: ApiKey <YOUR_API_KEY>
 ```
 
 Note the space after `ApiKey`. The key is held only by the tenant backend. The
-browser never sees it, and it never sees an `assertionToken`.
+browser never sees it.
+
+An API key with scopes needs the scope of the operation: `wallet:create`,
+`wallet:read` or `wallet:update` for the deployment; `audit-logs:read` for the
+performance statistics; `individual-wallet-units:<read|create|update|delete|revoke>`
+and `organisation-wallet-units:<read|update|delete|issue|revoke>` for the
+wallet provider operations. A key with the older scope set needs the
+`config` scope.
 
 ## Validation / done criteria
-- You can name the path and the method for deploy, read deployment, turn on the
-  wallet provider capability, and each of the individual wallet unit
-  operations, without a guess.
 - You test the deployment with `status`, and not with `deploymentRegion` or
   another constant field.
-- Your update of a wallet unit sends `isAuthorised: false` only when you
-  mean to revoke the attestations of that unit.
-- No `assertionToken` reaches a browser, a log, or version control.
+- You do not send `isWalletProvider`: no operation sets it.
+- You send `isAuthorised: false` or `revocationStatus: "Revoked"` only when
+  you mean to stop the wallet unit for good. A revocation is final.
+- You call the wallet-provider operations only with a key of the wallet
+  provider organisation, not with a sandbox key.
 
 ## Documentation is the source of truth
 This skill mirrors the iGrant.io OID4VC API documentation. If this skill and
@@ -271,4 +419,6 @@ can be corrected.
 
 ## Cross-references
 - `igrantio-ows-overview` - architecture, glossary, and the shared contracts.
+- `igrantio-api-key-management` - the signing keys and the certificate chains
+  that the wallet provider configurations name.
 - `igrantio-api-sandboxes` - sandbox organisations and the sandbox call style.
