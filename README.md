@@ -11,6 +11,7 @@
 <p align="center">
   <a href="#about">About</a> •
   <a href="#quick-start">Quick Start</a> •
+  <a href="#environments">Environments</a> •
   <a href="#available-skills">Available Skills</a> •
   <a href="#release-versioning">Release Versioning</a> •
   <a href="#support">Support</a> •
@@ -59,20 +60,34 @@ what to build:
 
 **Prerequisites:** an iGrant.io Organisation Wallet Suite (OWS) API key,
 obtained from [support@igrant.io](mailto:support@igrant.io), for the
-environment you integrate with: demo (`https://demo-api.igrant.io`, the
-default) or staging (`https://staging-api.igrant.io`).
+environment you integrate with: demo (the default), staging or production
+(see [Environments](#environments)).
 Issuers and verifiers also register their certificate in the trust list
 (contact support@igrant.io, see
 [trust-list registration](https://docs.igrant.io/docs/trust-relying-party-registration/)).
 See [get started](https://docs.igrant.io/docs/get-started/) and the
 [developer APIs](https://docs.igrant.io/docs/developer-apis).
 
+## Environments
+
+The skills use these hosts. An API key works only in its own environment.
+
+| Environment | API (base URL of every `/v4` call) | Wallet service (public OpenID4VC endpoints, VCT metadata) | Dashboard |
+| --- | --- | --- | --- |
+| Demo (default) | `https://demo-api.igrant.io` | `https://oid4vc.igrant.io` | `https://demo-business.igrant.io` |
+| Staging | `https://staging-api.igrant.io` | `https://staging-oid4vc.igrant.io` | `https://staging-business.igrant.io` |
+| Production | `https://api.igrant.io` | `https://wallet.igrant.io` | `https://business.igrant.io` |
+
+Your backend calls only the API host. Wallets call the wallet service. The
+dashboard is where your organisation admin manages the organisation and its
+API keys.
+
 ## Available Skills
 
 Start with the overview skill. The issuer and verifier skills compose the
 building blocks, so your agent installs only what the task needs. Every skill
 is interactive: it opens with **Prerequisites** (the OWS API key from
-support@igrant.io and the environment: demo or staging) and an
+support@igrant.io and the environment of the key) and an
 **Ask the integrator first** interview, asked one question at a time with a
 recommended default, so the agent locks the setup before writing code. Issuer
 and verifier skills also remind you to register your certificate in the trust
@@ -108,18 +123,20 @@ its page on [docs.igrant.io](https://docs.igrant.io/docs/developer-apis/). The
 documentation is the source of truth: when a skill and the linked page
 disagree, the agent must follow the page and check it for updates.
 Every wallet path has the form `/v4/{group}/ows/{role}/...`, for example
-`/v4/config/ows/issuer/issuances`. To move code to these paths, read
-[Migrate to the wallet API paths](https://docs.igrant.io/docs/developer-apis/migration-wallet-routes/).
+`/v4/config/ows/issuer/issuance-history`. The webhooks, the sandbox
+organisations and the admin account are under `/v4/config/platform/...` and
+`/v4/onboard/platform/...`. Webhook event types have the form
+`ows.<role>.<resource>.<event>`.
 
 | Skill | API group |
 | --- | --- |
-| [`igrantio-api-issuer`](./apis/igrantio-api-issuer) | Issuer: issuer configuration, credential definitions (claim path pointers, `credentialDefinitions[]`, credential categories, definition versions), issuances, issued credentials, revocation, statistics |
+| [`igrantio-api-issuer`](./apis/igrantio-api-issuer) | Issuer: issuer configuration, credential definitions (`credentialConfigurations[]`, each with its own X.509 signing key, claim path pointers, credential categories, definition versions), issuance histories, issued credentials, revocation, statistics |
 | [`igrantio-api-holder`](./apis/igrantio-api-holder) | Holder: receive and hold credentials (also wallet-initiated), present, notifications with SSE stream, holder events |
 | [`igrantio-api-verifier`](./apis/igrantio-api-verifier) | Verifier: DCQL presentation definitions, transaction data, verifications, DC API, verifier events |
 | [`igrantio-api-webhooks`](./apis/igrantio-api-webhooks) | Webhook configuration, the wallet event types (`ows.<role>.<resource>.<event>`), the signature over the exact body, retries, ping, deliveries |
-| [`igrantio-api-trust-anchor`](./apis/igrantio-api-trust-anchor) | Trust authorities the wallet accepts: ETSI trusted lists, lists of trusted entities, X.509 CAs |
-| [`igrantio-api-wallet-provider`](./apis/igrantio-api-wallet-provider) | Wallet units, WUA, statistics, wallet deployment |
-| [`igrantio-api-key-management`](./apis/igrantio-api-key-management) | Key stores, signing keys, CSR and certificate presets, certificate chains, test certificates, trust lookup |
+| [`igrantio-api-trust-anchor`](./apis/igrantio-api-trust-anchor) | Trust sources of the organisation: trust anchors (X.509 CA certificates), ETSI trusted lists, lists of trusted entities, their entries, usage and statistics |
+| [`igrantio-api-wallet-provider`](./apis/igrantio-api-wallet-provider) | Wallet deployment and performance statistics; for the wallet provider: wallet units, wallet apps, device policy, key attestation, WUA |
+| [`igrantio-api-key-management`](./apis/igrantio-api-key-management) | Key stores, signing keys, CSR and certificate presets, certificate chains, trust anchor selection, test certificates |
 | [`igrantio-api-sandboxes`](./apis/igrantio-api-sandboxes) | Sandbox organisations and the sandbox call style |
 | [`igrantio-api-user-management`](./apis/igrantio-api-user-management) | The admin account of an API key: profile, avatar, and authentication configuration |
 
@@ -228,7 +245,7 @@ agent adapts working code rather than generating an integration from scratch.
 Each skill is versioned individually through the `metadata.version` field in
 its `SKILL.md`, following the `yyyy.mm.NN` scheme, where `yyyy.mm` is the year
 and month of the release and `NN` is the release number within that month. The
-current release is `2026.11.01`. Versions are bumped whenever a skill's
+current release is `2026.11.02`. Versions are bumped whenever a skill's
 contract changes.
 
 To update installed skills to the latest release:
