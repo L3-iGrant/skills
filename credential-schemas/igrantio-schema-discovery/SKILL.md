@@ -6,7 +6,7 @@ metadata:
   categories: [credential-schema]
   provider: iGrant.io
   keywords: credential schema, claim path pointer, DCQL query, schema discovery, verifiable data registry, attestation rulebook, ARF, EUDIW, eIDAS2
-  version: 2026.11.01
+  version: 2026.11.02
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry
 ---
 
@@ -21,10 +21,9 @@ The steps below tell you where to look, in order.
 - An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
   [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
   an environment variable or a secret manager. The browser never sees it.
-- The **OWS environment** the key belongs to. The default is **demo**
-  (`https://demo-api.igrant.io`). Use **staging**
-  (`https://staging-api.igrant.io`) only when the integrator asks for it.
-  A key works only in its own environment.
+- The **environment** the key belongs to: demo (`https://demo-api.igrant.io`,
+  the default), staging (`https://staging-api.igrant.io`) or production
+  (`https://api.igrant.io`). A key works only in its own environment.
 
 ## Ask the integrator first
 Ask one question at a time. Wait for the answer. Give the recommended
@@ -32,7 +31,7 @@ default with each question. Look up facts in the project (framework,
 environment variables, an existing backend) instead of asking for them.
 Record the answers before you write code.
 
-1. **Environment** - demo or staging? _Default demo
+1. **Environment** - demo, staging or production? _Default demo
    (`https://demo-api.igrant.io`); a switch later is a configuration
    change._
 2. **API key** - do you have the OWS API key for that environment? If not,
@@ -60,16 +59,24 @@ directory. It holds one schema file and one metadata file per credential
 format. The registry can hold templates that are newer than the skills in
 this collection, so check it even when a skill exists.
 
-The API serves the latest version of each template, with your API key:
+The API also serves templates, with your API key:
 
 - `GET /v4/config/ows/issuer/credential-definition-templates`
 - `GET /v4/config/ows/verifier/presentation-definition-templates`
 
 Each answer holds a `templates` array and a `pagination` object (`offset` and
-`limit` query parameters, 10 items by default). In the first answer, use the
-entries with `type: claimPathPointer`. In the second, use the entries whose
-format metadata has `isDcqlQuery: true`. The answers fill in placeholders such
-as `{baseUrl}` for your environment.
+`limit` query parameters, 10 items by default). The first answer gives one
+item for each format of a template, with `schema.claims` and `metadata`
+(`credentialType`, `doctype` and `namespace` for `mso_mdoc`). The second
+answer gives one item for each template, with one query for each format
+(`dc+sd-jwt`, `jwt_vc_json` and `mso_mdoc_v1`); a format that the template
+does not have holds `{"schema": null, "metadata": null}`. The answers fill in
+placeholders such as `{baseUrl}` for your environment.
+
+The API takes its templates from a copy of the registry that is part of each
+release, so they can differ from the registry. For example, the API has one
+PID template (`pid`, the PID Rulebook v1.7 shape). Check the template that you
+use against the registry.
 
 ## Step 2: the EUDI Wallet attestation rulebooks catalog
 **If the credential type is not in the iGrant.io registry, check the EUDI
@@ -92,8 +99,9 @@ the claim path pointer document from its attribute definitions:
 - Set `mandatory` and `limitDisclosure` per attribute as the rulebook
   requires.
 
-Then create the credential definition with one `credentialDefinitions[]` entry
-per format, `version: version_01` and `cryptographicKeyFormat: x509`. Read
+Then create the credential definition with `version: version_01` and one
+`credentialConfigurations[]` entry per format. Each entry names its signing
+key: `cryptographicKeyFormat: "x509"` and `cryptographicKeyIdentifier`. Read
 `igrantio-api-issuer` for the operation, or `igrantio-api-verifier` to build
 the matching DCQL query.
 

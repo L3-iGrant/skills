@@ -6,7 +6,7 @@ metadata:
   categories: [credential-schema]
   provider: iGrant.io
   keywords: payment card, PAN, card scheme, SCA, TS12, strong customer authentication, payment credential, PSD2, credential schema, claim path pointer, SD-JWT VC, dc+sd-jwt, EUDIW, verifiable data registry
-  version: 2026.11.01
+  version: 2026.11.02
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/credentialSchemas/claimPathPointer/scaPaymentCard
   schema-version: 2025.7.1
   credential-formats: dc+sd-jwt
@@ -33,10 +33,11 @@ in one format: `dc+sd-jwt`.
 - An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
   [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
   an environment variable or a secret manager. The browser never sees it.
-- The **OWS environment** the key belongs to. The default is **demo**
-  (`https://demo-api.igrant.io`). Use **staging**
-  (`https://staging-api.igrant.io`) only when the integrator asks for it.
-  A key works only in its own environment.
+- The **environment** the key belongs to: demo (`https://demo-api.igrant.io`,
+  the default), staging (`https://staging-api.igrant.io`) or production
+  (`https://api.igrant.io`). A key works only in its own environment.
+- A **signing key** with an X.509 certificate chain in Key Management (see
+  `igrantio-api-key-management`). Each credential configuration names one.
 
 ## Ask the integrator first
 Ask one question at a time. Wait for the answer. Give the recommended
@@ -44,7 +45,7 @@ default with each question. Look up facts in the project (framework,
 environment variables, an existing backend) instead of asking for them.
 Record the answers before you write code.
 
-1. **Environment** - demo or staging? _Default demo
+1. **Environment** - demo, staging or production? _Default demo
    (`https://demo-api.igrant.io`); a switch later is a configuration
    change._
 2. **API key** - do you have the OWS API key for that environment? If not,
@@ -58,9 +59,10 @@ Record the answers before you write code.
    arrive later)?
 6. **Revocation** - status list on? _Recommend on for any credential with a
    lifetime._
-7. **Signing key** - which key signs the credentials? _Recommend a key with an
-   X.509 certificate chain (`cryptographicKeyFormat: "x509"`). The trust list
-   needs it, and `mso_mdoc` accepts only `x509`._
+7. **Signing key** - which key of Key Management signs the credentials?
+   _`x509` is the only key format. The key must be an active key of the
+   organisation with a certificate chain. Each credential configuration names
+   it._
 8. **Trust list** - is your issuer certificate (the trust anchor) registered
    in the trust list? If not, contact
    [support@igrant.io](mailto:support@igrant.io) and follow
@@ -97,12 +99,19 @@ a change.
 | Claim carrier in the request | `claims` |
 
 The `credentialType` holds the placeholder `{baseUrl}`. Replace it with the
-OpenID4VC service URL of your environment before you send the value in the
-`vct` field: `https://oid4vc.igrant.io` on demo and
-`https://staging-oid4vc.igrant.io` on staging. That service publishes the VCT
-metadata. The templates operation
-`GET /v4/config/ows/issuer/credential-definition-templates`
-returns the value with `{baseUrl}` already replaced.
+wallet service URL of your environment before you send the value in the `vct`
+field:
+
+| Environment | `{baseUrl}` | `vct` |
+| --- | --- | --- |
+| Demo | `https://oid4vc.igrant.io` | `https://oid4vc.igrant.io/service/vct-metadata/card` |
+| Staging | `https://staging-oid4vc.igrant.io` | `https://staging-oid4vc.igrant.io/service/vct-metadata/card` |
+| Production | `https://wallet.igrant.io` | `https://wallet.igrant.io/service/vct-metadata/card` |
+
+The wallet service publishes the VCT metadata at the `vct` URL. Verifiers read
+that document. The templates operation
+`GET /v4/config/ows/issuer/credential-definition-templates` returns the value
+with `{baseUrl}` already replaced.
 
 ```json
 {
@@ -162,18 +171,19 @@ For `jwt_vc_json`, the first element of the path is always `credentialSubject`.
 Create a credential definition with
 `POST /v4/config/ows/issuer/credential-definitions`. Put the
 `claims` array of the registry document into the configuration entry, and set
-`vct` to the credential type with `{baseUrl}` replaced.
+`vct` to the credential type with `{baseUrl}` replaced. The example uses the
+demo value.
 
 ```json
 {
   "label": "Issue Payment Card",
   "version": "version_01",
-  "cryptographicKeyFormat": "x509",
-  "credentialDefinitions": [
+  "credentialConfigurations": [
     {
       "credentialFormat": "dc+sd-jwt",
-      "vct": "{baseUrl}/service/vct-metadata/card",
-      "validationPath": "$",
+      "vct": "https://oid4vc.igrant.io/service/vct-metadata/card",
+      "cryptographicKeyFormat": "x509",
+      "cryptographicKeyIdentifier": "<KEY_ID_WITH_CERTIFICATE_CHAIN>",
       "claims": {
         "claims": [
           {
@@ -202,22 +212,32 @@ label, for example `Issue Payment Card`.
 
 Notes on the request.
 
-- `label` must hold at least 3 characters. The platform reserves the labels
-  `Payment User Credential`, `Payment Card Credential`, `Payment Account
-  Credential`, `PID Issuance` and `Photo ID Issuance`, so pick another label.
+- `label` has 3 to 100 characters and is unique in the organisation. A second
+  create with the same label gets HTTP 400. Before you run the sample again,
+  change the label, or reuse the `id` of the first run. The platform reserves
+  the labels `Payment User Credential`, `Payment Card Credential`, `Payment
+  Account Credential`, `PID Issuance` and `Photo ID Issuance` (in any letter
+  case), so pick another label.
 - `version` is required. Its only value is `version_01` (OpenID4VCI 1.0), and
   you cannot change it after you create the credential definition.
-- `cryptographicKeyFormat: "x509"` signs the credentials with the default key of
-  the organisation and its X.509 certificate chain. Name another key with
-  `cryptographicKeyIdentifier`. Upload the chain to the key first
-  (`igrantio-api-key-management`).
-- Add one entry of `credentialDefinitions[]` for each format that you want to
-  publish. You can publish more than one format from one credential definition.
-- Keep the `credentialConfigurationId` that the response returns for each
-  entry. An issuance of a definition with more than one configuration names
-  it in `credentialConfigurationId`.
-- Add `revocation`, `expirationInDays`, `display` and
-  the other entry fields as your use case needs them.
+- Each entry of `credentialConfigurations[]` names its signing key:
+  `cryptographicKeyFormat: "x509"` (the only format) and
+  `cryptographicKeyIdentifier`, the id of an active key of the organisation
+  with an X.509 certificate chain. Upload the chain to the key first
+  (`igrantio-api-key-management`). A key at the top level of the request gets
+  HTTP 400.
+- `validationPath` is optional. The issuer sets `$` for `dc+sd-jwt` and
+  `mso_mdoc`, and `$.vc` for `jwt_vc_json`.
+- Add one entry of `credentialConfigurations[]` for each format that you want
+  to publish. You can publish more than one format from one credential
+  definition.
+- Keep the `credentialConfigurationId` that the answer gives for each entry.
+  The issue call, `POST /v4/config/ows/issuer/issuance-history`, gives the
+  claims of each configuration in `credentials[]`: one
+  `{"credentialConfigurationId", "claims"}` entry for each configuration. One
+  call offers every configuration of the definition.
+- Add `revocation`, `expirationInDays`, `display` and the other entry fields
+  as your use case needs them.
 
 Read `igrantio-api-issuer` for the full operation reference, the other request
 fields, and the issue operation that follows.

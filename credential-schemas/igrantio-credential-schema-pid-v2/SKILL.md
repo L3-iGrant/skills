@@ -6,7 +6,7 @@ metadata:
   categories: [credential-schema]
   provider: iGrant.io
   keywords: PID, Person Identification Data, PID Rulebook, ARF, eIDAS2, urn:eudi:pid:1, place of birth, nationalities, trust anchor, credential schema, claim path pointer, SD-JWT VC, mso_mdoc, EUDIW, verifiable data registry
-  version: 2026.11.01
+  version: 2026.11.02
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/credentialSchemas/claimPathPointer/pidV2
   schema-version: 2026.4.1
   credential-formats: dc+sd-jwt, mso_mdoc
@@ -36,10 +36,11 @@ in two formats: `dc+sd-jwt` and `mso_mdoc`.
 - An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
   [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
   an environment variable or a secret manager. The browser never sees it.
-- The **OWS environment** the key belongs to. The default is **demo**
-  (`https://demo-api.igrant.io`). Use **staging**
-  (`https://staging-api.igrant.io`) only when the integrator asks for it.
-  A key works only in its own environment.
+- The **environment** the key belongs to: demo (`https://demo-api.igrant.io`,
+  the default), staging (`https://staging-api.igrant.io`) or production
+  (`https://api.igrant.io`). A key works only in its own environment.
+- A **signing key** with an X.509 certificate chain in Key Management (see
+  `igrantio-api-key-management`). Each credential configuration names one.
 
 ## Ask the integrator first
 Ask one question at a time. Wait for the answer. Give the recommended
@@ -47,7 +48,7 @@ default with each question. Look up facts in the project (framework,
 environment variables, an existing backend) instead of asking for them.
 Record the answers before you write code.
 
-1. **Environment** - demo or staging? _Default demo
+1. **Environment** - demo, staging or production? _Default demo
    (`https://demo-api.igrant.io`); a switch later is a configuration
    change._
 2. **API key** - do you have the OWS API key for that environment? If not,
@@ -61,9 +62,10 @@ Record the answers before you write code.
    arrive later)?
 6. **Revocation** - status list on? _Recommend on for any credential with a
    lifetime._
-7. **Signing key** - which key signs the credentials? _Recommend a key with an
-   X.509 certificate chain (`cryptographicKeyFormat: "x509"`). The trust list
-   needs it, and `mso_mdoc` accepts only `x509`._
+7. **Signing key** - which key of Key Management signs the credentials?
+   _`x509` is the only key format. The key must be an active key of the
+   organisation with a certificate chain. Each credential configuration names
+   it._
 8. **Trust list** - is your issuer certificate (the trust anchor) registered
    in the trust list? If not, contact
    [support@igrant.io](mailto:support@igrant.io) and follow
@@ -88,8 +90,10 @@ the picture (`picture` in `dc+sd-jwt`, `portrait` in `mso_mdoc`),
   `expiry_date`), `personal_administrative_number`,
   `attestation_legal_category` and `trust_anchor`.
 - Person data: `sex`.
-- Place of birth members (`dc+sd-jwt` only): `country`, `region` and `locality`
-  are each optional, but `place_of_birth` must hold at least one of them.
+- Place of birth members: `country`, `region` and `locality` are each
+  optional, but `place_of_birth` must hold at least one of them. The
+  `dc+sd-jwt` document lists the members. The `mso_mdoc` document does not
+  list them; see "Use with the iGrant.io API".
 - Contact: `email` and `phone_number` in `dc+sd-jwt`; `email_address` and
   `mobile_phone_number` in `mso_mdoc`.
 - Address: `dc+sd-jwt` nests it under `address`, with `formatted`, `country`,
@@ -99,9 +103,10 @@ the picture (`picture` in `dc+sd-jwt`, `portrait` in `mso_mdoc`),
   `resident_street`. The house number is part of `resident_street`.
 
 `nationalities` is an array in `dc+sd-jwt`, so its pointer ends with `null` to
-cover every entry. An mdoc pointer holds only the namespace and the data element
-name, so `nationality` and `place_of_birth` are each one data element in
-`mso_mdoc`.
+cover every entry. In the registry document, an mdoc pointer holds only the
+namespace and the data element name, so `nationality` and `place_of_birth` are
+each one data element in `mso_mdoc`. A credential definition of the API also
+needs a member path of `place_of_birth`; see "Use with the iGrant.io API".
 
 ## Claim path pointer documents
 Each document below is the file that the registry holds. Copy it without
@@ -465,22 +470,64 @@ Create a credential definition with
 `claims` array of the registry document into the configuration entry, and set
 the format fields that the table above gives.
 
+**The PID Rulebook check.** A configuration of a PID type (`vct` in the
+`urn:eudi:pid:` namespace, or `doctype` `eu.europa.ec.eudi.pid.1`) must list
+each mandatory attribute of PID Rulebook v1.7 and mark it mandatory. Else the
+create gets HTTP 400. Keep these claims, each with `mandatory: true`:
+
+| `dc+sd-jwt` | `mso_mdoc` (namespace `eu.europa.ec.eudi.pid.1`) |
+| --- | --- |
+| `family_name` | `family_name` |
+| `given_name` | `given_name` |
+| `birthdate` | `birth_date` |
+| `place_of_birth` | `place_of_birth` |
+| `nationalities` (or `["nationalities", null]`) | `nationality` |
+| `picture` | `portrait` |
+| `issuing_authority` | `issuing_authority` |
+| `issuing_country` | `issuing_country` |
+
+The check has two more rules:
+
+- `place_of_birth` needs one or more of its members `country`, `region` and
+  `locality` as claims, each with `mandatory: false`. A mandatory member gets
+  HTTP 400. The `dc+sd-jwt` document lists the three members. The `mso_mdoc`
+  document lists `place_of_birth` only, so the API refuses it as it is. Add
+  one or more member paths to it, for example
+  `{"path": ["eu.europa.ec.eudi.pid.1", "place_of_birth", "locality"], "mandatory": false, "limitDisclosure": true}`.
+- The `address` of a `dc+sd-jwt` PID and its members stay optional. A
+  mandatory address claim gets HTTP 400.
+
+The templates operation
+`GET /v4/config/ows/issuer/credential-definition-templates` gives a PID
+template that passes the check (`pid`, version `2026.10.1`).
+
+The example lists the mandatory claims and one member of `place_of_birth`, so
+it passes the check. Add the optional claims of the registry document that
+your PID carries.
+
 ```json
 {
-  "label": "Issue Person Identification Data",
+  "label": "Issue PID Rulebook v1.7",
   "version": "version_01",
-  "cryptographicKeyFormat": "x509",
-  "credentialDefinitions": [
+  "credentialConfigurations": [
     {
       "credentialFormat": "dc+sd-jwt",
       "vct": "urn:eudi:pid:1",
-      "validationPath": "$",
+      "cryptographicKeyFormat": "x509",
+      "cryptographicKeyIdentifier": "<KEY_ID_WITH_CERTIFICATE_CHAIN>",
       "credentialCategory": "pid",
       "revocation": { "enabled": true, "method": "status_list", "revokeWhenHolderDeletes": true },
       "claims": {
         "claims": [
+          { "path": ["family_name"], "mandatory": true, "limitDisclosure": true },
           { "path": ["given_name"], "mandatory": true, "limitDisclosure": true },
-          { "path": ["family_name"], "mandatory": true, "limitDisclosure": true }
+          { "path": ["birthdate"], "mandatory": true, "limitDisclosure": true },
+          { "path": ["place_of_birth"], "mandatory": true, "limitDisclosure": true },
+          { "path": ["place_of_birth", "country"], "mandatory": false, "limitDisclosure": true },
+          { "path": ["nationalities", null], "mandatory": true, "limitDisclosure": true },
+          { "path": ["picture"], "mandatory": true, "limitDisclosure": true },
+          { "path": ["issuing_authority"], "mandatory": true, "limitDisclosure": true },
+          { "path": ["issuing_country"], "mandatory": true, "limitDisclosure": true }
         ]
       }
     }
@@ -488,24 +535,32 @@ the format fields that the table above gives.
 }
 ```
 
-The example shows two claims. Send the full array of the registry document
-when you issue the full PID.
-
 The two formats use different credential type values, so an entry for
 `dc+sd-jwt` sends `vct: urn:eudi:pid:1`, and an entry for `mso_mdoc` sends
 `doctype: eu.europa.ec.eudi.pid.1`.
 
+`revokeWhenHolderDeletes: true` revokes the PID when the wallet reports that
+the holder deleted it. Check this rule with your compliance owner before you
+keep it.
+
 Notes on the request.
 
-- `label` must hold at least 3 characters. The platform reserves the labels
-  `Payment User Credential`, `Payment Card Credential`, `Payment Account
-  Credential`, `PID Issuance` and `Photo ID Issuance`, so pick another label.
+- `label` has 3 to 100 characters and is unique in the organisation. A second
+  create with the same label gets HTTP 400. Before you run the sample again,
+  change the label, or reuse the `id` of the first run. The platform reserves
+  the labels `Payment User Credential`, `Payment Card Credential`, `Payment
+  Account Credential`, `PID Issuance` and `Photo ID Issuance` (in any letter
+  case), so pick another label.
 - `version` is required. Its only value is `version_01` (OpenID4VCI 1.0), and
   you cannot change it after you create the credential definition.
-- `cryptographicKeyFormat: "x509"` signs the credentials with the default key of
-  the organisation and its X.509 certificate chain. Name another key with
-  `cryptographicKeyIdentifier`. Upload the chain to the key first
-  (`igrantio-api-key-management`).
+- Each entry of `credentialConfigurations[]` names its signing key:
+  `cryptographicKeyFormat: "x509"` (the only format) and
+  `cryptographicKeyIdentifier`, the id of an active key of the organisation
+  with an X.509 certificate chain. Upload the chain to the key first
+  (`igrantio-api-key-management`). A key at the top level of the request gets
+  HTTP 400.
+- `validationPath` is optional. The issuer sets `$` for `dc+sd-jwt` and
+  `mso_mdoc`, and `$.vc` for `jwt_vc_json`.
 - A PID provider sets `credentialCategory` to `pid` in each configuration. The
   certificate of the signing key must then be a PID provider certificate (ETSI
   TS 119 412-6: QcType `id-etsi-qct-pid`). The create call accepts another
@@ -514,13 +569,16 @@ Notes on the request.
   certificate preset `pid-provider`.
   `GET /v4/config/ows/issuer/credential-categories` lists the
   categories and their certificate rules.
-- Add one entry of `credentialDefinitions[]` for each format that you want to
-  publish. You can publish more than one format from one credential definition.
-- Keep the `credentialConfigurationId` that the response returns for each
-  entry. An issuance of a definition with more than one configuration names
-  it in `credentialConfigurationId`.
-- Add `revocation`, `expirationInDays`, `display` and
-  the other entry fields as your use case needs them.
+- Add one entry of `credentialConfigurations[]` for each format that you want
+  to publish. You can publish more than one format from one credential
+  definition.
+- Keep the `credentialConfigurationId` that the answer gives for each entry.
+  The issue call, `POST /v4/config/ows/issuer/issuance-history`, gives the
+  claims of each configuration in `credentials[]`: one
+  `{"credentialConfigurationId", "claims"}` entry for each configuration. One
+  call offers every configuration of the definition.
+- Add `revocation`, `expirationInDays`, `display` and the other entry fields
+  as your use case needs them.
 
 Read `igrantio-api-issuer` for the full operation reference, the other request
 fields, and the issue operation that follows.

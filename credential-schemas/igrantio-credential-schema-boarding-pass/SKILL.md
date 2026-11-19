@@ -6,7 +6,7 @@ metadata:
   categories: [credential-schema]
   provider: iGrant.io
   keywords: boarding pass, ferry ticket, travel credential, VerifiableFerryBoardingPassCredentialSDJWT, eu.europa.ec.eudi.boardingpass, SD-JWT VC, dc+sd-jwt, claim path pointer, credential definition, EUDIW, selective disclosure
-  version: 2026.11.01
+  version: 2026.11.02
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/credentialSchemas/claimPathPointer/boardingPass
   schema-version: 2025.7.1
   formats: dc+sd-jwt
@@ -32,10 +32,11 @@ template.
 - An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
   [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
   an environment variable or a secret manager. The browser never sees it.
-- The **OWS environment** the key belongs to. The default is **demo**
-  (`https://demo-api.igrant.io`). Use **staging**
-  (`https://staging-api.igrant.io`) only when the integrator asks for it.
-  A key works only in its own environment.
+- The **environment** the key belongs to: demo (`https://demo-api.igrant.io`,
+  the default), staging (`https://staging-api.igrant.io`) or production
+  (`https://api.igrant.io`). A key works only in its own environment.
+- A **signing key** with an X.509 certificate chain in Key Management (see
+  `igrantio-api-key-management`). Each credential configuration names one.
 
 ## Ask the integrator first
 Ask one question at a time. Wait for the answer. Give the recommended
@@ -43,7 +44,7 @@ default with each question. Look up facts in the project (framework,
 environment variables, an existing backend) instead of asking for them.
 Record the answers before you write code.
 
-1. **Environment** - demo or staging? _Default demo
+1. **Environment** - demo, staging or production? _Default demo
    (`https://demo-api.igrant.io`); a switch later is a configuration
    change._
 2. **API key** - do you have the OWS API key for that environment? If not,
@@ -57,9 +58,10 @@ Record the answers before you write code.
    arrive later)?
 6. **Revocation** - status list on? _Recommend on for any credential with a
    lifetime._
-7. **Signing key** - which key signs the credentials? _Recommend a key with an
-   X.509 certificate chain (`cryptographicKeyFormat: "x509"`). The trust list
-   needs it, and `mso_mdoc` accepts only `x509`._
+7. **Signing key** - which key of Key Management signs the credentials?
+   _`x509` is the only key format. The key must be an active key of the
+   organisation with a certificate chain. Each credential configuration names
+   it._
 8. **Trust list** - is your issuer certificate (the trust anchor) registered
    in the trust list? If not, contact
    [support@igrant.io](mailto:support@igrant.io) and follow
@@ -204,31 +206,34 @@ Create a credential definition with:
 
 `POST /v4/config/ows/issuer/credential-definitions`
 
-Put one entry in `credentialDefinitions[]` and copy the `claims` array of the
-schema document into that entry.
+Put one entry in `credentialConfigurations[]` and copy the `claims` array of
+the schema document into that entry.
 
+- Set `label` to a name that is unique in the organisation (see below).
 - Set `version` to `version_01` at the top level of the request.
-- Set `cryptographicKeyFormat` to `x509` at the top level. The default key of
-  the organisation then signs, with its X.509 certificate chain. Name another
-  key with `cryptographicKeyIdentifier`.
+- In each entry, set `cryptographicKeyFormat` to `x509` and
+  `cryptographicKeyIdentifier` to the id of your signing key. The key must be
+  an active key of the organisation with an X.509 certificate chain
+  (`igrantio-api-key-management`). A key at the top level of the request gets
+  HTTP 400.
 - Set `credentialFormat` to `dc+sd-jwt`.
 - Set `vct` to the credential type `VerifiableFerryBoardingPassCredentialSDJWT`.
   The registry also gives the namespace `eu.europa.ec.eudi.boardingpass`. Some
   ecosystem profiles use that namespace as the `vct`. Send the value that your
   verifier expects, because the verifier matches on the `vct`.
 - Put the array in `claims.claims`.
-- Set `validationPath` to `$`.
+- Leave out `validationPath`. The issuer sets `$`.
 
 ```json
 {
   "label": "Issue Boarding Pass",
   "version": "version_01",
-  "cryptographicKeyFormat": "x509",
-  "credentialDefinitions": [
+  "credentialConfigurations": [
     {
       "credentialFormat": "dc+sd-jwt",
       "vct": "VerifiableFerryBoardingPassCredentialSDJWT",
-      "validationPath": "$",
+      "cryptographicKeyFormat": "x509",
+      "cryptographicKeyIdentifier": "<KEY_ID_WITH_CERTIFICATE_CHAIN>",
       "expirationInDays": 1,
       "claims": {
         "claims": [
@@ -245,8 +250,15 @@ The example shows two claims. Send the full array when you want the full
 schema. A boarding pass is valid for one trip, so set `expirationInDays` to a
 short value.
 
-When you issue, put the claim values in `claims` of the create issuance body. The issuer takes
-the `vct` from the credential definition.
+`label` has 3 to 100 characters and is unique in the organisation: a second
+create with the same label gets HTTP 400. Before you run the sample again,
+change the label, or reuse the `id` of the first run.
+
+Keep the `credentialConfigurationId` that the answer gives. To issue, call
+`POST /v4/config/ows/issuer/issuance-history` and give the claim values in
+`credentials: [{"credentialConfigurationId", "claims"}]`, as a nested object
+that matches the paths. The issuer takes the `vct` from the credential
+definition.
 
 Read `igrantio-api-issuer` for the full operation reference: every request
 field, the display options, revocation, and the issue operation that fills these

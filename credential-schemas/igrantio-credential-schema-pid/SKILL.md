@@ -1,12 +1,12 @@
 ---
 name: igrantio-credential-schema-pid
-description: 'Claim path pointer schema for the Person Identification Data (PID) credential, the core identity attestation of the EUDI Wallet. Holds the registry documents for the dc+sd-jwt, jwt_vc_json and mso_mdoc formats, with name, birth date, address, contact data and the age-over flags. Use this skill when you build a PID credential definition for the iGrant.io OpenID4VC API, or when you need the exact PID claim path. For the current PID Rulebook shape (vct urn:eudi:pid:1), read igrantio-credential-schema-pid-v2.'
+description: 'Claim path pointer schema for the Person Identification Data (PID) credential, the core identity attestation of the EUDI Wallet. Holds the registry documents for the dc+sd-jwt, jwt_vc_json and mso_mdoc formats, with name, birth date, address, contact data and the age-over flags. Use this skill when you need the exact claim path of a PID of this first shape, for example to read one that a wallet holds. The iGrant.io OpenID4VC API does not issue this shape: to build a PID credential definition, read igrantio-credential-schema-pid-v2 (PID Rulebook v1.7, vct urn:eudi:pid:1).'
 license: Apache-2.0
 metadata:
   categories: [credential-schema]
   provider: iGrant.io
   keywords: PID, Person Identification Data, eIDAS2, identity, age over 18, credential schema, claim path pointer, SD-JWT VC, mso_mdoc, jwt_vc_json, EUDIW, verifiable data registry
-  version: 2026.11.01
+  version: 2026.11.02
   source-doc: https://github.com/decentralised-dataexchange/verifiable-data-registry/tree/main/credentialSchemas/claimPathPointer/pid
   schema-version: 2025.7.1
   credential-formats: dc+sd-jwt, jwt_vc_json, mso_mdoc
@@ -16,9 +16,14 @@ metadata:
 # Person Identification Data (PID) - credential schema
 
 ## When to use
-Use this skill when you issue or verify a **Person Identification Data (PID)**
-credential. PID is the core identity attestation of the EUDI Wallet. It carries
-the legal identity of a natural person.
+Use this skill when you need the claim paths of a **Person Identification Data
+(PID)** credential of the first shape, for example to read or verify one that
+a wallet holds. PID is the core identity attestation of the EUDI Wallet. It
+carries the legal identity of a natural person.
+
+**The iGrant.io API does not issue this shape.** A credential definition from
+this template gets HTTP 400 (see "Use with the iGrant.io API"). To issue a PID,
+use `igrantio-credential-schema-pid-v2`.
 
 The registry gives the credential type `urn:eu.europa.ec.eudi:pid:1`. The schema
 supports three formats: SD-JWT VC (`dc+sd-jwt`), W3C JWT VC (`jwt_vc_json`) and
@@ -37,10 +42,9 @@ in three formats: `dc+sd-jwt`, `jwt_vc_json` and `mso_mdoc`.
 - An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
   [support@igrant.io](mailto:support@igrant.io). Keep it on the server, in
   an environment variable or a secret manager. The browser never sees it.
-- The **OWS environment** the key belongs to. The default is **demo**
-  (`https://demo-api.igrant.io`). Use **staging**
-  (`https://staging-api.igrant.io`) only when the integrator asks for it.
-  A key works only in its own environment.
+- The **environment** the key belongs to: demo (`https://demo-api.igrant.io`,
+  the default), staging (`https://staging-api.igrant.io`) or production
+  (`https://api.igrant.io`). A key works only in its own environment.
 
 ## Ask the integrator first
 Ask one question at a time. Wait for the answer. Give the recommended
@@ -48,29 +52,17 @@ default with each question. Look up facts in the project (framework,
 environment variables, an existing backend) instead of asking for them.
 Record the answers before you write code.
 
-1. **Environment** - demo or staging? _Default demo
+1. **Environment** - demo, staging or production? _Default demo
    (`https://demo-api.igrant.io`); a switch later is a configuration
    change._
 2. **API key** - do you have the OWS API key for that environment? If not,
    request it from [support@igrant.io](mailto:support@igrant.io) before you
    continue.
-3. **Format** - which of the formats the registry publishes for this schema:
-   `dc+sd-jwt`, `jwt_vc_json` or `mso_mdoc`? _Recommend `dc+sd-jwt` unless the
-   rule book requires mdoc._
-4. **Claims** - all claims of the schema, or a subset? _Mandatory claims
-   stay._
-5. **Issuance mode** - `in_time` (claims known now) or `deferred` (claims
-   arrive later)?
-6. **Revocation** - status list on? _Recommend on for any credential with a
-   lifetime._
-7. **Signing key** - which key signs the credentials? _Recommend a key with an
-   X.509 certificate chain (`cryptographicKeyFormat: "x509"`). The trust list
-   needs it, and `mso_mdoc` accepts only `x509`._
-8. **Trust list** - is your issuer certificate (the trust anchor) registered
-   in the trust list? If not, contact
-   [support@igrant.io](mailto:support@igrant.io) and follow
-   <https://docs.igrant.io/docs/trust-relying-party-registration/>. Until then
-   wallets show your credentials as unverified.
+3. **Purpose** - issue a PID, or look up the claim paths of a PID of this
+   shape? _To issue a PID, use `igrantio-credential-schema-pid-v2`: the API
+   refuses a credential definition from this template._
+4. **Format** - `dc+sd-jwt`, `jwt_vc_json` or `mso_mdoc`? _Match the format
+   of the credentials that you read._
 
 ## What the claims describe
 Every claim in this schema is mandatory. The three formats hold the same data,
@@ -324,77 +316,24 @@ same first element.
 For `jwt_vc_json`, the first element of the path is always `credentialSubject`.
 
 ## Use with the iGrant.io API
-Create a credential definition with
-`POST /v4/config/ows/issuer/credential-definitions`. Put the
-`claims` array of the registry document into the configuration entry, and set
-the format fields that the table above gives.
+The iGrant.io API refuses a credential definition from this template with
+HTTP 400, in each format:
 
-```json
-{
-  "label": "Issue Person Identification Data",
-  "version": "version_01",
-  "cryptographicKeyFormat": "x509",
-  "credentialDefinitions": [
-    {
-      "credentialFormat": "dc+sd-jwt",
-      "vct": "urn:eu.europa.ec.eudi:pid:1",
-      "validationPath": "$",
-      "claims": {
-        "claims": [
-          {
-            "path": [
-              "address"
-            ],
-            "mandatory": true,
-            "limitDisclosure": true
-          },
-          {
-            "path": [
-              "address",
-              "country"
-            ],
-            "mandatory": true,
-            "limitDisclosure": true
-          }
-        ]
-      }
-    }
-  ]
-}
-```
+- `dc+sd-jwt` and `jwt_vc_json`: `urn:eu.europa.ec.eudi:pid:1` is the old PID
+  type. PID Rulebook v1.7 gives an SD-JWT VC PID a type in the
+  `urn:eudi:pid:` namespace, for example `urn:eudi:pid:1`, and defines no W3C
+  VC PID.
+- `mso_mdoc`: the document does not list `place_of_birth`, `nationality`,
+  `portrait`, `issuing_authority` and `issuing_country`. PID Rulebook v1.7
+  makes them mandatory, and a PID configuration must list each one as a
+  mandatory claim.
 
-The label `PID Issuance` is reserved for the platform. Pick another label, for
-example `Issue Person Identification Data`.
+To issue a PID, use the PID Rulebook v1.7 template in
+`igrantio-credential-schema-pid-v2`. The claim paths of this skill stay
+useful to read a PID of this shape, for example in a DCQL query
+(`igrantio-dcql-query-pid`).
 
-Notes on the request.
-
-- `label` must hold at least 3 characters. The platform reserves the labels
-  `Payment User Credential`, `Payment Card Credential`, `Payment Account
-  Credential`, `PID Issuance` and `Photo ID Issuance`, so pick another label.
-- `version` is required. Its only value is `version_01` (OpenID4VCI 1.0), and
-  you cannot change it after you create the credential definition.
-- `cryptographicKeyFormat: "x509"` signs the credentials with the default key of
-  the organisation and its X.509 certificate chain. Name another key with
-  `cryptographicKeyIdentifier`. Upload the chain to the key first
-  (`igrantio-api-key-management`).
-- A PID provider sets `credentialCategory` to `pid` in each configuration. The
-  certificate of the signing key must then be a PID provider certificate (ETSI
-  TS 119 412-6: QcType `id-etsi-qct-pid`). The create call accepts another
-  key, and the definition shows that the key does not fit (`signingKeyCheck`
-  with the result `does-not-fit`). Request the certificate with the
-  certificate preset `pid-provider`.
-  `GET /v4/config/ows/issuer/credential-categories` lists the
-  categories and their certificate rules.
-- Add one entry of `credentialDefinitions[]` for each format that you want to
-  publish. You can publish more than one format from one credential definition.
-- Keep the `credentialConfigurationId` that the response returns for each
-  entry. An issuance of a definition with more than one configuration names
-  it in `credentialConfigurationId`.
-- Add `revocation`, `expirationInDays`, `display` and
-  the other entry fields as your use case needs them.
-
-Read `igrantio-api-issuer` for the full operation reference, the other request
-fields, and the issue operation that follows.
+Read `igrantio-api-issuer` for the full operation reference.
 
 ## Source is the registry
 The verifiable data registry is the source of truth. If this skill and the
