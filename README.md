@@ -1,9 +1,26 @@
-# iGrant.io Agent Skills for EUDI Wallet and European Business Wallet integrations
+<h1 align="center">
+    iGrant.io Agent Skills
+</h1>
 
-[![Install via skills.sh](https://img.shields.io/badge/skills.sh-install-green)](https://www.skills.sh/l3-igrant/skills)
-[![Licence: Apache-2.0](https://img.shields.io/badge/licence-Apache--2.0-blue)](./LICENSE)
+<p align="center">
+    <a href="https://github.com/L3-iGrant/skills/commits/main" title="Last Commit"><img src="https://img.shields.io/github/last-commit/L3-iGrant/skills?style=flat"></a>
+    <a href="https://github.com/L3-iGrant/skills/issues" title="Open Issues"><img src="https://img.shields.io/github/issues/L3-iGrant/skills?style=flat"></a>
+    <a href="./LICENSE" title="License"><img src="https://img.shields.io/badge/License-Apache%202.0-yellowgreen?style=flat"></a>
+</p>
 
-[Agent Skills](https://agentskills.io) that teach AI coding agents (Claude Code,
+<p align="center">
+  <a href="#about">About</a> •
+  <a href="#quick-start">Quick Start</a> •
+  <a href="#available-skills">Available Skills</a> •
+  <a href="#release-versioning">Release Versioning</a> •
+  <a href="#support">Support</a> •
+  <a href="#contributing">Contributing</a> •
+  <a href="#licensing">Licensing</a>
+</p>
+
+## About
+
+This repository holds [Agent Skills](https://agentskills.io) that teach AI coding agents (Claude Code,
 Cursor, and any agent supporting the `SKILL.md` format) how to build
 **European Digital Identity (EUDI) Wallet (EUDIW)** and **European Business
 Wallet (EUBW)** integrations on the [iGrant.io](https://igrant.io)
@@ -21,7 +38,7 @@ EU Regulation 2024/1183).
 Browse the published skills on
 [skills.sh](https://www.skills.sh/l3-igrant/skills).
 
-## Quick start
+## Quick Start
 
 ```bash
 npx skills add L3-iGrant/skills
@@ -50,7 +67,7 @@ Issuers and verifiers also register their certificate in the trust list
 See [get started](https://docs.igrant.io/docs/get-started/) and the
 [developer APIs](https://docs.igrant.io/docs/developer-apis).
 
-## Available skills
+## Available Skills
 
 Start with the overview skill. The issuer and verifier skills compose the
 building blocks, so your agent installs only what the task needs. Every skill
@@ -206,7 +223,7 @@ The issuer, verifier, holder, and consent building blocks ship a runnable
 TypeScript reference implementation in their `references/` folder, so the
 agent adapts working code rather than generating an integration from scratch.
 
-## Release versioning
+## Release Versioning
 
 Each skill is versioned individually through the `metadata.version` field in
 its `SKILL.md`, following the `yyyy.mm.NN` scheme, where `yyyy.mm` is the year
@@ -238,7 +255,12 @@ We welcome contributions to improve these skills. You can help by:
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines, including the
 canonical locations of the intentionally duplicated reference files.
 
-## Licence
+## Licensing
 
-Apache 2.0. You are free to copy, modify, and distribute these skills. See
-[`LICENSE`](./LICENSE).
+Copyright (c) 2026 iGrant Technologies AB (iGrant.io), Sweden
+
+Licensed under the Apache 2.0 License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the [LICENSE](./LICENSE) for the specific language governing permissions and limitations under the License.
+
+You are free to copy, modify, and distribute these skills. See also the [NOTICE](./NOTICE) file.
