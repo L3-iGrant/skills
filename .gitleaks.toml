@@ -1,0 +1,12 @@
+# Configuration of the secret scan in CI: the default rules of gitleaks.
+# The API samples hold identifiers in UUID form, for example
+# "credentialExchangeId": "6b0f3d2a-...". They are not secrets.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Identifiers in UUID form in the API samples"
+regexTarget = "match"
+regexes = [
+  '''(?i)[a-z]*id"?\s*[:=]\s*"?[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"?''',
+]
