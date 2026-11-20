@@ -176,8 +176,7 @@ as the fallback source.
 | [`igrantio-credential-schema-payment-wallet-attestation`](./credential-schemas/igrantio-credential-schema-payment-wallet-attestation) | Payment Wallet Attestation |
 | [`igrantio-credential-schema-pda1`](./credential-schemas/igrantio-credential-schema-pda1) | PDA1 |
 | [`igrantio-credential-schema-photo-id`](./credential-schemas/igrantio-credential-schema-photo-id) | Photo ID |
-| [`igrantio-credential-schema-pid`](./credential-schemas/igrantio-credential-schema-pid) | PID |
-| [`igrantio-credential-schema-pid-v2`](./credential-schemas/igrantio-credential-schema-pid-v2) | PID V2 |
+| [`igrantio-credential-schema-pid-v2`](./credential-schemas/igrantio-credential-schema-pid-v2) | PID (PID Rulebook v1.7) |
 | [`igrantio-credential-schema-qesac`](./credential-schemas/igrantio-credential-schema-qesac) | QESAC |
 | [`igrantio-credential-schema-sca-payment-account`](./credential-schemas/igrantio-credential-schema-sca-payment-account) | SCA Payment Account |
 | [`igrantio-credential-schema-sca-payment-card`](./credential-schemas/igrantio-credential-schema-sca-payment-card) | SCA Payment Card |

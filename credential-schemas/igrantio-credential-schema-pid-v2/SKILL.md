@@ -18,14 +18,12 @@ metadata:
 ## When to use
 Use this skill when you issue or verify a **Person Identification Data (PID)**
 credential that follows the **PID Rulebook (version 1.7)** of the EUDI Wallet
-ARF. This is the current PID shape. It adds document data, place of birth,
-nationalities, portrait and trust anchor to the first PID shape.
+ARF. It holds names, birth data, place of birth, nationalities, portrait,
+document data and trust anchor.
 
 The registry gives two credential types, one per format: `urn:eudi:pid:1` for
 SD-JWT VC (`dc+sd-jwt`), and `eu.europa.ec.eudi.pid.1` for mdoc (`mso_mdoc`).
 The `jwt_vc_json` format is not part of this template.
-
-For the first PID shape, read `igrantio-credential-schema-pid`.
 
 The registry keeps this schema under
 `credentialSchemas/claimPathPointer/pidV2`. Version **2026.4.1** is the latest
@@ -597,7 +595,6 @@ corrected.
   doctype and the format flags.
 
 ## Cross-references
-- `igrantio-credential-schema-pid` - the first PID shape.
 - `igrantio-api-issuer` - the create credential definition and issue credential
   operations.
 - `igrantio-api-verifier` - the DCQL query that asks a holder for a PID
