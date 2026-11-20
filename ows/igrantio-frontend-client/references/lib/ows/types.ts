@@ -38,9 +38,9 @@ export type IssuanceClaims = Record<string, unknown>;
 export interface TransactionCodeRequest {
   /** 4 to 12. */
   length: number;
-  /** `numeric`: digits. `text`: upper-case letters and digits. */
+  /** `numeric`: the digits 0 to 9. `text`: letters and digits (a random code: upper-case letters and digits). */
   inputMode: "numeric" | "text";
-  /** Optional: the code, with exactly `length` characters. Without it, the issuer makes a random code. */
+  /** Optional: the code, with exactly `length` characters of `inputMode`. Without it, the issuer makes a random code. */
   value?: string;
 }
 

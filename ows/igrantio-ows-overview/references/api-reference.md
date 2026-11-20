@@ -48,7 +48,7 @@ Request body:
   ],
   // optional fields:
   "preAuthorised": true,                    // pre-authorised code flow (default false: authorisation code flow)
-  "transactionCode": { "length": 6, "inputMode": "numeric" },  // only with preAuthorised; the issuer makes the code
+  "transactionCode": { "length": 6, "inputMode": "numeric" },  // only with preAuthorised; add "value" to give the code, else the issuer makes one
   "presentationDefinitionId": "<id>",       // dynamic credential request: collect a presentation first (not with transactionCode)
   "transactionData": { ... },               // only with presentationDefinitionId
   "urlScheme": "openid-credential-offer://",  // default; the scheme of offer.uri ("haip://" is the other value)

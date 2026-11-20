@@ -104,7 +104,8 @@ data-flow, path allow-list, HMAC scheme, and the correlation table.
      definition, each with its `credentialExchangeId` (the correlation key)
      and `status` `offer_sent`.
    With `preAuthorised: true` and `transactionCode: {length, inputMode}`, the
-   issuer makes the code and gives it one time in `offer.transactionCode`.
+   issuer makes a random code, or uses the code of `transactionCode.value`.
+   The answer gives the code one time, in `offer.transactionCode`.
 2. Open one SSE stream on the credential exchange ids of the offer.
 3. The wallet scans and takes the credentials → event
    `ows.issuer.issuance_history.credential_issued` for each issuance history
