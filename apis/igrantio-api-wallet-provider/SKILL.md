@@ -31,11 +31,16 @@ Use this skill when the task is one of these:
 For issuance and verification, use the issuer and the verifier skills. For the
 architecture and the glossary, read `igrantio-ows-overview` first.
 
-**Who is the wallet provider.** The wallet provider is the organisation of the
-platform operator of the installation. Its wallet gets the wallet provider
-capability (`isWalletProvider: true`) when it is deployed. No operation turns
-the capability on or off. In every other organisation, each
-`/v4/config/ows/wallet-provider/...` operation gives HTTP 400.
+**Who is the wallet provider.** Only the platform operator is a wallet
+provider. On demo, staging and production, iGrant.io is the platform
+operator. An API key of a customer organisation gets HTTP 400 (`Open id
+digital wallet is not a wallet provider`) on each
+`/v4/config/ows/wallet-provider/...` operation, also before the service reads
+the body. A sandbox organisation is not a wallet provider either. A customer
+organisation uses only the wallet deployment and the performance statistics
+(`/v4/config/ows/wallet/...`) of this skill. The wallet of the platform
+operator gets the wallet provider capability (`isWalletProvider: true`) when
+it is deployed. No operation turns the capability on or off.
 
 ## Prerequisites
 - An **iGrant.io Organisation Wallet Suite (OWS) API key**. Get it from
@@ -241,11 +246,25 @@ wallet unit, newest first: `items` (`id`, `eventType`, `occurredAt`, `actor`,
   `totalItems`.
 - **Wallet apps configuration.** `PUT` body
   `{"protocol1CutOff": {"android": <time or null>, "ios": <time or null>}}`
-  (RFC 3339 with an offset). The answer is `{"walletAppsConfiguration": {...}}`.
+  (RFC 3339 with an offset). Each member is mandatory. `null` for a platform
+  clears its date; `null` for `protocol1CutOff` gets HTTP 400. The service
+  keeps each time in UTC (`2027-03-01T00:00:00+01:00` comes back as
+  `2027-02-28T23:00:00Z`). The answer is `{"walletAppsConfiguration": {...}}`.
+  A new configuration has `null` for both platforms. From the cut-off date of
+  a platform, a request of an app version of protocol 1 of that platform gets
+  HTTP 403 `individual_wallet_unit.protocol_1_refused`.
 - **Device policy configuration.** `PUT` body: `patchAgeMonths` (6 to 36,
   default 12, never `null`), `minimumAndroidVersion` (9 to 99, or `null` for
   no minimum) and `applyToProtocol1` (boolean). Each member is mandatory. The
-  answer is `{"devicePolicyConfiguration": {...}}`.
+  answer is `{"devicePolicyConfiguration": {...}}`. The key origin rule (the
+  secure hardware of the phone made the key) has no field: it is always on.
+  The minimum Android version applies to both protocols. The security patch
+  age and the key origin rule apply to protocol 2, and to protocol 1 only
+  with `applyToProtocol1: true`. The rules apply to each fresh Android Key
+  Attestation chain (the registration of a wallet unit and each key
+  attestation request), not to the wallet units that are registered already
+  (the scan applies the patch age and the minimum Android version to them).
+  A refused device gets HTTP 403 `individual_wallet_unit.device_refused`.
 - **Vulnerable device class.** `deviceModel` (mandatory), `androidVersions`
   (`null`: every version), `reason`. **Leaked attestation key.**
   `fingerprint` (the SHA-256 of the certificate, 64 hex digits), `reason`.
@@ -289,7 +308,10 @@ attestations of one keystore type share one status entry.
 ### Wallet provider configuration
 Each kind has one configuration. The answer is
 `{"globalConfiguration": {...}, "signingKeyWarnings": [...]}`. `PATCH` is
-partial: a member that you leave out keeps its value.
+partial: a member that you leave out keeps its value. The configuration of
+the individual wallet units has no `protocol1CutOff` and no `devicePolicy`: a
+`PATCH` with them gets HTTP 400 (`<member>: unknown field`). Use the wallet
+apps configuration and the device policy configuration in their place.
 
 - `walletUnitAttestationSigningConfig`, `keyAttestationSigningConfig`,
   `statusListSigningConfig`: `{cryptographicKeyIdentifier,
