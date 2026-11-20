@@ -35,7 +35,7 @@ export interface StepProps {
   children?: ReactNode;
 }
 
-/** Use-case SDK StepIndicator: a white card with the number box, a Byrd
+/** Use-case SDK StepIndicator: a white card with the number box, a heading
  *  title, and a dark-green tick circle once done. */
 export function Step({ title, detail, number, done, active, onClick, children }: StepProps) {
   return (

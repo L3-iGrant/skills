@@ -1,6 +1,6 @@
 ---
 name: igrantio-usecase-ui
-description: 'Default iGrant.io look and feel for EUDI Wallet (EUDIW) and European Business Wallet (EUBW) use-case frontends, ported at exact values from the iGrant.io use-case SDK and landing page: design tokens, Byrd + Plus Jakarta Sans typography, split layout with sticky stepper cards, uppercase buttons, content card, QR box, status stages, page shell, and strings-driven i18n. Used by default when the user has not specified their own UI or layout.'
+description: 'Default iGrant.io look and feel for EUDI Wallet (EUDIW) and European Business Wallet (EUBW) use-case frontends, ported at exact values from the iGrant.io use-case SDK and landing page: design tokens, Plus Jakarta Sans typography (a free font), split layout with sticky stepper cards, uppercase buttons, content card, QR box, status stages, page shell, and strings-driven i18n. Used by default when the user has not specified their own UI or layout.'
 license: Apache-2.0
 metadata:
   categories: [frontend, education]
@@ -49,19 +49,16 @@ Record the answers before you write code.
 3. **Look** - the default iGrant.io look, or your own design system? _Skip
    this skill for your own._
 4. **Languages** - which UI languages? _Strings live in `strings.ts`._
-5. **Fonts** - do you have the Byrd woff2 files? _Otherwise Plus Jakarta Sans
-   is used._
-6. **QR** - the wallet QR is rendered by `igrantio-qr-code` at the
+5. **QR** - the wallet QR is rendered by `igrantio-qr-code` at the
    demonstrator look; confirm the logo for its centre disc.
 
 ## What it provides (`references/`)
 - **`assets/`** - vendored brand assets: `iGrant_210_55_BW.svg` (the white
   iGrant.io logo) and `whatsapp.png`.
 - **`ui/theme.css`** - the single source of truth for every token and
-  use-case style, at exact iGrant.io values: typography (Plus Jakarta Sans
-  body, **Byrd** headings - copy the woff2 files from an iGrant.io
-  deployment's `/assets/fonts/` into `ui/fonts/`, otherwise it falls back to
-  Plus Jakarta Sans), palette, buttons, split layout, stepper cards with the
+  use-case style, at exact iGrant.io values: typography (Plus Jakarta Sans,
+  a free font under the SIL Open Font License, for the body and the headings,
+  with the system font stack as fallback), palette, buttons, split layout, stepper cards with the
   offset-shadow number box, heading scale, content card, step navigation,
   form fields, status stages, and the navbar/footer chrome. Read the file
   for the numbers; do not invent new ones. The QR box carries the frame
