@@ -1,12 +1,12 @@
 ---
 name: igrantio-api-webhooks
-description: 'The Webhook group of the iGrant.io OID4VC API: create, read, update, delete and list webhooks, list the event types that the organisation can subscribe to and the payload content types, ping a payload URL, read the deliveries of a webhook and send a delivery again. Covers the webhook events of the wallet (ows.issuer.issuance_history.*, ows.verifier.verification.*, ows.holder.credential.*, ows.holder.presentation.*) and the consent events, the product feature of each event type, the wallet event body (id, type, schemaVersion, occurredAt, organisationId, sandboxOrganisationId, subject, data), the X-IGrant-Signature t=,v1= HMAC-SHA256 scheme over the exact body bytes, the retries and the order of each resource. Use when you register or debug a webhook receiver, verify a signature, or check why an event did not arrive.'
+description: 'The Webhook group of the iGrant.io OID4VC API: create, read, update, delete and list webhooks, list the event types that the organisation can subscribe to and the payload content types, ping a payload URL, read the status of a webhook (active, failing, paused, disabled), resume a paused webhook, disable and enable a webhook, read the deliveries of a webhook and send a delivery again. Covers the webhook events of the wallet (ows.issuer.issuance_history.*, ows.verifier.verification.*, ows.holder.credential.*, ows.holder.presentation.*) and the consent events, the product feature of each event type, the wallet event body (id, type, schemaVersion, occurredAt, organisationId, sandboxOrganisationId, subject, data), the X-IGrant-Signature t=,v1= HMAC-SHA256 scheme over the exact body bytes, the retries (no retry for a refusal, Retry-After for 429 and 503) and the order of each resource. Use when you register or debug a webhook receiver, verify a signature, check why an event did not arrive, or resume a paused webhook.'
 license: Apache-2.0
 metadata:
   categories: [ows-api]
   provider: iGrant.io
-  keywords: webhook, webhook event, webhook delivery, HMAC, X-IGrant-Signature, event types, payload URL, retries, issuance history, credential exchange id, OID4VC, EUDIW, eIDAS2, callback
-  version: 2026.11.02
+  keywords: webhook, webhook event, webhook delivery, webhook status, paused webhook, resume webhook, Retry-After, HMAC, X-IGrant-Signature, event types, payload URL, retries, issuance history, credential exchange id, OID4VC, EUDIW, eIDAS2, callback
+  version: 2026.11.03
   source-doc: https://docs.igrant.io/docs/developer-apis/
   protocols: HTTP webhooks, HMAC-SHA256
   auth: OWS API key (Authorization "ApiKey <YOUR_API_KEY>")
@@ -19,7 +19,8 @@ Use this skill when you:
 - register an external IT system to receive the events of your organisation;
 - must know the exact event type strings to subscribe to;
 - verify the `X-IGrant-Signature` header on an incoming delivery;
-- debug a receiver that gets no events, or read a delivery record.
+- debug a receiver that gets no events, or read a delivery record;
+- see why a webhook is `failing` or `paused`, and resume it.
 
 Base URL: the API host of your environment (demo:
 `https://demo-api.igrant.io`). Auth header:
@@ -69,6 +70,9 @@ Record the answers before you write code.
 | `DELETE` | `/v4/config/platform/webhook/{webhookId}` | Delete a webhook. | [Delete webhook](https://docs.igrant.io/docs/openid4vc-api/config-delete-webhook/) |
 | `GET` | `/v4/config/platform/webhooks` | List the webhooks, newest first, with the result of the last delivery. | [List all webhooks](https://docs.igrant.io/docs/openid4vc-api/config-list-webhooks/) |
 | `POST` | `/v4/config/platform/webhook/{webhookId}/ping` | Ping the payload URL to test that it answers. | [Ping webhook](https://docs.igrant.io/docs/openid4vc-api/config-ping-webhook/) |
+| `POST` | `/v4/config/platform/webhook/{webhookId}/resume` | Send a test event, and make a paused webhook active again. | [Resume webhook](https://docs.igrant.io/docs/openid4vc-api/config-resume-webhook/) |
+| `POST` | `/v4/config/platform/webhook/{webhookId}/disable` | Turn a webhook off (`disabled` `true`). | [Disable webhook](https://docs.igrant.io/docs/openid4vc-api/config-disable-webhook/) |
+| `POST` | `/v4/config/platform/webhook/{webhookId}/enable` | Turn a webhook on and set its status to `active`. | [Enable webhook](https://docs.igrant.io/docs/openid4vc-api/config-enable-webhook/) |
 | `GET` | `/v4/config/platform/webhooks/{webhookId}/deliveries` | List the deliveries of one webhook, newest first. | [List webhook deliveries](https://docs.igrant.io/docs/openid4vc-api/config-list-all-recent-webhook-deliveries/) |
 | `GET` | `/v4/config/platform/webhooks/{webhookId}/delivery/{deliveryId}` | Read one delivery. | [Read webhook delivery](https://docs.igrant.io/docs/openid4vc-api/config-read-recent-webhook-delivery/) |
 | `POST` | `/v4/config/platform/webhooks/{webhookId}/delivery/{deliveryId}/redeliver` | Send a delivery again. | [Redeliver webhook delivery](https://docs.igrant.io/docs/openid4vc-api/config-redeliver-webhook/) |
@@ -86,7 +90,9 @@ A refusal of a request body answers
 `{"errorCode": <status>, "errorDescription": "...", "errorKey"?: "..."}`.
 An unknown webhook (404), an unknown delivery (400), an API key without the
 scope of the operation (403) and a server error (500) answer the older body
-`{"Code": <status>, "Message": "..."}`.
+`{"Code": <status>, "Message": "..."}`. Resume refuses with HTTP 409 and an
+`errorKey` (see "Resume, disable and enable"). Resume, disable and enable need
+the scope `webhooks:update`.
 
 ## Key fields
 
@@ -115,7 +121,9 @@ Both operations wrap the body in a `webhook` object:
   `secretKey`. Optional: `contentType`, `disabled` (default `false`) and
   `skipSslVerification` (default `false`). The service refuses an unknown
   member with HTTP 400. It ignores `id`, `orgId`, `sandboxOrgId`,
-  `timestamp` and the read-only members of a list item
+  `timestamp`, the status members (`status`, `consecutiveFailedAttempts`,
+  `failingSince`, `lastSuccessAt`, `pausedAt`, `pauseReason`,
+  `statusReason`) and the read-only members of a list item
   (`isLastDeliverySuccess`, `lastDeliveryStatus`, `lastDeliveryStatusCode`),
   so you can send a list item back.
 - `payloadUrl` must be an absolute `http://` or `https://` URL with a host.
@@ -146,6 +154,9 @@ Both operations wrap the body in a `webhook` object:
   array of `subscribedEvents` becomes empty. The service keeps `id`,
   `orgId`, `sandboxOrgId` and `timestamp` (the creation time). A new secret
   key signs the next attempt, also of a delivery that is in progress.
+- `PUT` keeps the status of the webhook. `disabled` `false` in a `PUT` does
+  not resume a paused webhook: call resume. To turn a webhook off or on, the
+  disable and enable operations need no full body.
 - Create answers with **`200`**, not `201`. The main wallet, and each
   sandbox organisation, has at most 50 webhooks that are not deleted. The
   next create gives HTTP 409 with `errorKey` `webhook_limit_reached`.
@@ -154,7 +165,8 @@ Both operations wrap the body in a `webhook` object:
 
 The answer `webhook` object adds `id`, `orgId` (the main organisation, also
 for a webhook of a sandbox organisation), `sandboxOrgId` (only for a webhook
-of a sandbox organisation) and `timestamp` to the fields above. Each item of
+of a sandbox organisation), `timestamp` and the status members (see "Webhook
+status") to the fields above. Each item of
 the list operation (`{"webhooks": [...], "pagination": {...}}`) also has:
 
 - `isLastDeliverySuccess` - `true` when the last delivery got a 2xx answer,
@@ -164,8 +176,8 @@ the list operation (`{"webhooks": [...], "pagination": {...}}`) also has:
 - `lastDeliveryStatusCode` - the HTTP status of the last attempt (`0` when
   there was no answer). Both last members are `null` without a delivery.
 
-Read, update, delete, ping and the delivery operations give HTTP 404 for an
-unknown or deleted `webhookId`.
+Read, update, delete, ping, resume, disable, enable and the delivery
+operations give HTTP 404 for an unknown or deleted `webhookId`.
 
 Delete disables the webhook and marks it as deleted. The answer holds the
 webhook in its final state, with `disabled` `true`. A delivery that waits
@@ -363,7 +375,20 @@ where `sig` is the HMAC-SHA256 of `<t>.<body>` over the exact body bytes.
 - **Retries:** after a failed attempt, the service tries again after 1 min,
   5 min, 30 min, 2 h, 6 h and 24 h, with the same body and the same event
   id, and a new `t` and signature. After the failed attempt 7 the delivery is
-  `failed`.
+  `failed`. The answer of the receiver can change this:
+
+  | Answer of an attempt | What the service does |
+  | --- | --- |
+  | 2xx | The delivery is `completed`. |
+  | 400, 401, 403, 404, 405, 413, 415, 422 | The delivery is `failed` at once. No retry: the receiver refused the event. Fix the receiver, then redeliver. |
+  | 410 | The delivery is `failed` at once, and the webhook is paused at once (`pauseReason` `gone`). |
+  | 429 or 503 with a valid `Retry-After` (seconds or an HTTP date) | The next attempt is at the later of the schedule and `Retry-After`, at most 24 hours after the attempt. |
+  | Another answer, a timeout, no connection | The schedule above. |
+
+  Each failed attempt counts for the status of the webhook, also an attempt
+  without a retry. The `statusDescription` of the delivery tells you when the
+  receiver refused the event, when `Retry-After` set the time of the next
+  attempt, and when a pause ended the delivery.
 - **At least once:** your receiver can get an event again (for example after
   a timeout of its answer). Remove duplicates with the event id.
 - **Order:** for one webhook and one resource, the service sends an event only
@@ -374,17 +399,80 @@ where `sig` is the HMAC-SHA256 of `<t>.<body>` over the exact body bytes.
   the service sends the next events, so a gap in the sequence is possible.
 - **Features:** an event of a type whose feature is off for the
   organisation gets no delivery, also when a webhook subscribes to it.
-- A webhook that is disabled or deleted before an attempt fails the delivery.
+- A webhook that is disabled, paused or deleted before an attempt fails the
+  delivery.
 
 A consent or data marketplace event gets one attempt. A delivery with any HTTP
 answer has the status `completed`; a delivery without an answer has the status
-`failed`. A disabled webhook gets no consent or data marketplace event.
+`failed`. A disabled or paused webhook gets no consent or data marketplace
+event.
+
+### Webhook status
+Each webhook answer (create, read, update, delete, list, resume, disable and
+enable) holds the status of the webhook. All 7 members are always present:
+
+| Member | Value |
+| --- | --- |
+| `status` | `active`, `failing`, `paused` or `disabled` (see the next table). |
+| `consecutiveFailedAttempts` | The attempts that failed in a row, over all the deliveries of the webhook. A 2xx answer to any attempt (also an attempt of a redelivery) sets it to `0`. |
+| `failingSince` | The time of the first failed attempt since the last 2xx answer, or `null`. |
+| `lastSuccessAt` | The time of the last 2xx answer, or `null`. |
+| `pausedAt` | The time of the pause, or `null`. |
+| `pauseReason` | `failed_attempts`, `gone` (the receiver answered 410), `platform` (the platform operator paused the webhook), or `null`. |
+| `statusReason` | A short English text for `failing` and `paused`, for example `17 attempts failed in a row since 2026-11-23T05:40:00Z.`; `null` for `active` and `disabled`. Show it to a user. Do not parse it. |
+
+All times are RFC 3339 in UTC.
+
+| `status` | When | Events |
+| --- | --- | --- |
+| `active` | The default, and again after each 2xx answer. | Sent and retried. |
+| `failing` | `consecutiveFailedAttempts` is 5 or more. | Sent and retried. |
+| `paused` | `consecutiveFailedAttempts` is 50 or more and no attempt succeeded for 24 hours (both), or the receiver answered 410, or the platform operator paused the webhook. | Not sent. |
+| `disabled` | `disabled` is `true`. This status takes precedence over the others. | Not sent. |
+
+While a webhook is paused:
+- the deliveries that wait for a retry end at once as `failed`;
+- a new event gets no delivery and no delivery record. The service does not
+  send it later, not even after a resume. Read the resources from the API to
+  get the changes of the pause;
+- a ping works, but it does not change the status;
+- only resume or enable ends the pause.
+
+The service writes an entry in the Activity Logs of the organisation for each
+pause, resume, disable and enable.
+
+### Resume, disable and enable
+`POST .../resume` makes a paused webhook active again. It first sends the
+test event of the ping to the payload URL:
+
+- A 2xx answer: `status` is `active`, `consecutiveFailedAttempts` is `0`,
+  and `failingSince`, `pausedAt` and `pauseReason` are `null`. The answer is
+  HTTP 200 with the webhook and the ping result:
+  `{"webhook": {...}, "ping": {"responseStatusCode": 200, ...}}`.
+- Another answer, no answer in 10 seconds, or no connection: HTTP 409 with
+  `errorKey` `webhook.resume_ping_failed`. `errorDescription` gives the
+  reason, for example `The test event failed: the answer has the status 503.
+  The webhook stays paused.` The webhook stays paused.
+- A webhook that is not paused gives HTTP 409 with `errorKey`
+  `webhook.not_paused`. A disabled webhook gives HTTP 409 with `errorKey`
+  `webhook.disabled` (call enable).
+
+After a resume, list the deliveries and redeliver the deliveries that the
+pause ended as `failed` (the service keeps them for 10 days).
+
+`POST .../disable` sets `disabled` to `true` (the status is `disabled`).
+`POST .../enable` sets `disabled` to `false`, the status to `active`,
+`consecutiveFailedAttempts` to `0`, and `failingSince`, `pausedAt` and
+`pauseReason` to `null`. Enable does not test the payload URL. Both
+operations have no body, change nothing else, answer HTTP 200 with
+`{"webhook": {...}}`, and give the same result when you call them again.
 
 ### Ping (`POST .../ping`)
 A ping sends a POST with an **empty body** to the payload URL. **A ping carries
 no `X-IGrant-Signature` header and no event headers**, so the receiver cannot
 check its authenticity. The service does not record a ping as a webhook
-delivery. You can ping a disabled webhook.
+delivery. You can ping a disabled or paused webhook. A ping does not change
+the status of the webhook: to end a pause, call resume.
 
 The ping response is a **flat object. There is no wrapper field**:
 
@@ -478,7 +566,8 @@ does not send it.
 To manage the webhooks of a sandbox organisation, call the API with an API key
 that is bound to that sandbox organisation. The service takes the sandbox
 organisation from the key. You send no extra header. Create, read, update,
-delete, list and ping, and the deliveries (list, read and redeliver), then
+delete, list, ping, resume, disable and enable, and the deliveries (list,
+read and redeliver), then
 work on the webhooks of that sandbox organisation, and not on the webhooks of
 the main wallet. A `webhookId` of the other wallet gives HTTP 404.
 
@@ -504,7 +593,7 @@ Fetch the linked page, or the raw specification at
 <https://docs.igrant.io/openapispecifications/oid4vc.yaml>, to check for
 updates before you build. Report the drift so the skill can be corrected.
 
-- Webhooks guide (event types, body, signature, retries): <https://docs.igrant.io/docs/openid4vc-webhooks/>
+- Webhooks guide (event types, body, signature, retries, webhook status): <https://docs.igrant.io/docs/openid4vc-webhooks/>
 - API index: <https://docs.igrant.io/docs/developer-apis/>
 
 ## Cross-references

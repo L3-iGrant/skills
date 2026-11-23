@@ -447,10 +447,13 @@ Body (the event; the same for each attempt):
 `offerId`, `status`, ...); `data.verification` is the summary of the
 verification (`id` = the presentationExchangeId, `status`, `isVerified`, ...).
 The body holds no claims, tokens or presentation content.
-Answer 2xx in 10 seconds: any other answer makes OWS try again after 1 min,
-5 min, 30 min, 2 h, 6 h and 24 h (7 attempts). For one webhook and one
-resource, the events come in the order of `subject.sequence`; a gap is
-possible.
+Answer 2xx in 10 seconds: another answer makes OWS try again after 1 min,
+5 min, 30 min, 2 h, 6 h and 24 h (7 attempts). A refusal (400, 401, 403, 404,
+405, 413, 415, 422) and 410 get no retry, and 410 pauses the webhook; a 429 or
+503 with `Retry-After` can move the next attempt later. A webhook with many
+failed attempts is paused and gets no events until you resume it (see
+`igrantio-api-webhooks`). For one webhook and one resource, the events come in
+the order of `subject.sequence`; a gap is possible.
 
 ### 4.4 Event type → resource id
 The **resource id** of each event is `subject.id`; it is the SSE key that you
