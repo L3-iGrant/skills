@@ -72,7 +72,7 @@ Record the answers before you write code.
 | `POST` | `/v4/config/platform/webhook/{webhookId}/ping` | Ping the payload URL to test that it answers. | [Ping webhook](https://docs.igrant.io/docs/openid4vc-api/config-ping-webhook/) |
 | `POST` | `/v4/config/platform/webhook/{webhookId}/resume` | Send a test event, and make a paused webhook active again. | [Resume webhook](https://docs.igrant.io/docs/openid4vc-api/config-resume-webhook/) |
 | `POST` | `/v4/config/platform/webhook/{webhookId}/disable` | Turn a webhook off (`disabled` `true`). | [Disable webhook](https://docs.igrant.io/docs/openid4vc-api/config-disable-webhook/) |
-| `POST` | `/v4/config/platform/webhook/{webhookId}/enable` | Turn a webhook on and set its status to `active`. | [Enable webhook](https://docs.igrant.io/docs/openid4vc-api/config-enable-webhook/) |
+| `POST` | `/v4/config/platform/webhook/{webhookId}/enable` | Turn a disabled webhook on again. | [Enable webhook](https://docs.igrant.io/docs/openid4vc-api/config-enable-webhook/) |
 | `GET` | `/v4/config/platform/webhooks/{webhookId}/deliveries` | List the deliveries of one webhook, newest first. | [List webhook deliveries](https://docs.igrant.io/docs/openid4vc-api/config-list-all-recent-webhook-deliveries/) |
 | `GET` | `/v4/config/platform/webhooks/{webhookId}/delivery/{deliveryId}` | Read one delivery. | [Read webhook delivery](https://docs.igrant.io/docs/openid4vc-api/config-read-recent-webhook-delivery/) |
 | `POST` | `/v4/config/platform/webhooks/{webhookId}/delivery/{deliveryId}/redeliver` | Send a delivery again. | [Redeliver webhook delivery](https://docs.igrant.io/docs/openid4vc-api/config-redeliver-webhook/) |
@@ -428,7 +428,7 @@ All times are RFC 3339 in UTC.
 | `active` | The default, and again after each 2xx answer. | Sent and retried. |
 | `failing` | `consecutiveFailedAttempts` is 5 or more. | Sent and retried. |
 | `paused` | `consecutiveFailedAttempts` is 50 or more and no attempt succeeded for 24 hours (both), or the receiver answered 410, or the platform operator paused the webhook. | Not sent. |
-| `disabled` | `disabled` is `true`. This status takes precedence over the others. | Not sent. |
+| `disabled` | `disabled` is `true`. This status takes precedence over the others; the stored status (for example `paused`) shows again after enable. | Not sent. |
 
 While a webhook is paused:
 - the deliveries that wait for a retry end at once as `failed`;
@@ -436,10 +436,15 @@ While a webhook is paused:
   send it later, not even after a resume. Read the resources from the API to
   get the changes of the pause;
 - a ping works, but it does not change the status;
-- only resume or enable ends the pause.
+- only resume ends the pause. Disable and enable do not end it.
 
-The service writes an entry in the Activity Logs of the organisation for each
-pause, resume, disable and enable.
+The service writes an Activity Logs entry of type 5 (`Webhooks`) for each
+pause, resume, disable and enable: `event` is `webhook_paused`,
+`webhook_resumed`, `webhook_disabled` or `webhook_enabled`, `objectType` is
+`webhook` and `objectId` is the `webhookId`. The `action` is
+`Organisation webhook: <payloadUrl> paused by system reason: <failed_attempts|gone>`
+or `Organisation webhook: <payloadUrl> resumed by user: <user id>` (also
+`disabled`, `enabled`), with ` via api key: <key name>` for an API key.
 
 ### Resume, disable and enable
 `POST .../resume` makes a paused webhook active again. It first sends the
@@ -450,21 +455,32 @@ test event of the ping to the payload URL:
   HTTP 200 with the webhook and the ping result:
   `{"webhook": {...}, "ping": {"responseStatusCode": 200, ...}}`.
 - Another answer, no answer in 10 seconds, or no connection: HTTP 409 with
-  `errorKey` `webhook.resume_ping_failed`. `errorDescription` gives the
-  reason, for example `The test event failed: the answer has the status 503.
-  The webhook stays paused.` The webhook stays paused.
+  `errorKey` `webhook_resume_ping_failed`. `errorDescription` is
+  `The test event failed: <reason>. The webhook stays paused.`, where
+  `<reason>` is `the answer has the status 503`, `no answer in 10 seconds` or
+  `the request did not reach the receiver`. The webhook stays paused.
+- A disabled webhook gives HTTP 409 with `errorKey` `webhook_disabled`
+  (`The webhook is disabled: enable it first.`). The service checks this
+  first. Call enable, then resume.
 - A webhook that is not paused gives HTTP 409 with `errorKey`
-  `webhook.not_paused`. A disabled webhook gives HTTP 409 with `errorKey`
-  `webhook.disabled` (call enable).
+  `webhook_not_paused`
+  (`The webhook is not paused: only a paused webhook can be resumed.`).
+- Resume does not change `lastSuccessAt`.
 
 After a resume, list the deliveries and redeliver the deliveries that the
 pause ended as `failed` (the service keeps them for 10 days).
 
-`POST .../disable` sets `disabled` to `true` (the status is `disabled`).
-`POST .../enable` sets `disabled` to `false`, the status to `active`,
-`consecutiveFailedAttempts` to `0`, and `failingSince`, `pausedAt` and
-`pauseReason` to `null`. Enable does not test the payload URL. Both
-operations have no body, change nothing else, answer HTTP 200 with
+`POST .../disable` sets `disabled` to `true` (the status is `disabled`). The
+stored status of the deliveries stays.
+
+`POST .../enable` sets `disabled` to `false`:
+- a webhook that was `active` or `failing` becomes `active`,
+  `consecutiveFailedAttempts` is `0` and `failingSince` is `null`;
+- a webhook that was paused stays `paused`, with its `pausedAt` and
+  `pauseReason`. Call resume to end the pause.
+
+Enable does not test the payload URL and does not change `lastSuccessAt`.
+Both operations have no body, change no other setting, answer HTTP 200 with
 `{"webhook": {...}}`, and give the same result when you call them again.
 
 ### Ping (`POST .../ping`)
