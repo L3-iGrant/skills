@@ -402,9 +402,10 @@ where `sig` is the HMAC-SHA256 of `<t>.<body>` over the exact body bytes.
 - A webhook that is disabled, paused or deleted before an attempt fails the
   delivery.
 
-A consent or data marketplace event gets one attempt. A delivery with any HTTP
-answer has the status `completed`; a delivery without an answer has the status
-`failed`. A disabled or paused webhook gets no consent or data marketplace
+A consent or data marketplace event gets one attempt, with the same limit of
+10 seconds. A delivery with any HTTP answer in that time has the status
+`completed`; a delivery without an answer (no connection, or no answer in 10
+seconds) has the status `failed`. A disabled or paused webhook gets no consent or data marketplace
 event.
 
 ### Webhook status
